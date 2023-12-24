@@ -40,7 +40,7 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	UCustom_Movement_Component* Custom_Movement_Component;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
@@ -53,6 +53,9 @@ private:
 	void On_Player_Enter_Climb_State();
 	void On_Player_Exit_Climb_State();
 	
+	void On_Player_Enter_Take_Cover_State();
+	void On_Player_Exit_Take_Cover_State();
+	
 	void Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority);
 	void Remove_Input_Mapping_Context(UInputMappingContext* Context_To_Remove);
 	
@@ -62,6 +65,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputMappingContext* Climbing_Mapping_Context;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputMappingContext* Take_Cover_Mapping_Context;
 
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -74,6 +80,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Climbing_Move_Action;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Take_Cover_Move_Action;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
@@ -84,10 +93,16 @@ private:
 	UInputAction* Parkour_Action;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Exit_Parkour_Action;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Climb_Action;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Climb_Hop_Action;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Take_Cover_Action;
 
 #pragma endregion
 
@@ -98,14 +113,20 @@ private:
 
 	void Handle_Climb_Movement_Input(const FInputActionValue& Value);
 
+	void Handle_Take_Cover_Movement_Input(const FInputActionValue& Value);
+
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 
 	void On_Parkour_Started(const FInputActionValue& Value);
+
+	void On_Parkour_Ended(const FInputActionValue& Value);
 	
 	void On_Climb_Action_Started(const FInputActionValue& Value);
 
 	void On_Climb_Hop_Action_Started(const FInputActionValue& Value);
+
+	void On_Take_Cover_Action_Started(const FInputActionValue& Value);
 
 #pragma endregion
 

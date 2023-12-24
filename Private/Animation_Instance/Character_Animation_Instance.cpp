@@ -32,6 +32,8 @@ void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
     Get_Is_Falling();
     Get_Is_Climbing();
     Get_Climb_Velocity();
+    Get_Is_Taking_Cover();
+    Get_Take_Cover_Velocity();
 }
 
 
@@ -57,6 +59,8 @@ void UCharacter_Animation_Instance::Get_Is_Falling()
 {
     bIs_Falling = Custom_Movement_Component->IsFalling();
 }
+
+
 void UCharacter_Animation_Instance::Get_Is_Climbing()
 {
     bIs_Climbing = Custom_Movement_Component->Is_Climbing();
@@ -64,4 +68,14 @@ void UCharacter_Animation_Instance::Get_Is_Climbing()
 void UCharacter_Animation_Instance::Get_Climb_Velocity()
 {
   Climb_Velocity = Custom_Movement_Component->Get_Unrotated_Climb_Velocity();
+}
+
+void UCharacter_Animation_Instance::Get_Is_Taking_Cover()
+{
+    bIs_Taking_Cover = Custom_Movement_Component->Is_Taking_Cover();
+}
+
+void UCharacter_Animation_Instance::Get_Take_Cover_Velocity()
+{
+    Take_Cover_Velocity = Custom_Movement_Component->Get_Unrotated_Take_Cover_Velocity();
 }

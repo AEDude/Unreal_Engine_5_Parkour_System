@@ -9,6 +9,7 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Technical_Animator/Technical_AnimatorCharacter.h"
 #include "MotionWarpingComponent.h"
+#include "Engine/World.h"
 
 
 void UCustom_Movement_Component::BeginPlay()
@@ -21,6 +22,9 @@ void UCustom_Movement_Component::BeginPlay()
 	{
 		Owning_Player_Animation_Instance->OnMontageEnded.AddDynamic(this, &UCustom_Movement_Component::On_Climbing_Montage_Ended);
 		Owning_Player_Animation_Instance->OnMontageBlendingOut.AddDynamic(this, &UCustom_Movement_Component::On_Climbing_Montage_Ended);
+
+		Owning_Player_Animation_Instance->OnMontageEnded.AddDynamic(this, &UCustom_Movement_Component::On_Take_Cover_Montage_Ended);
+		Owning_Player_Animation_Instance->OnMontageBlendingOut.AddDynamic(this, &UCustom_Movement_Component::On_Take_Cover_Montage_Ended);
 	}
 
 	Owning_Player_Character = Cast<ATechnical_AnimatorCharacter>(CharacterOwner);
@@ -30,6 +34,10 @@ void UCustom_Movement_Component::TickComponent(float DeltaTime, ELevelTick TickT
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	/*Capsule_Trace_Take_Cover_Surfaces();
+	Line_Trace_Check_Cover_Right(Take_Cover_Check_Cover_Edge);
+	Line_Trace_Check_Cover_Left(Take_Cover_Check_Cover_Edge);*/
+	
 	const FVector Unrotated_Last_Input_Vector = 
 	UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(), GetLastInputVector());
 
@@ -43,6 +51,8 @@ void UCustom_Movement_Component::TickComponent(float DeltaTime, ELevelTick TickT
 
 void UCustom_Movement_Component::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
 {
+	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+
 	if(Is_Climbing())
 	{
 		bOrientRotationToMovement = false;
@@ -64,17 +74,42 @@ void UCustom_Movement_Component::OnMovementModeChanged(EMovementMode PreviousMov
 		On_Exit_Climb_State_Delegate.ExecuteIfBound();
 	}
 
-	Super::OnMovementModeChanged(PreviousMovementMode, PreviousCustomMode);
+	if(Is_Taking_Cover())
+	{
+		bOrientRotationToMovement = false;
+		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(48.f);
+		CharacterOwner->bIsCrouched = true;
+		On_Enter_Take_Cover_State_Delegate.ExecuteIfBound();
+	}
+
+	if(PreviousMovementMode == MOVE_Custom && PreviousCustomMode == E_Custom_Movement_Mode::MOVE_Take_Cover)
+	{
+		bOrientRotationToMovement = true;
+		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(96.f);
+
+		const FRotator Dirty_Rotation = UpdatedComponent->GetComponentRotation();
+		const FRotator Clean_Stand_Rotation = FRotator(0.f, Dirty_Rotation.Yaw, 0.f);
+		UpdatedComponent->SetRelativeRotation(Clean_Stand_Rotation);
+
+		StopMovementImmediately();
+
+		On_Exit_Take_Cover_State_Delegate.ExecuteIfBound();
+	}
 }
 
 void UCustom_Movement_Component::PhysCustom(float deltaTime, int32 Iterations)
 {
+	Super::PhysCustom(deltaTime, Iterations);
+
 	if(Is_Climbing())
 	{
 		Physics_Climb(deltaTime, Iterations);
 	}
-
-	Super::PhysCustom(deltaTime, Iterations);
+	
+	if(Is_Taking_Cover())
+	{
+		Physics_Take_Cover(deltaTime, Iterations);
+	}
 }
 
 float UCustom_Movement_Component::GetMaxSpeed() const
@@ -83,9 +118,16 @@ float UCustom_Movement_Component::GetMaxSpeed() const
 	{
 		return Max_Climb_Speed;
 	}
-	
 	else
+	{
+		return Super:: GetMaxSpeed();
+	}
 	
+	if(Is_Taking_Cover())
+	{
+		return Max_Take_Cover_Speed;
+	}
+	else
 	{
 		return Super:: GetMaxSpeed();
 	}
@@ -97,9 +139,16 @@ float UCustom_Movement_Component::GetMaxAcceleration() const
 	{
 		return Max_Climb_Acceleration;
 	}
-	
 	else
-	
+	{
+		return Super:: GetMaxAcceleration();
+	}
+
+	if(Is_Taking_Cover())
+	{
+		return Max_Take_Cover_Acceleration;
+	}
+	else
 	{
 		return Super:: GetMaxAcceleration();
 	}
@@ -771,6 +820,368 @@ bool UCustom_Movement_Component::bCheck_Can_Hop_Right(FVector &Out_Hop_Right_Tar
 FVector UCustom_Movement_Component::Get_Unrotated_Climb_Velocity() const
 {
     return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(), Velocity);
+}
+
+#pragma endregion
+
+#pragma region Take_Cover_Traces
+
+TArray<FHitResult> UCustom_Movement_Component::Do_Capsule_Trace_Multi_By_Object_Take_Cover(const FVector& Start, const FVector& End, bool B_Show_Debug_Shape, bool B_Draw_Persistant_Shapes)
+{
+	TArray<FHitResult> Out_Capsule_Trace_Hit_Results;
+
+	EDrawDebugTrace::Type Debug_Trace_Type = EDrawDebugTrace::None;
+
+	if(B_Show_Debug_Shape)
+	{
+		Debug_Trace_Type = EDrawDebugTrace::ForOneFrame;
+
+		if(B_Draw_Persistant_Shapes)
+		{
+			Debug_Trace_Type = EDrawDebugTrace::Persistent;
+		}
+	}
+
+	UKismetSystemLibrary::CapsuleTraceMultiForObjects(
+		this,
+		Start,
+		End,
+		Take_Cover_Capsule_Trace_Radius,
+		Take_Cover_Capsule_Trace_Half_Height,
+		Take_Cover_Surface_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		Debug_Trace_Type,
+		Out_Capsule_Trace_Hit_Results,
+		false
+	);
+	
+	return Out_Capsule_Trace_Hit_Results;
+}
+
+FHitResult UCustom_Movement_Component::Do_Line_Trace_Single_By_Object_Take_Cover(const FVector& Start, const FVector& End, bool B_Show_Debug_Shape, bool B_Draw_Persistant_Shapes)
+{
+	FHitResult Out_Hit;
+	
+	EDrawDebugTrace::Type Debug_Trace_Type = EDrawDebugTrace::None;
+
+	if(B_Show_Debug_Shape)
+	{
+		Debug_Trace_Type = EDrawDebugTrace::ForOneFrame;
+
+		if(B_Draw_Persistant_Shapes)
+		{
+			Debug_Trace_Type = EDrawDebugTrace::Persistent;
+		}
+	}
+
+	/*GetWorld()->LineTraceSingleByChannel(
+		Out_Hit,
+		Start,
+		End,
+		ECollisionChannel::ECC_GameTraceChannel1
+	);*/
+
+	UKismetSystemLibrary::LineTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		Take_Cover_Surface_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		Debug_Trace_Type,
+		Out_Hit,
+		false
+	);
+
+	return Out_Hit;
+}
+
+#pragma endregion
+
+#pragma region Take_Cover_Core
+
+void UCustom_Movement_Component::Toggle_Take_Cover(bool bEneble_Take_Cover)
+{
+	if(bEneble_Take_Cover)
+	{
+		if(Can_Take_Cover())
+		{
+			//Enter Take Cover State
+			Debug::Print(TEXT("Can Take Cover!"));
+			Play_Take_Cover_Montage(Idle_To_Take_Cover_Montage);
+		}
+		else
+		{
+			Debug::Print(TEXT("Can't Take Cover!"));
+		}
+	}
+	else
+	{
+		//Stop Taking Cover
+		Play_Take_Cover_Montage(Exit_Cover_To_Stand);
+	}
+}
+
+bool UCustom_Movement_Component::Can_Take_Cover()
+{
+	if(IsFalling()) return false;
+	if(!Capsule_Trace_Take_Cover_Surfaces() || !Capsule_Trace_Ground_Surface()) return false;
+	if(!Line_Trace_Check_Cover_Right(Take_Cover_Check_Cover_Edge).bBlockingHit || !Line_Trace_Check_Cover_Right(Take_Cover_Check_Cover_Edge).bBlockingHit) return false;
+
+	return true;
+}
+
+void UCustom_Movement_Component::Start_Take_Cover()
+{
+	SetMovementMode(MOVE_Custom, E_Custom_Movement_Mode::MOVE_Take_Cover);
+}
+
+void UCustom_Movement_Component::Stop_Take_Cover()
+{
+	SetMovementMode(MOVE_Walking);
+}
+
+void UCustom_Movement_Component::Physics_Take_Cover(float deltaTime, int32 Iterations)
+{
+	if (deltaTime < MIN_TICK_TIME)
+	{
+		return;
+	}
+
+	//Process all take cover surfaces information
+
+	Capsule_Trace_Take_Cover_Surfaces();
+
+	Capsule_Trace_Ground_Surface();
+
+	Process_Take_Cover_Surface_Info();
+
+	Process_Take_Cover_Ground_Surface_Info();
+
+	/* Check if we should exit taking cover*/
+	if(Check_Should_Exit_Take_Cover())
+	{
+		Stop_Take_Cover();
+	}
+
+	RestorePreAdditiveRootMotionVelocity();
+
+	if( !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() )
+	{	
+		/*Define the max take cover speed and acceleration*/
+		CalcVelocity(deltaTime, 0.f, true, Max_Brake_Take_Cover_Deceleration);
+	}
+
+	ApplyRootMotionToVelocity(deltaTime);
+
+
+	FVector OldLocation = UpdatedComponent->GetComponentLocation();
+	const FVector Adjusted = Velocity * deltaTime;
+	FHitResult Hit(1.f);
+	
+	/*Handle the take cover rotation*/
+	SafeMoveUpdatedComponent(Adjusted, Get_Take_Cover_Rotation(deltaTime), true, Hit);
+
+	if (Hit.Time < 1.f)
+	{
+		//adjust and try again
+			HandleImpact(Hit, deltaTime, Adjusted);
+			SlideAlongSurface(Adjusted, (1.f - Hit.Time), Hit.Normal, Hit, true);
+	}
+
+	if(!HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() )
+	{
+		Velocity = (UpdatedComponent->GetComponentLocation() - OldLocation) / deltaTime;
+	}
+
+	/*Snap movement to take cover surfaces*/
+	Snap_Movement_To_Take_Cover_Surfaces(deltaTime);
+	Take_Cover_Snap_Movement_To_Ground(deltaTime);
+}
+
+void UCustom_Movement_Component::Process_Take_Cover_Surface_Info()
+{
+	Current_Take_Cover_Surface_Location = FVector::ZeroVector;
+	Current_Take_Cover_Surface_Normal = FVector::ZeroVector;
+
+	if(Take_Cover_Surfaces_Traced_Results.IsEmpty()) return;
+
+	for(const FHitResult& Traced_Hit_Result : Take_Cover_Surfaces_Traced_Results)
+	{
+		Current_Take_Cover_Surface_Location += Traced_Hit_Result.ImpactPoint;
+		Current_Take_Cover_Surface_Normal += Traced_Hit_Result.ImpactNormal;
+	}
+
+	Current_Take_Cover_Surface_Location /= Take_Cover_Surfaces_Traced_Results.Num();
+	Current_Take_Cover_Surface_Normal = Current_Take_Cover_Surface_Normal.GetSafeNormal();
+}
+
+void UCustom_Movement_Component::Process_Take_Cover_Ground_Surface_Info()
+{
+	if(Take_Cover_Ground_Surface_Traced_Results.IsEmpty()) return;
+
+	for(const FHitResult& Traced_Hit_Result : Take_Cover_Ground_Surface_Traced_Results)
+	{
+		Current_Take_Cover_Ground_Surface_Location += Traced_Hit_Result.ImpactPoint;
+		Current_Take_Cover_Ground_Surface_Normal += Traced_Hit_Result.ImpactNormal;
+	}
+
+	Current_Take_Cover_Ground_Surface_Location /= Take_Cover_Ground_Surface_Traced_Results.Num();
+	Current_Take_Cover_Ground_Surface_Normal = Current_Take_Cover_Ground_Surface_Normal.GetSafeNormal();
+
+	Debug::Print(TEXT("Take Cover Ground Surface Location: ") + Current_Take_Cover_Ground_Surface_Location.ToCompactString(), FColor::Green, 1);
+	Debug::Print(TEXT("Take Cover Ground Surface Normal: ") + Current_Take_Cover_Ground_Surface_Normal.ToCompactString(), FColor::Yellow, 2);
+}
+
+bool UCustom_Movement_Component::Check_Should_Exit_Take_Cover()
+{
+	if(Take_Cover_Surfaces_Traced_Results.IsEmpty()) return true;
+
+	const float Dot_Result = FVector::DotProduct(Current_Take_Cover_Surface_Normal, FVector::UpVector);
+	const float Degree_Difference = FMath::RadiansToDegrees(FMath::Acos(Dot_Result));
+
+	if(Degree_Difference <= 87.f)
+	{
+		return true;
+	}
+
+	Debug::Print(TEXT("Take Cover Edge Degree Difference") + FString::SanitizeFloat(Degree_Difference), FColor::Yellow, 1);
+
+	return false;
+}
+
+FQuat UCustom_Movement_Component::Get_Take_Cover_Rotation(float DeltaTime)
+{
+	const FQuat Current_Quat = UpdatedComponent->GetComponentQuat();
+
+	if(HasAnimRootMotion() || CurrentRootMotion.HasOverrideVelocity())
+	{
+		return Current_Quat;
+	}
+
+	const FQuat Target_Quat = FRotationMatrix::MakeFromX(-Current_Take_Cover_Surface_Normal).ToQuat();
+	
+	return FMath::QInterpTo(Current_Quat, Target_Quat, DeltaTime, 5.f);
+}
+
+void UCustom_Movement_Component::Snap_Movement_To_Take_Cover_Surfaces(float DeltaTime)
+{
+	const FVector Component_Forward = UpdatedComponent->GetForwardVector();
+	const FVector Component_Locataion = UpdatedComponent->GetComponentLocation();
+
+	const FVector Projected_Character_To_Surface = 
+	(Current_Take_Cover_Surface_Location - Component_Locataion).ProjectOnTo(Component_Forward);
+
+	const FVector Snap_Vector = -Current_Take_Cover_Surface_Normal * Projected_Character_To_Surface.Length();
+
+	UpdatedComponent->MoveComponent
+	(Snap_Vector * DeltaTime * Max_Take_Cover_Speed,
+	UpdatedComponent->GetComponentQuat(),
+	true
+	);
+}
+
+void UCustom_Movement_Component::Take_Cover_Snap_Movement_To_Ground(float DeltaTime)
+{
+	const FVector Component_Down = -UpdatedComponent->GetUpVector();
+	const FVector Component_Locataion = UpdatedComponent->GetComponentLocation();
+
+	const FVector Projected_Character_To_Surface = 
+	(Current_Take_Cover_Ground_Surface_Location - Component_Locataion).ProjectOnTo(Component_Down);
+
+	const FVector Snap_Vector = -Current_Take_Cover_Ground_Surface_Normal * Projected_Character_To_Surface.Length();
+
+	UpdatedComponent->MoveComponent
+	(Snap_Vector * DeltaTime * Max_Take_Cover_Speed,
+	UpdatedComponent->GetComponentQuat(),
+	true
+	);
+}
+
+void UCustom_Movement_Component::Play_Take_Cover_Montage(UAnimMontage* Montage_To_Play)
+{
+	if(!Montage_To_Play) return;
+	if(!Owning_Player_Animation_Instance) return;
+	if(Owning_Player_Animation_Instance->IsAnyMontagePlaying()) return;
+
+	Owning_Player_Animation_Instance->Montage_Play(Montage_To_Play);
+}
+
+void UCustom_Movement_Component::On_Take_Cover_Montage_Ended(UAnimMontage* Montage, bool bInterrupted)
+{
+	if(Montage == Idle_To_Take_Cover_Montage)
+	{
+		Debug::Print(TEXT("Take Cover Montage Ended!"));
+		
+		Start_Take_Cover();
+	}
+
+	if(Montage == Exit_Cover_To_Stand)
+	{
+		Debug::Print(TEXT("Exiting Take Cover Montage"));
+
+		Stop_Take_Cover();
+	}
+}
+
+FVector UCustom_Movement_Component::Get_Unrotated_Take_Cover_Velocity() const
+{
+	return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(), Velocity);
+}
+
+bool UCustom_Movement_Component::Is_Taking_Cover() const
+{
+	return MovementMode == MOVE_Custom && CustomMovementMode == E_Custom_Movement_Mode::MOVE_Take_Cover;
+}
+
+#pragma endregion
+
+#pragma region Take_Cover_Traces
+
+//Trace for surfaces which player can take cover. Return true if there are valid surfaces, otherwise returns false.
+bool UCustom_Movement_Component::Capsule_Trace_Take_Cover_Surfaces()
+{
+	const FVector Start_Offset = UpdatedComponent->GetForwardVector() * 30.f;
+	const FVector Start = UpdatedComponent->GetComponentLocation() + Start_Offset;
+	const FVector End = Start + UpdatedComponent->GetForwardVector();
+
+	Take_Cover_Surfaces_Traced_Results = Do_Capsule_Trace_Multi_By_Object_Take_Cover(Start, End, true /*, true*/);
+
+	return !Take_Cover_Surfaces_Traced_Results.IsEmpty();
+}
+
+bool UCustom_Movement_Component::Capsule_Trace_Ground_Surface()
+{
+	const FVector Start_Offset = -UpdatedComponent->GetUpVector() * 30.f;
+	const FVector Start = UpdatedComponent->GetComponentLocation() + Start_Offset;
+	const FVector End = Start + -UpdatedComponent->GetForwardVector();
+
+	Take_Cover_Ground_Surface_Traced_Results = Do_Capsule_Trace_Multi_By_Object_Take_Cover(Start, End, true /*, true*/);
+
+	return !Take_Cover_Ground_Surface_Traced_Results.IsEmpty();
+}
+
+FHitResult UCustom_Movement_Component::Line_Trace_Check_Cover_Right(float Trace_Distance, float Trace_Start_Offset)
+{
+	const FVector Component_Location = UpdatedComponent->GetComponentLocation();
+	const FVector Right_Offset = UpdatedComponent->GetRightVector() * Trace_Start_Offset;
+	
+	const FVector Start = Component_Location + Right_Offset;
+	const FVector End = Start + UpdatedComponent->GetForwardVector() * Trace_Distance;
+
+ 	return Do_Line_Trace_Single_By_Object_Take_Cover(Start, End /*, true, true*/);
+}
+
+FHitResult UCustom_Movement_Component::Line_Trace_Check_Cover_Left(float Trace_Distance, float Trace_Start_Offset)
+{
+	const FVector Component_Location = UpdatedComponent->GetComponentLocation();
+	const FVector Left_Offset = -UpdatedComponent->GetRightVector() * Trace_Start_Offset;
+	
+	const FVector Start = Component_Location + Left_Offset;
+	const FVector End = Start + UpdatedComponent->GetForwardVector() * Trace_Distance;
+
+ 	return Do_Line_Trace_Single_By_Object_Take_Cover(Start, End /*, true, true*/);
 }
 
 #pragma endregion

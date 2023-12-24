@@ -8,6 +8,8 @@
 
 DECLARE_DELEGATE(F_On_Enter_Climb_State)
 DECLARE_DELEGATE(F_On_Exit_Climb_State)
+DECLARE_DELEGATE(F_On_Enter_Take_Cover_State)
+DECLARE_DELEGATE(F_On_Exit_Take_Cover_State)
 
 class UAnimMontage;
 class UAnimInstance;
@@ -18,7 +20,8 @@ namespace E_Custom_Movement_Mode
 {
 	enum Type
 	{
-		MOVE_Climb UMETA(DisplayName = "Climb Mode")
+		MOVE_Climb UMETA(DisplayName = "Climb Mode"),
+		MOVE_Take_Cover UMETA(DisplayName = "Take Cover Mode")
 	};
 }
 
@@ -34,6 +37,10 @@ public:
 	F_On_Enter_Climb_State On_Enter_Climb_State_Delegate;
 
 	F_On_Exit_Climb_State On_Exit_Climb_State_Delegate;
+
+	F_On_Enter_Take_Cover_State On_Enter_Take_Cover_State_Delegate;
+
+	F_On_Exit_Take_Cover_State On_Exit_Take_Cover_State_Delegate;
 protected:
 
 #pragma region Overriden_Functions
@@ -41,7 +48,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
-	virtual void PhysCustom(float deltaTime, int32 Iterations);
+	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
 	virtual float GetMaxSpeed() const override;
 	virtual float GetMaxAcceleration() const override;
 	virtual FVector ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity, const FVector& CurrentVelocity) const override;
@@ -49,6 +56,12 @@ protected:
 #pragma endregion
 
 private:
+
+UPROPERTY()
+UAnimInstance* Owning_Player_Animation_Instance;
+
+UPROPERTY()
+ATechnical_AnimatorCharacter* Owning_Player_Character;
 
 #pragma region Climb_Traces
 
@@ -122,15 +135,9 @@ FVector Current_Climbable_Surface_Location;
 
 FVector Current_Climbable_Surface_Normal;
 
-UPROPERTY()
-UAnimInstance* Owning_Player_Animation_Instance;
-
-UPROPERTY()
-ATechnical_AnimatorCharacter* Owning_Player_Character;
-
 #pragma endregion
 
-#pragma region ClimbBPVariables
+#pragma region Climb_BP_Variables
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement: Climbing", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery> > Climable_Surface_Trace_Types;
@@ -185,11 +192,118 @@ ATechnical_AnimatorCharacter* Owning_Player_Character;
 
 #pragma endregion
 
+#pragma region Take_Cover_Traces
+
+TArray<FHitResult> Do_Capsule_Trace_Multi_By_Object_Take_Cover(const FVector& Start, const FVector& End, bool B_Show_Debug_Shape = false,  bool B_Draw_Persistant_Shapes = false);
+
+FHitResult Do_Line_Trace_Single_By_Object_Take_Cover(const FVector& Start, const FVector& End, bool B_Show_Debug_Shape = false, bool B_Draw_Persistent_Shapes = false);
+
+#pragma endregion
+
+#pragma region Take_Cover_Core
+
+bool Capsule_Trace_Take_Cover_Surfaces();
+
+bool Capsule_Trace_Ground_Surface();
+
+FHitResult Line_Trace_Check_Cover_Right(float Trace_Distance, float Trace_Start_Offset = 55.f);
+
+FHitResult Line_Trace_Check_Cover_Left(float Trace_Distance, float Trace_Start_Offset = 55.f);
+
+bool Can_Take_Cover();
+
+void Start_Take_Cover();
+
+void Stop_Take_Cover();
+
+void Physics_Take_Cover(float deltaTime, int32 Iterations);
+
+void Process_Take_Cover_Surface_Info();
+
+void Process_Take_Cover_Ground_Surface_Info();
+
+bool Check_Should_Exit_Take_Cover();
+
+FQuat Get_Take_Cover_Rotation(float DeltaTime);
+
+void Snap_Movement_To_Take_Cover_Surfaces(float DeltaTime);
+
+void Take_Cover_Snap_Movement_To_Ground(float DeltaTime);
+
+void Check_Has_Reached_Take_Cover_Edge();
+
+void Play_Take_Cover_Montage(UAnimMontage* Montage_To_Play);
+
+UFUNCTION()
+void On_Take_Cover_Montage_Ended(UAnimMontage* Montage, bool bInterrupted);
+
+#pragma endregion
+
+#pragma region Take_Cover_Variables
+
+TArray<FHitResult> Take_Cover_Surfaces_Traced_Results;
+
+TArray<FHitResult> Take_Cover_Ground_Surface_Traced_Results;
+
+FVector Current_Take_Cover_Surface_Location;
+
+FVector Current_Take_Cover_Surface_Normal;
+
+FVector Current_Take_Cover_Ground_Surface_Location;
+
+FVector Current_Take_Cover_Ground_Surface_Normal;
+
+#pragma endregion
+
+#pragma region Take_Cover_BP_Variables
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+TArray<TEnumAsByte<EObjectTypeQuery> > Take_Cover_Surface_Trace_Types;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+float Take_Cover_Capsule_Trace_Radius = 50.f;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+float Take_Cover_Capsule_Trace_Half_Height = 70.f;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+float Take_Cover_Check_Cover_Edge = 100.f;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+float Max_Brake_Take_Cover_Deceleration = 3000.f;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+float Max_Take_Cover_Speed = 10.f;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+float Max_Take_Cover_Acceleration = 5.f;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+UAnimMontage* Idle_To_Take_Cover_Montage;
+
+UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Take Cover", meta = (AllowPrivateAccess = "true"))
+UAnimMontage* Exit_Cover_To_Stand;
+
+
+#pragma endregion
+
 public:
+
+#pragma region Climbing
+
 	void Toggle_Climbing(bool B_Eneble_Climb);
 	void Request_Hopping();
 	bool Is_Climbing() const;
 	FORCEINLINE FVector Get_Climbable_Surface_Normal() const {return Current_Climbable_Surface_Normal;}
 	FVector Get_Unrotated_Climb_Velocity() const;
+ #pragma endregion
 
+#pragma region Take Cover
+
+void Toggle_Take_Cover(bool bEneble_Take_Cover);
+bool Is_Taking_Cover() const;
+FORCEINLINE FVector Get_Take_Cover_Surface_Normal() const {return Current_Take_Cover_Surface_Normal;}
+FVector Get_Unrotated_Take_Cover_Velocity() const;
+
+#pragma endregion
 };

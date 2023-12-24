@@ -28,29 +28,37 @@ private:
 	UPROPERTY()
 	UCustom_Movement_Component* Custom_Movement_Component;
 
-	UPROPERTY(VisibleANywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	float Ground_Speed;
 	void Get_Ground_Speed();
 
-	UPROPERTY(VisibleANywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	float Air_Speed;
 	void Get_Air_Speed();
 
-	UPROPERTY(VisibleANywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	bool bShould_Move;
 	void Get_Should_Move();
 
-	UPROPERTY(VisibleANywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	bool bIs_Falling;
 	void Get_Is_Falling();
 
-	UPROPERTY(VisibleANywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	bool bIs_Climbing;
 	void Get_Is_Climbing();
 
-	UPROPERTY(VisibleANywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	FVector Climb_Velocity;
 	void Get_Climb_Velocity();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	bool bIs_Taking_Cover;
+	void Get_Is_Taking_Cover();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	FVector Take_Cover_Velocity;
+	void Get_Take_Cover_Velocity();
 };	
 
 

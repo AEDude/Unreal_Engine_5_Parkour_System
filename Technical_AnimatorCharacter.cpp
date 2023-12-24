@@ -73,6 +73,9 @@ void ATechnical_AnimatorCharacter::BeginPlay()
 	{
 		Custom_Movement_Component->On_Enter_Climb_State_Delegate.BindUObject(this, &ThisClass::On_Player_Enter_Climb_State);
 		Custom_Movement_Component->On_Exit_Climb_State_Delegate.BindUObject(this, &ThisClass::On_Player_Exit_Climb_State);
+		
+		Custom_Movement_Component->On_Enter_Take_Cover_State_Delegate.BindUObject(this, &ThisClass::On_Player_Enter_Take_Cover_State);
+		Custom_Movement_Component->On_Exit_Take_Cover_State_Delegate.BindUObject(this, &ThisClass::On_Player_Exit_Take_Cover_State);
 	}
 	
 }
@@ -109,7 +112,8 @@ void ATechnical_AnimatorCharacter::Remove_Input_Mapping_Context(UInputMappingCon
 void ATechnical_AnimatorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
-	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
+		{
 		
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
@@ -118,6 +122,7 @@ void ATechnical_AnimatorCharacter::SetupPlayerInputComponent(UInputComponent* Pl
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input);
 		EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Climb_Movement_Input);
+		EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Take_Cover_Movement_Input);
 
 
 		// Looking
@@ -125,14 +130,18 @@ void ATechnical_AnimatorCharacter::SetupPlayerInputComponent(UInputComponent* Pl
 
 		EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Parkour_Started);
 
+		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Parkour_Ended);
+
 		EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Climb_Action_Started);
 
 		EnhancedInputComponent->BindAction(Climb_Hop_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Climb_Hop_Action_Started);
-	}
-	else
-	{
-		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-	}
+
+		EnhancedInputComponent->BindAction(Take_Cover_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Take_Cover_Action_Started);
+		}
+		else
+		{
+			UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+		}
 }
 
 void ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input(const FInputActionValue& Value)
@@ -163,19 +172,44 @@ void ATechnical_AnimatorCharacter::Handle_Climb_Movement_Input(const FInputActio
 	// input is a Vector2D
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
-	const FVector ForwardDirection = FVector::CrossProduct(
-		-Custom_Movement_Component->Get_Climbable_Surface_Normal(),
-		GetActorRightVector()
-	);
+	if (Controller != nullptr)
+	{
+		const FVector ForwardDirection = FVector::CrossProduct(
+			-Custom_Movement_Component->Get_Climbable_Surface_Normal(),
+			GetActorRightVector()
+		);
 
-	const FVector RightDirection = FVector::CrossProduct(
-		-Custom_Movement_Component->Get_Climbable_Surface_Normal(),
-		-GetActorUpVector()
-	);
+		const FVector RightDirection = FVector::CrossProduct(
+			-Custom_Movement_Component->Get_Climbable_Surface_Normal(),
+			-GetActorUpVector()
+		);
 
-	// add movement 
-	AddMovementInput(ForwardDirection, MovementVector.Y);
-	AddMovementInput(RightDirection, MovementVector.X);
+		// add movement 
+		AddMovementInput(ForwardDirection, MovementVector.Y);
+		AddMovementInput(RightDirection, MovementVector.X);
+	}
+}
+
+void ATechnical_AnimatorCharacter::Handle_Take_Cover_Movement_Input(const FInputActionValue& Value)
+{
+	// input is a Vector2D
+	const FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (Controller != nullptr)
+	{
+		const FVector ForwardDirection = FVector::CrossProduct(
+			-Custom_Movement_Component->Get_Climbable_Surface_Normal(),
+			GetActorRightVector()
+		);
+
+		const FVector RightDirection = FVector::CrossProduct(
+			-Custom_Movement_Component->Get_Take_Cover_Surface_Normal(),
+			-GetActorUpVector()
+		);
+
+		// add movement 
+		AddMovementInput(RightDirection, MovementVector.X); 
+	}
 }
 
 void ATechnical_AnimatorCharacter::Look(const FInputActionValue& Value)
@@ -194,6 +228,11 @@ void ATechnical_AnimatorCharacter::Look(const FInputActionValue& Value)
 void ATechnical_AnimatorCharacter::On_Parkour_Started(const FInputActionValue& Value)
 {
 	Debug::Print(TEXT("Parkour Is Working"));
+}
+
+void ATechnical_AnimatorCharacter::On_Parkour_Ended(const FInputActionValue& Value)
+{
+	Debug::Print(TEXT("Exited Parkour"));
 }
 
 void ATechnical_AnimatorCharacter::On_Climb_Action_Started(const FInputActionValue& Value)
@@ -222,6 +261,18 @@ void ATechnical_AnimatorCharacter::On_Player_Exit_Climb_State()
 	Debug::Print(TEXT("Exited Climb State."));
 }
 
+void ATechnical_AnimatorCharacter::On_Player_Enter_Take_Cover_State()
+{
+	Add_Input_Mapping_Context(Take_Cover_Mapping_Context, 1);
+	Debug::Print(TEXT("Entered Take Cover State."));
+}
+
+void ATechnical_AnimatorCharacter::On_Player_Exit_Take_Cover_State()
+{
+	Remove_Input_Mapping_Context(Take_Cover_Mapping_Context);
+	Debug::Print(TEXT("Exited Take Cover State."));
+}
+
 void ATechnical_AnimatorCharacter::On_Climb_Hop_Action_Started(const FInputActionValue &Value)
 {
 	if(Custom_Movement_Component)
@@ -229,4 +280,18 @@ void ATechnical_AnimatorCharacter::On_Climb_Hop_Action_Started(const FInputActio
 		Custom_Movement_Component->Request_Hopping();
 	}
 	Debug::Print(TEXT("Hopping Started"));
+}
+
+void ATechnical_AnimatorCharacter::On_Take_Cover_Action_Started(const FInputActionValue &Value)
+{
+	if(!Custom_Movement_Component) return;
+
+	if(!Custom_Movement_Component->Is_Taking_Cover())
+	{
+		Custom_Movement_Component->Toggle_Take_Cover(true);
+	}
+	else
+	{
+		Custom_Movement_Component->Toggle_Take_Cover(false);
+	}
 }
