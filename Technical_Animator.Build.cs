@@ -14,6 +14,7 @@ public class Technical_Animator : ModuleRules
 		"Engine", 
 		"InputCore", 
 		"EnhancedInput",  
-		"MotionWarping"});
+		"MotionWarping",
+		"GameplayTags"});
 	}
 }

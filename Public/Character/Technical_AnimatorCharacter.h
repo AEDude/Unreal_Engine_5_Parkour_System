@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Interfaces/Parkour_Locomotion_Interface.h"
 #include "Logging/LogMacros.h"
 #include "Technical_AnimatorCharacter.generated.h"
 
@@ -20,7 +21,7 @@ class UMotionWarpingComponent;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class ATechnical_AnimatorCharacter : public ACharacter
+class ATechnical_AnimatorCharacter : public ACharacter, public IParkour_Locomotion_Interface
 
 {
 	GENERATED_BODY()
@@ -31,20 +32,24 @@ public:
 private:
 
 #pragma region Components
-	
+
+	UPROPERTY()
+	ATechnical_AnimatorCharacter* Character_Reference;
+
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* CameraBoom;
+	USpringArmComponent* Camera_Boom;
 
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* FollowCamera;
+	UCameraComponent* Follow_Camera;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	UCustom_Movement_Component* Custom_Movement_Component;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	UMotionWarpingComponent* Motion_Warping_Component;
+
 
 #pragma endregion
 
@@ -138,14 +143,16 @@ protected:
 	// To add mapping context
 	virtual void BeginPlay();
 
+	virtual void Tick(float Deltatime);
+
 public:
 	/** Returns CameraBoom subobject **/
-	FORCEINLINE USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
+	FORCEINLINE USpringArmComponent* Get_Camera_Boom() const { return Camera_Boom; }
 	/** Returns FollowCamera subobject **/
-	FORCEINLINE UCameraComponent* GetFollowCamera() const { return FollowCamera; }
+	FORCEINLINE UCameraComponent* Get_Follow_Camera() const { return Follow_Camera; }
+	
+	FORCEINLINE UCustom_Movement_Component* Get_Custom_Movement_Component() const {return Custom_Movement_Component;}
 
-	FORCEINLINE UCustom_Movement_Component* GetCustom_Movement_Component() const {return Custom_Movement_Component;}
-
-	FORCEINLINE UMotionWarpingComponent* GetMotion_Warping_Component() const {return Motion_Warping_Component;}
+	FORCEINLINE UMotionWarpingComponent* Get_Motion_Warping_Component() const {return Motion_Warping_Component;}
 };
 

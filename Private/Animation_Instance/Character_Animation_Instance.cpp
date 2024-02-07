@@ -2,7 +2,7 @@
 
 
 #include "Animation_Instance/Character_Animation_Instance.h"
-#include "Technical_Animator/Technical_AnimatorCharacter.h"
+#include "Character/Technical_AnimatorCharacter.h"
 #include "Components/Custom_Movement_Component.h"
 #include "Kismet/KismetMathLibrary.h"
 
@@ -16,7 +16,7 @@ void UCharacter_Animation_Instance::NativeInitializeAnimation()
     if(Climbing_System_Character)
     {
         
-        Custom_Movement_Component = Climbing_System_Character->GetCustom_Movement_Component();
+        Custom_Movement_Component = Climbing_System_Character->Get_Custom_Movement_Component();
     }
 }
 

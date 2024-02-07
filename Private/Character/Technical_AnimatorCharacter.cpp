@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Technical_AnimatorCharacter.h"
+#include "Character/Technical_AnimatorCharacter.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -10,7 +10,7 @@
 #include "GameFramework/Controller.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "DebugHelper.h"
+#include "Debug/DebugHelper.h"
 #include "InputActionValue.h"
 #include "MotionWarpingComponent.h"
 
@@ -36,7 +36,7 @@ ATechnical_AnimatorCharacter::ATechnical_AnimatorCharacter(const FObjectInitiali
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 
-	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
+	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint.
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
@@ -46,15 +46,15 @@ ATechnical_AnimatorCharacter::ATechnical_AnimatorCharacter(const FObjectInitiali
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
-	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	Camera_Boom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera_Boom"));
+	Camera_Boom->SetupAttachment(RootComponent);
+	Camera_Boom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	.
+	Camera_Boom->bUsePawnControlRotation = true; // Rotate the arm based on the controller.
 
 	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	Follow_Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Follow_Camera"));
+	Follow_Camera->SetupAttachment(Camera_Boom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation.
+	Follow_Camera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm.
 
 	Motion_Warping_Component = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("C++ Motion Warping Component"));
 
@@ -68,16 +68,32 @@ void ATechnical_AnimatorCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	Add_Input_Mapping_Context(DefaultMappingContext, 0);
+
+	//Get a reference to self to pass onto "&UCustom_Movement_Component::Initialize_References()".
+	Character_Reference = this;
 	
-	if(Custom_Movement_Component)
+	if(Custom_Movement_Component && Character_Reference && Motion_Warping_Component && Follow_Camera)
 	{
+		Custom_Movement_Component->Initialize_Parkour_Pointers(Character_Reference, Motion_Warping_Component, Follow_Camera);
+
 		Custom_Movement_Component->On_Enter_Climb_State_Delegate.BindUObject(this, &ThisClass::On_Player_Enter_Climb_State);
 		Custom_Movement_Component->On_Exit_Climb_State_Delegate.BindUObject(this, &ThisClass::On_Player_Exit_Climb_State);
 		
 		Custom_Movement_Component->On_Enter_Take_Cover_State_Delegate.BindUObject(this, &ThisClass::On_Player_Enter_Take_Cover_State);
 		Custom_Movement_Component->On_Exit_Take_Cover_State_Delegate.BindUObject(this, &ThisClass::On_Player_Exit_Take_Cover_State);
+
+		UE_LOG(LogTemp, Warning, TEXT("Custom_Movement_Component && Character_Reference && Motion_Warping_Component && Follow_Camera INITIALIZATION SUCCEEDED"));
 	}
-	
+
+	else
+	UE_LOG(LogTemp, Warning, TEXT("Custom_Movement_Component && Character_Reference && Motion_Warping_Component && Follow_Camera INITIALIZATION FAILED"));
+}
+
+void ATechnical_AnimatorCharacter::Tick(float Deltatime)
+{
+	// Call the base class  
+	Super::Tick(Deltatime);
+
 }
 
 void ATechnical_AnimatorCharacter::Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority)
@@ -198,7 +214,7 @@ void ATechnical_AnimatorCharacter::Handle_Take_Cover_Movement_Input(const FInput
 	if (Controller != nullptr)
 	{
 		const FVector ForwardDirection = FVector::CrossProduct(
-			-Custom_Movement_Component->Get_Climbable_Surface_Normal(),
+			-Custom_Movement_Component->Get_Take_Cover_Surface_Normal(),
 			GetActorRightVector()
 		);
 
@@ -228,6 +244,7 @@ void ATechnical_AnimatorCharacter::Look(const FInputActionValue& Value)
 void ATechnical_AnimatorCharacter::On_Parkour_Started(const FInputActionValue& Value)
 {
 	Debug::Print(TEXT("Parkour Is Working"));
+	Custom_Movement_Component->Start_Parkour_Action();
 }
 
 void ATechnical_AnimatorCharacter::On_Parkour_Ended(const FInputActionValue& Value)
@@ -263,7 +280,7 @@ void ATechnical_AnimatorCharacter::On_Player_Exit_Climb_State()
 
 void ATechnical_AnimatorCharacter::On_Player_Enter_Take_Cover_State()
 {
-	Add_Input_Mapping_Context(Take_Cover_Mapping_Context, 1);
+	Add_Input_Mapping_Context(Take_Cover_Mapping_Context, 2);
 	Debug::Print(TEXT("Entered Take Cover State."));
 }
 

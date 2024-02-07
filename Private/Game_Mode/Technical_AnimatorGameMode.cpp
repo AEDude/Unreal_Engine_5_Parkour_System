@@ -1,7 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Technical_AnimatorGameMode.h"
-#include "Technical_AnimatorCharacter.h"
+#include "Game_Mode/Technical_AnimatorGameMode.h"
+#include "Character/Technical_AnimatorCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
 ATechnical_AnimatorGameMode::ATechnical_AnimatorGameMode()

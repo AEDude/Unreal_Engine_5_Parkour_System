@@ -3,19 +3,20 @@
 
 #include "Components/Custom_Movement_Component.h"
 #include "Kismet/KismetSystemLibrary.h"
-#include "Technical_Animator/DebugHelper.h"
+#include "Debug/DebugHelper.h"
 #include "Components/CapsuleComponent.h"
-#include "Technical_Animator/Technical_AnimatorCharacter.h"
+#include "Character/Technical_AnimatorCharacter.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Technical_Animator/Technical_AnimatorCharacter.h"
 #include "MotionWarpingComponent.h"
 #include "Engine/World.h"
-
+#include "Gameplay_Tags/Gameplay_Tags.h"
+#include "DrawDebugHelpers.h"
+#include "Character_Direction/Character_Direction_Arrow.h"
 
 void UCustom_Movement_Component::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	Owning_Player_Animation_Instance = CharacterOwner->GetMesh()->GetAnimInstance();
 
 	if(Owning_Player_Animation_Instance)
@@ -34,19 +35,10 @@ void UCustom_Movement_Component::TickComponent(float DeltaTime, ELevelTick TickT
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	/*Capsule_Trace_Take_Cover_Surfaces();
-	Line_Trace_Check_Cover_Right(Take_Cover_Check_Cover_Edge);
-	Line_Trace_Check_Cover_Left(Take_Cover_Check_Cover_Edge);*/
-	
 	const FVector Unrotated_Last_Input_Vector = 
 	UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(), GetLastInputVector());
 
-	Debug::Print(Unrotated_Last_Input_Vector.GetSafeNormal().ToCompactString(), FColor:: Cyan, 9);
-
-
-	/*Trace_Climbable_Surfaces();
-
-	Trace_From_Eye_Height(100.f);*/
+	//Debug::Print(Unrotated_Last_Input_Vector.GetSafeNormal().ToCompactString(), FColor:: Cyan, 9);
 }
 
 void UCustom_Movement_Component::OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode)
@@ -60,7 +52,7 @@ void UCustom_Movement_Component::OnMovementModeChanged(EMovementMode PreviousMov
 		On_Enter_Climb_State_Delegate.ExecuteIfBound();
 	}
 
-	if(PreviousMovementMode == MOVE_Custom && PreviousCustomMode == E_Custom_Movement_Mode::MOVE_Climb)
+	else if(PreviousMovementMode == MOVE_Custom && PreviousCustomMode == E_Custom_Movement_Mode::MOVE_Climb)
 	{
 		bOrientRotationToMovement = true;
 		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(96.f);
@@ -82,7 +74,7 @@ void UCustom_Movement_Component::OnMovementModeChanged(EMovementMode PreviousMov
 		On_Enter_Take_Cover_State_Delegate.ExecuteIfBound();
 	}
 
-	if(PreviousMovementMode == MOVE_Custom && PreviousCustomMode == E_Custom_Movement_Mode::MOVE_Take_Cover)
+	else if(PreviousMovementMode == MOVE_Custom && PreviousCustomMode == E_Custom_Movement_Mode::MOVE_Take_Cover)
 	{
 		bOrientRotationToMovement = true;
 		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(96.f);
@@ -139,7 +131,7 @@ float UCustom_Movement_Component::GetMaxAcceleration() const
 	{
 		return Max_Climb_Acceleration;
 	}
-	else
+	else if(!Is_Climbing())
 	{
 		return Super:: GetMaxAcceleration();
 	}
@@ -152,6 +144,23 @@ float UCustom_Movement_Component::GetMaxAcceleration() const
 	{
 		return Super:: GetMaxAcceleration();
 	}
+
+
+	/*if(Is_Climbing() || Is_Taking_Cover())
+	{
+		if(Is_Climbing())
+		{
+			return Max_Climb_Acceleration;
+		}
+		else if(Is_Taking_Cover())
+		{
+			return Max_Take_Cover_Acceleration;
+		}	
+	}
+	else
+	{	
+		return Super:: GetMaxAcceleration();
+	}*/
 }
 
 FVector UCustom_Movement_Component::ConstrainAnimRootMotionVelocity(const FVector &RootMotionVelocity, const FVector &CurrentVelocity) const
@@ -168,6 +177,9 @@ FVector UCustom_Movement_Component::ConstrainAnimRootMotionVelocity(const FVecto
 		return Super::ConstrainAnimRootMotionVelocity(RootMotionVelocity,CurrentVelocity);
 	}
 }
+
+
+#pragma region Climb_Region
 
 
 #pragma region Climb_Traces
@@ -348,7 +360,7 @@ void UCustom_Movement_Component::Physics_Climb(float deltaTime, int32 Iterations
 
 	if( !HasAnimRootMotion() && !CurrentRootMotion.HasOverrideVelocity() )
 	{	/*Define the max climb speed and acceleration*/
-		CalcVelocity(deltaTime, 0.f, true, Max_Break_Climb_Deceleration);
+		CalcVelocity(deltaTime, 0.f, true, Max_Climb_Speed);
 	}
 
 	ApplyRootMotionToVelocity(deltaTime);
@@ -472,10 +484,10 @@ void UCustom_Movement_Component::Snap_Movement_To_Climbable_Surfaces(float Delta
 	const FVector Projected_Character_To_Surface = 
 	(Current_Climbable_Surface_Location - Component_Location).ProjectOnTo(Component_Forward);
 
-	const FVector SnapVector = -Current_Climbable_Surface_Normal * Projected_Character_To_Surface.Length();
+	const FVector Snap_Vector = -Current_Climbable_Surface_Normal * Projected_Character_To_Surface.Length();
 
 	UpdatedComponent->MoveComponent(
-	SnapVector * DeltaTime * Max_Climb_Speed,
+	Snap_Vector * DeltaTime * Max_Climb_Speed,
 	UpdatedComponent->GetComponentQuat(),
 	true);
 }
@@ -582,7 +594,6 @@ bool UCustom_Movement_Component::Trace_Climbable_Surfaces()
 	return !Climable_Surfaces_Traced_Results.IsEmpty();
 }
 
-
 FHitResult UCustom_Movement_Component::Trace_From_Eye_Height(float Trace_Distance, float Trace_Start_Offset, bool B_Show_Debug_Shape, bool bDrawPersistantShapes)
 {
 	const FVector Component_Location = UpdatedComponent->GetComponentLocation();
@@ -665,7 +676,7 @@ void UCustom_Movement_Component::Set_Motion_Warping_Target(const FName &In_Warpi
 {
 	if(!Owning_Player_Character) return;
 
-	Owning_Player_Character->GetMotion_Warping_Component()->AddOrUpdateWarpTargetFromLocation(
+	Owning_Player_Character->Get_Motion_Warping_Component()->AddOrUpdateWarpTargetFromLocation(
 		In_Warping_Target_Name,
 		In_Target_Position
 	);
@@ -763,6 +774,7 @@ void UCustom_Movement_Component::Handle_Hop_Left()
 	}
 
 }
+
 bool UCustom_Movement_Component::bCheck_Can_Hop_Left(FVector &Out_Hop_Left_Target_Point)
 {
 	float Offset = 100.f;
@@ -783,6 +795,7 @@ bool UCustom_Movement_Component::bCheck_Can_Hop_Left(FVector &Out_Hop_Left_Targe
 	}
 	return false;
 }
+
 void UCustom_Movement_Component::Handle_Hop_Right()
 {
 	FVector Hop_Right_Target_Point;
@@ -797,6 +810,7 @@ void UCustom_Movement_Component::Handle_Hop_Right()
 		Debug::Print(TEXT("Can't Hop Right"));
 	}
 }
+
 bool UCustom_Movement_Component::bCheck_Can_Hop_Right(FVector &Out_Hop_Right_Target_Point)
 {
     float Offset = 100.f;
@@ -817,12 +831,21 @@ bool UCustom_Movement_Component::bCheck_Can_Hop_Right(FVector &Out_Hop_Right_Tar
 	}
 	return false;
 }
+
 FVector UCustom_Movement_Component::Get_Unrotated_Climb_Velocity() const
 {
     return UKismetMathLibrary::Quat_UnrotateVector(UpdatedComponent->GetComponentQuat(), Velocity);
 }
 
 #pragma endregion
+
+
+#pragma endregion
+
+
+
+#pragma region Take_Cover_Region
+
 
 #pragma region Take_Cover_Traces
 
@@ -897,6 +920,98 @@ FHitResult UCustom_Movement_Component::Do_Line_Trace_Single_By_Object_Take_Cover
 	return Out_Hit;
 }
 
+FHitResult UCustom_Movement_Component::Do_Sphere_Trace_For_Objects(const FVector& Start, const FVector& End, bool B_Show_Debug_Shape, bool B_Draw_Persistent_Shapes)
+{
+	FHitResult Out_Hit;
+	
+	EDrawDebugTrace::Type Debug_Trace_Type = EDrawDebugTrace::None;
+
+	if(B_Show_Debug_Shape)
+	{
+		Debug_Trace_Type = EDrawDebugTrace::ForOneFrame;
+
+		if(B_Draw_Persistent_Shapes)
+		{
+			Debug_Trace_Type = EDrawDebugTrace::Persistent;
+		}
+	}
+
+	UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		Take_Cover_Sphere_Trace_Radius,
+		Take_Cover_Surface_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		Debug_Trace_Type,
+		Out_Hit,
+		false
+		);
+	
+	return Out_Hit;
+
+}
+
+#pragma endregion
+
+#pragma region Take_Cover_Traces_Implemented
+
+//Trace for surfaces which player can take cover. Return true if there are valid surfaces, otherwise returns false.
+bool UCustom_Movement_Component::Capsule_Trace_Take_Cover_Surfaces()
+{
+	const FVector Start_Offset = UpdatedComponent->GetForwardVector() * 55.f;
+	const FVector Start = UpdatedComponent->GetComponentLocation() + Start_Offset;
+	const FVector End = Start + UpdatedComponent->GetForwardVector();
+
+	Take_Cover_Surfaces_Traced_Results = Do_Capsule_Trace_Multi_By_Object_Take_Cover(Start, End, true /*,true */);
+
+	return !Take_Cover_Surfaces_Traced_Results.IsEmpty();
+}
+
+bool UCustom_Movement_Component::Capsule_Trace_Ground_Surface()
+{
+	const FVector Start_Offset = -UpdatedComponent->GetUpVector() * 30.f;
+	const FVector Start = UpdatedComponent->GetComponentLocation() + Start_Offset;
+	const FVector End = Start + -UpdatedComponent->GetForwardVector();
+
+	Take_Cover_Ground_Surface_Traced_Results = Do_Capsule_Trace_Multi_By_Object_Take_Cover(Start, End, true /*, true*/);
+
+	return !Take_Cover_Ground_Surface_Traced_Results.IsEmpty();
+}
+
+FHitResult UCustom_Movement_Component::Sphere_Trace_Trace_Take_Cover()
+{
+	const FVector Forward = UpdatedComponent->GetForwardVector();
+
+	const FVector Start = UpdatedComponent->GetComponentLocation();
+	const FVector End = Start + Forward * 200.f;
+	
+	 return Sphere_Trace_Hit_Result = Do_Sphere_Trace_For_Objects(Start, End, true, false);
+}
+
+FHitResult UCustom_Movement_Component::Line_Trace_Check_Cover_Right(float Trace_Distance, float Trace_Start_Offset)
+{
+	const FVector Component_Location = UpdatedComponent->GetComponentLocation();
+	const FVector Right_Offset = UpdatedComponent->GetRightVector() * Trace_Start_Offset;
+	
+	const FVector Start = Component_Location + Right_Offset;
+	const FVector End = Start + UpdatedComponent->GetForwardVector() * Trace_Distance;
+
+ 	return Do_Line_Trace_Single_By_Object_Take_Cover(Start, End /*, true, true*/);
+}
+
+FHitResult UCustom_Movement_Component::Line_Trace_Check_Cover_Left(float Trace_Distance, float Trace_Start_Offset)
+{
+	const FVector Component_Location = UpdatedComponent->GetComponentLocation();
+	const FVector Left_Offset = -UpdatedComponent->GetRightVector() * Trace_Start_Offset;
+	
+	const FVector Start = Component_Location + Left_Offset;
+	const FVector End = Start + UpdatedComponent->GetForwardVector() * Trace_Distance;
+
+ 	return Do_Line_Trace_Single_By_Object_Take_Cover(Start, End /*, true, true*/);
+}
+
 #pragma endregion
 
 #pragma region Take_Cover_Core
@@ -905,10 +1020,15 @@ void UCustom_Movement_Component::Toggle_Take_Cover(bool bEneble_Take_Cover)
 {
 	if(bEneble_Take_Cover)
 	{
-		if(Can_Take_Cover())
+		FVector Take_Cover_End_Position;
+		
+		if(Can_Take_Cover(Take_Cover_End_Position))
 		{
 			//Enter Take Cover State
 			Debug::Print(TEXT("Can Take Cover!"));
+			Debug::Print(TEXT("Take Cover End Position: ") + Take_Cover_End_Position.ToCompactString());
+			Set_Motion_Warping_Target(FName("Take_Cover_Crouch"), Take_Cover_End_Position);
+			
 			Play_Take_Cover_Montage(Idle_To_Take_Cover_Montage);
 		}
 		else
@@ -923,13 +1043,29 @@ void UCustom_Movement_Component::Toggle_Take_Cover(bool bEneble_Take_Cover)
 	}
 }
 
-bool UCustom_Movement_Component::Can_Take_Cover()
+bool UCustom_Movement_Component::Can_Take_Cover(FVector& Out_Take_Cover_End_Position)
 {
-	if(IsFalling()) return false;
+	Sphere_Trace_Trace_Take_Cover();
+
+	Out_Take_Cover_End_Position = FVector::ZeroVector;
+
+	if(IsFalling() || !Sphere_Trace_Hit_Result.bBlockingHit) return false;
 	if(!Capsule_Trace_Take_Cover_Surfaces() || !Capsule_Trace_Ground_Surface()) return false;
 	if(!Line_Trace_Check_Cover_Right(Take_Cover_Check_Cover_Edge).bBlockingHit || !Line_Trace_Check_Cover_Right(Take_Cover_Check_Cover_Edge).bBlockingHit) return false;
 
-	return true;
+	if(Sphere_Trace_Hit_Result.bBlockingHit)
+	{
+		Out_Take_Cover_End_Position = Sphere_Trace_Hit_Result.ImpactPoint;
+	}
+
+	if(Out_Take_Cover_End_Position != FVector::ZeroVector)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
 void UCustom_Movement_Component::Start_Take_Cover()
@@ -1137,51 +1273,284 @@ bool UCustom_Movement_Component::Is_Taking_Cover() const
 
 #pragma endregion
 
-#pragma region Take_Cover_Traces
 
-//Trace for surfaces which player can take cover. Return true if there are valid surfaces, otherwise returns false.
-bool UCustom_Movement_Component::Capsule_Trace_Take_Cover_Surfaces()
+#pragma endregion
+
+
+
+#pragma region Parkour_Region
+
+
+#pragma region Initialize_Parkour
+
+void UCustom_Movement_Component::Initialize_Parkour_Pointers(ATechnical_AnimatorCharacter* Character, UMotionWarpingComponent* Motion_Warping, UCameraComponent* Camera)
 {
-	const FVector Start_Offset = UpdatedComponent->GetForwardVector() * 30.f;
-	const FVector Start = UpdatedComponent->GetComponentLocation() + Start_Offset;
-	const FVector End = Start + UpdatedComponent->GetForwardVector();
+	//"GetCharacterMovement" using the character pointer passed in by (ATechnical_AnimatorCharacter* Character) and initialize "UCharacterMovementComponent* Character_Movement".
+	Character_Movement = Character->GetCharacterMovement();
+	//Get the mesh using the character pointer passed in by (ATechnical_AnimatorCharacter* Character) and initialize "USkeletalMeshComponent* Mesh".
+	Mesh = Character->GetMesh(); 
+	//Get the CapsuleComponent by using the character pointer passed in by (ATechnical_AnimatorCharacter* Character) and initialize "UCapsuleComponent* Capsule_Component".
+	Capsule_Component = Character->GetCapsuleComponent();
+	//Use the "USkeletalMeshComponent* Mesh" which is initialized by the character pointer passed in by (ATechnical_AnimatorCharacter* Character), to get the GetAnimInstance. Initialize "UAnimInstance* Anim_Instance".
+	Anim_Instance = Mesh->GetAnimInstance();
+	//Initialize "UMotionWarpingComponent* Motion_Warping_Component" with the "UMotionWarpingComponent* Motion_Warping" which is passed in by "&ATechnical_AnimatorCharacter". 
+	Motion_Warping_Component = Motion_Warping;
+	//Initialize "UCameraComponent* Camera_Component" with the "UCameraComponent* Camera" that is passed in by "&ATechnical_AnimatorCharacter".
+	Camera_Component = Camera;
+	//This cast will return the same object as when casting "this".
+	Parkour_Interface = Cast<IParkour_Locomotion_Interface>(_getUObject()->GetOuter());
+	if(Parkour_Interface) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Parkour_Interface INITIALIZATION SUCCEEDED"));
+	}
 
-	Take_Cover_Surfaces_Traced_Results = Do_Capsule_Trace_Multi_By_Object_Take_Cover(Start, End, true /*, true*/);
+	else UE_LOG(LogTemp, Warning, TEXT("Parkour_Interface INITIALIZATION FAILED"));
 
-	return !Take_Cover_Surfaces_Traced_Results.IsEmpty();
-}
 
-bool UCustom_Movement_Component::Capsule_Trace_Ground_Surface()
-{
-	const FVector Start_Offset = -UpdatedComponent->GetUpVector() * 30.f;
-	const FVector Start = UpdatedComponent->GetComponentLocation() + Start_Offset;
-	const FVector End = Start + -UpdatedComponent->GetForwardVector();
 
-	Take_Cover_Ground_Surface_Traced_Results = Do_Capsule_Trace_Multi_By_Object_Take_Cover(Start, End, true /*, true*/);
-
-	return !Take_Cover_Ground_Surface_Traced_Results.IsEmpty();
-}
-
-FHitResult UCustom_Movement_Component::Line_Trace_Check_Cover_Right(float Trace_Distance, float Trace_Start_Offset)
-{
-	const FVector Component_Location = UpdatedComponent->GetComponentLocation();
-	const FVector Right_Offset = UpdatedComponent->GetRightVector() * Trace_Start_Offset;
+	/*Attach Arrow from "&ACharacter_Direction_Arrow" to the Character*/
 	
-	const FVector Start = Component_Location + Right_Offset;
-	const FVector End = Start + UpdatedComponent->GetForwardVector() * Trace_Distance;
+	//Use the character pointer passed in by (ATechnical_AnimatorCharacter* Character) "GetActorTransform()" and initialize input paramater 1. (for "GetWorld()->SpawnActor") "FTransform Location".
+	FTransform Location{Character->GetActorTransform()};
+	//Initialize Input parameter 2. (for "GetWorld()->SpawnActor") "FActorSpawnParameters Spawn_Info"
+	FActorSpawnParameters Spawn_Info{};
 
- 	return Do_Line_Trace_Single_By_Object_Take_Cover(Start, End /*, true, true*/);
-}
-
-FHitResult UCustom_Movement_Component::Line_Trace_Check_Cover_Left(float Trace_Distance, float Trace_Start_Offset)
-{
-	const FVector Component_Location = UpdatedComponent->GetComponentLocation();
-	const FVector Left_Offset = -UpdatedComponent->GetRightVector() * Trace_Start_Offset;
+	//Spawn the arrow component which is within "&ACharacter_Direction_Arrow" using "GetWorld()->SpawnActor". Use the two input parameters initialized above (Location, Spawn_Info).
+	ACharacter_Direction_Arrow* Character_Direction_Arrow{GetWorld()->SpawnActor<ACharacter_Direction_Arrow>(ACharacter_Direction_Arrow::StaticClass(), Location, Spawn_Info)};
+	//After spawning the arrow and attach it to the character using the character pointer passed in by (ATechnical_AnimatorCharacter* Character). Snap it to the target.
+	Character_Direction_Arrow->AttachToActor(Character, FAttachmentTransformRules::SnapToTargetIncludingScale);
 	
-	const FVector Start = Component_Location + Left_Offset;
-	const FVector End = Start + UpdatedComponent->GetForwardVector() * Trace_Distance;
-
- 	return Do_Line_Trace_Single_By_Object_Take_Cover(Start, End /*, true, true*/);
+	//Offset the location of the arrow with "SetActorRelativeLocation()" so it is just above the capsule component using its pointer which is initialized above "ACharacter_Direction_Arrow* Character_Direction_Arrow". 
+	FVector Character_Direction_Arrow_Relative_Location{FVector(0.f, 0.f, 100.f)};
+	Character_Direction_Arrow->SetActorRelativeLocation(Character_Direction_Arrow_Relative_Location);
 }
+
+#pragma endregion
+
+#pragma region Parkour_Helper
+
+FVector UCustom_Movement_Component::Move_Vector_Up(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+{
+	const FVector Move_Direction{UKismetMathLibrary::GetUpVector(Rotation)};
+	const FVector Destination{Initial_Location + (Move_Direction * Move_Value)};
+	
+	return Destination;
+}
+
+FVector UCustom_Movement_Component::Move_Vector_Down(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+{
+	const FVector Move_Direction{UKismetMathLibrary::GetUpVector(Rotation)};
+	const FVector Destination{Initial_Location + (-Move_Direction * Move_Value)};
+
+	return Destination;
+}
+
+FVector UCustom_Movement_Component::Move_Vector_Left(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+{
+	const FVector Move_Direction{UKismetMathLibrary::GetRightVector(Rotation)};
+	const FVector Destination{Initial_Location + (-Move_Direction * Move_Value)};
+
+	return Destination;
+}
+
+FVector UCustom_Movement_Component::Move_Vector_Right(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+{
+	const FVector Move_Direction{UKismetMathLibrary::GetRightVector(Rotation)};
+	const FVector Destination{Initial_Location + (Move_Direction * Move_Value)};
+
+	return Destination;
+}
+
+FVector UCustom_Movement_Component::Move_Vector_Forward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+{
+	const FVector Move_Direction{UKismetMathLibrary::GetForwardVector(Rotation)};
+	const FVector Destination{Initial_Location + (Move_Direction * Move_Value)};
+
+	return Destination;
+}
+
+FVector UCustom_Movement_Component::Move_Vector_Backward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+{
+	const FVector Move_Direction{UKismetMathLibrary::GetForwardVector(Rotation)};
+	const FVector Destination{Initial_Location + (-Move_Direction * Move_Value)};
+
+	return Destination;
+}
+
+FRotator UCustom_Movement_Component::Add_Rotator(const FRotator& Initial_Rotation, const float& Add_To_Rotation)
+{
+	const FRotator New_Rotation_Roll{Initial_Rotation.Roll + Add_To_Rotation};
+	const FRotator New_Rotation_Pitch{Initial_Rotation.Pitch + Add_To_Rotation};
+	const FRotator New_Rotation_Yaw{Initial_Rotation.Yaw + Add_To_Rotation};
+	const FRotator New_Rotation{New_Rotation_Roll + New_Rotation_Pitch + New_Rotation_Yaw};
+
+	return New_Rotation;
+}
+
+FRotator UCustom_Movement_Component::Reverse_Wall_Normal_Rotation_Z(const FVector& Initial_Wall_Normal)
+{
+	                                              //The direction of the wall normal is its X axis (pointing forward).
+	const FRotator Wall_Normal{UKismetMathLibrary::MakeRotFromX(Initial_Wall_Normal)};
+	const FRotator Reverse_Wall_Rotation_On_Z_Axis_180{FRotator(0, 0, 180)};
+	const FRotator Delta_Rotator{Wall_Normal - Reverse_Wall_Rotation_On_Z_Axis_180};
+
+	return Delta_Rotator;
+}
+
+void UCustom_Movement_Component::Draw_Debug_Sphere(const FVector& Location, const float& Radius, const FColor& Color, const float& Duration, const bool& bDraw_Debug_Shape_Persistent, const float& Lifetime)
+{
+	UWorld* World = GetWorld();
+
+	DrawDebugSphere(
+		World,
+		Location,
+		Radius,
+		12,
+		Color,
+		bDraw_Debug_Shape_Persistent,
+		Lifetime
+	);
+}
+
+#pragma endregion
+
+#pragma region Parkour_Traces
+
+FHitResult UCustom_Movement_Component::Parkour_Detect_Wall()
+{
+	FHitResult Out_Hit{};
+	int For_Loop_Last_Index{};
+	const int Is_Falling{7};
+	const int Is_Not_Falling{14};
+	
+	if(Character_Movement)
+	{
+		if(Character_Movement->IsFalling())
+		For_Loop_Last_Index = Is_Falling;
+
+		else //if(!Character_Movement->IsFalling())
+		For_Loop_Last_Index = Is_Not_Falling;
+	}
+
+
+	for(int i{}; i < For_Loop_Last_Index; i++)
+	{
+		const FVector Component_Location{UpdatedComponent->GetComponentLocation()};
+		
+		const FVector Set_Vector_At_Ground_Level{Move_Vector_Down(Component_Location, UpdatedComponent->GetComponentRotation(), 70.f)};
+		
+		const FVector Move_Vector_Up_With_Each_Iteration_Of_Loop{Move_Vector_Up(Set_Vector_At_Ground_Level, UpdatedComponent->GetComponentRotation(), i * 17.f)};
+		
+		const FVector Sphere_Trace_Start{Move_Vector_Backward(Move_Vector_Up_With_Each_Iteration_Of_Loop, UpdatedComponent->GetComponentRotation(), 20)};
+		
+		const FVector Sphere_Trace_End{Move_Vector_Forward(Sphere_Trace_Start, UpdatedComponent->GetComponentRotation(), 140)};
+
+		UKismetSystemLibrary::SphereTraceSingleForObjects(
+			this,
+			Sphere_Trace_Start,
+			Sphere_Trace_End,
+			10.f,
+			Parkour_Detect_Wall_Trace_Types,
+			false,
+			TArray<AActor*>(),
+			EDrawDebugTrace::ForDuration,
+			Out_Hit,
+			false
+			);
+
+		if(Out_Hit.bBlockingHit && !Out_Hit.bStartPenetrating)
+		break;
+	}
+
+	Draw_Debug_Sphere(Out_Hit.ImpactPoint, 5.f, FColor::Blue, 1.f, false, 7.f);
+
+	return Out_Hit;
+}
+
+#pragma endregion
+
+#pragma region Parkour_Core
+
+void UCustom_Movement_Component::Parkour_State_Settings(const ECollisionEnabled::Type& Collision_Type, const EMovementMode& New_Movement_Mode, const bool& bStop_Movement_Immediately)
+{
+	Capsule_Component->SetCollisionEnabled(Collision_Type);
+	Character_Movement->SetMovementMode(New_Movement_Mode);
+	
+	if(bStop_Movement_Immediately) Character_Movement->StopMovementImmediately();
+}
+
+void UCustom_Movement_Component::Set_Parkour_State(const FGameplayTag& New_Parkour_State)
+{
+	if(Parkour_State != New_Parkour_State)
+	{
+		Parkour_State = New_Parkour_State;
+		if(Parkour_Interface) Parkour_Interface->Set_Parkour_State(Parkour_State);
+		Setting_Parkour_State(Parkour_State);
+	}
+	else return;
+}
+
+void UCustom_Movement_Component::Setting_Parkour_State(const FGameplayTag& Current_Parkour_State)
+{
+	if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, false);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Ready.To.Climb"))))
+	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, false);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Mantle"))))
+	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, false);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Vault"))))
+	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, false);
+}
+
+void UCustom_Movement_Component::Set_Parkour_Climb_Style(const FGameplayTag& New_Climb_Style)
+{
+	if(Parkour_Climb_Style != New_Climb_Style)
+	{
+		Parkour_Climb_Style = New_Climb_Style;
+		Parkour_Interface->Set_Climb_Style(Parkour_Climb_Style);
+	}
+	else return;
+}
+
+void UCustom_Movement_Component::Set_Parkour_Direction(const FGameplayTag& New_Climb_Direction)
+{
+	if(Parkour_Climb_Direction != New_Climb_Direction)
+	{
+		Parkour_Climb_Direction = New_Climb_Direction;
+		Parkour_Interface->Set_Climb_Direction(Parkour_Climb_Direction);
+	}
+	else return;
+}
+
+float UCustom_Movement_Component::Climb_Style_Values(const FGameplayTag& Climb_Style, const float& Braced_Value, const float& Free_Hang_Value) const
+{
+	const float& Parkour_Braced_Value{Braced_Value};
+	const float& Parkour_Free_Hang_Value{Free_Hang_Value};
+
+	if((Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb")))))
+	{
+		return Parkour_Braced_Value;
+	}
+
+	else //if(Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Free.Hang"))))
+	{
+		return Parkour_Free_Hang_Value;
+	}
+}
+
+void UCustom_Movement_Component::Start_Parkour_Action()
+{
+	if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
+	Parkour_Detect_Wall();
+}
+
+#pragma endregion
+
 
 #pragma endregion
