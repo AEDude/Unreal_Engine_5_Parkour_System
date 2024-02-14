@@ -244,7 +244,7 @@ void ATechnical_AnimatorCharacter::Look(const FInputActionValue& Value)
 void ATechnical_AnimatorCharacter::On_Parkour_Started(const FInputActionValue& Value)
 {
 	Debug::Print(TEXT("Parkour Is Working"));
-	Custom_Movement_Component->Start_Parkour_Action();
+	Custom_Movement_Component->Execute_Parkour_Action();
 }
 
 void ATechnical_AnimatorCharacter::On_Parkour_Ended(const FInputActionValue& Value)

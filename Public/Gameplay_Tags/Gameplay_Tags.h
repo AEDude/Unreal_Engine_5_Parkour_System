@@ -19,7 +19,7 @@ struct F_Gameplay_Tags
         //Getter function to retrieve a GameplayTags.
         static const F_Gameplay_Tags& Get() {return Gameplay_Tags; }
 
-        //Initialize the Gameplay Tas in the GameplayTagsManager.
+        //Initialize the Gameplay Tags in the GameplayTagsManager.
         static void Initialize_Native_Tags();
 
         #pragma region Parkour_Tags
@@ -69,12 +69,12 @@ struct F_Gameplay_Tags
         //Registers all of the tags with the GameplayTags Manager.
         void Add_All_Tags(UGameplayTagsManager& Gameplay_Tag_Manager);
 
-        //Helper function used by AddAllTags to register a single tag with the GameplayTags Manager.
+        //Helper function used by "Add_All_Tags" to register a single tag with the GameplayTags Manager.
         void Add_Tag(FGameplayTag& Out_Tag, const ANSICHAR* Tag_Name);
 
     private:
 
-        //Used by the Getter function to retrieve GameplayTags.
+        //Used by the getter function "F_Gameplay_Tags& Get()" to retrieve GameplayTags.
         static F_Gameplay_Tags Gameplay_Tags;
 
 };
