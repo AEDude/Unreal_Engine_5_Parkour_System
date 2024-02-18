@@ -323,23 +323,23 @@ private:
 
 #pragma region Parkour_Helper
 
-	FVector Move_Vector_Up(const FVector& Initial_Location, const float& Move_Value);
+	FVector Move_Vector_Up(const FVector& Initial_Location, const float& Move_Value) const;
 
-	FVector Move_Vector_Down(const FVector& Initial_Location, const float& Move_Value);
+	FVector Move_Vector_Down(const FVector& Initial_Location, const float& Move_Value) const;
 
-	FVector Move_Vector_Left(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value);
+	FVector Move_Vector_Left(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value) const;
 
-	FVector Move_Vector_Right(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value);
+	FVector Move_Vector_Right(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value) const;
 
-	FVector Move_Vector_Forward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value);
+	FVector Move_Vector_Forward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value) const;
 
-	FVector Move_Vector_Backward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value);
+	FVector Move_Vector_Backward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value) const;
 
-	FRotator Add_Rotator(const FRotator& Initial_Rotation, const float& Add_To_Rotation);
+	FRotator Add_Rotator(const FRotator& Initial_Rotation, const float& Add_To_Rotation) const;
 
-	FRotator Reverse_Wall_Normal_Rotation_Z(const FVector& Initial_Wall_Normal);
+	FRotator Reverse_Wall_Normal_Rotation_Z(const FVector& Initial_Wall_Normal) const;
 
-	void Draw_Debug_Sphere(const FVector& Location, const float& Radius, const FColor& Color, const float& Duration, const bool& bDraw_Debug_Shape_Persistent, const float& Lifetime);
+	void Draw_Debug_Sphere(const FVector& Location, const float& Radius, const FColor& Color, const float& Duration, const bool& bDraw_Debug_Shape_Persistent, const float& Lifetime) const;
 
 #pragma endregion
 
@@ -392,6 +392,11 @@ private:
 	
 	void Calculate_Vault_Height();
 
+	void Validate_Is_On_Ground();
+
+	void Decide_Climb_Style(const FVector& Impact_Point, const FRotator& Direction_For_Character_To_Face);
+
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -400,7 +405,7 @@ private:
 
 	void Set_Parkour_State(const FGameplayTag& New_Parkour_State);
 
-	void Setting_Parkour_State(const FGameplayTag& Current_Parkour_State);
+	void Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_State);
 
 	void Set_Parkour_Climb_Style(const FGameplayTag& New_Climb_Style);
 
@@ -412,15 +417,19 @@ private:
 
 	void Decide_Parkour_Action();
 
-	void Validate_Is_On_Ground();
-
 	void Reset_Parkour_Variables();
 
 	void Parkour_Call_In_Tick();
 
-	void Get_Parkour_Data_Asset(UParkour_Action_Data* Parkour_Action_Data);
+	//void Get_Parkour_Data_Asset(UParkour_Action_Data* Parkour_Action_Data);
 
+	void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
 
+	FVector Find_Parkour_Warp_Location(const FVector& Impact_Point_To_Use, const FRotator& Direction_For_Character_To_Face, const float& X_Axis_Offset, const float& Z_Axis_Offset) const;
+
+	void Play_Parkour_Montage(UParkour_Action_Data* Parkour_Data_Asset_To_Use);
+
+	void Function_To_Execute_On_Animation_Blending_Out(UAnimMontage *Montage, bool bInterrupted);
 
 #pragma endregion
 
@@ -454,6 +463,8 @@ private:
 	FHitResult Wall_Depth_Result{};
 
 	FHitResult Wall_Vault_Result{};
+
+	FHitResult New_Climb_Hit_Result{};
 	
 	#pragma endregion
 
@@ -505,14 +516,19 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Validate_On_Land_Trace_Types{};
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Decide_Climb_Style_Trace_Types{};
+
 	#pragma region Parkour_Data_Assets
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Default_Parkour_Data_Asset_Pointer;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Braced_Jump_To_Climb;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Free_Hang_Jump_To_Climb;
-
 
 	#pragma endregion
 
@@ -547,7 +563,9 @@ public:
 
 	void Attach_Arrow_Actor_To_Character(ATechnical_AnimatorCharacter* Character);
 
-	void Get_Pointer_To_Parkour_Action_Data_Class(UParkour_Action_Data* Pointer_To_Use_In_This_Class);
+	void Get_Pointer_To_Parkour_Locomotion_Interface_Class();
+
+	//void Get_Pointer_To_Parkour_Action_Data_Class();
 	
 	void Initialize_Parkour_Pointers(ATechnical_AnimatorCharacter* Character, UMotionWarpingComponent* Motion_Warping, UCameraComponent* Camera);
 

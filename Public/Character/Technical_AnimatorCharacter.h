@@ -147,9 +147,9 @@ protected:
 
 public:
 	/** Returns CameraBoom subobject **/
-	FORCEINLINE USpringArmComponent* Get_Camera_Boom() const { return Camera_Boom; }
+	FORCEINLINE USpringArmComponent* Get_Camera_Boom() const {return Camera_Boom;}
 	/** Returns FollowCamera subobject **/
-	FORCEINLINE UCameraComponent* Get_Follow_Camera() const { return Follow_Camera; }
+	FORCEINLINE UCameraComponent* Get_Follow_Camera() const {return Follow_Camera;}
 	
 	FORCEINLINE UCustom_Movement_Component* Get_Custom_Movement_Component() const {return Custom_Movement_Component;}
 

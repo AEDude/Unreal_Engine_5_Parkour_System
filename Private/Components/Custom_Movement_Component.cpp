@@ -1306,10 +1306,39 @@ void UCustom_Movement_Component::Attach_Arrow_Actor_To_Character(ATechnical_Anim
 	Character_Direction_Arrow->SetActorRelativeLocation(Character_Direction_Arrow_Relative_Location);
 }
 
-void UCustom_Movement_Component::Get_Pointer_To_Parkour_Action_Data_Class(UParkour_Action_Data* Pointer_To_Use_In_This_Class)
+void UCustom_Movement_Component::Get_Pointer_To_Parkour_Locomotion_Interface_Class()
 {
-	Parkour_Data_Asset = Pointer_To_Use_In_This_Class;
+	//This cast will return the object that uses the interface. The interface is being used in the Animation Instance, therefore
+	//casting "Anim_Instance" to "IParkour_Locomotion_Interface" is nessacary. When Parkour_Interface is used to call the
+	//generated function (at compile) "Execute_..." the input argument of the function being called will requre a pointer to the object 
+	//which is using the interface. "Anim_Instance" will be passed in as the pointer to this object followed by the other inut parameter(s) 
+	//which needs to be filled in.
+	Parkour_Interface = Cast<IParkour_Locomotion_Interface>(Anim_Instance);
+	if(Parkour_Interface) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Parkour_Interface INITIALIZATION SUCCEEDED"));
+	}
+
+	else UE_LOG(LogTemp, Warning, TEXT("Parkour_Interface INITIALIZATION FAILED"));
 }
+
+/*void UCustom_Movement_Component::Get_Pointer_To_Parkour_Action_Data_Class()
+{
+	//Default_Parkour_Data_Asset_Pointer was declared and initialized in the character Blueprint with an empty Data Asset of the type UParkour_Action_Data.
+	//This is so an object of the type UParkour_Action_Data* could be created, enabling the calling of functions from within the class UParkour_Action_Data.
+	//The Data Asset assigned to the "Default_Parkour_Data_Asset_Pointer" slot within the character Blueprint has no use other use.
+	if(Default_Parkour_Data_Asset_Pointer)
+	//Parkour_Data_Asset is the pointer which will be used throughout the Parkour System. It holds the address of the class "UParkour_Action_Data" which is set within
+	//the constructor of said class followed by the transfer of value which happens within "&UParkour_Action_Data::Get_Pointer_To_This_Class()".
+	Parkour_Data_Asset = Default_Parkour_Data_Asset_Pointer->Get_Pointer_To_This_Class();
+
+	if(Parkour_Data_Asset) 
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Parkour_Data_Asset INITIALIZATION SUCCEEDED"));
+	}
+
+	else UE_LOG(LogTemp, Warning, TEXT("Parkour_Data_Asset INITIALIZATION FAILED"));
+}*/
 
 void UCustom_Movement_Component::Initialize_Parkour_Pointers(ATechnical_AnimatorCharacter* Character, UMotionWarpingComponent* Motion_Warping, UCameraComponent* Camera)
 {
@@ -1325,25 +1354,13 @@ void UCustom_Movement_Component::Initialize_Parkour_Pointers(ATechnical_Animator
 	Motion_Warping_Component = Motion_Warping;
 	//Initialize "UCameraComponent* Camera_Component" with the "UCameraComponent* Camera" that is passed in by "&ATechnical_AnimatorCharacter".
 	Camera_Component = Camera;
-	//This cast will return the same object as when casting "this".
-	Parkour_Interface = Cast<IParkour_Locomotion_Interface>(_getUObject()->GetOuter());
-	if(Parkour_Interface) 
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Parkour_Interface INITIALIZATION SUCCEEDED"));
-	}
-
-	else UE_LOG(LogTemp, Warning, TEXT("Parkour_Interface INITIALIZATION FAILED"));
-
 	
-	Parkour_Data_Asset = Cast<UParkour_Action_Data>(_getUObject()->GetOuter()->GetClass());
-	if(Parkour_Data_Asset) 
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Parkour_Data_Asset INITIALIZATION SUCCEEDED"));
-	}
+	/*Getting a pointer to the Parkour_Locomotion_Interface_Class.*/
+	Get_Pointer_To_Parkour_Locomotion_Interface_Class();
 
-	else UE_LOG(LogTemp, Warning, TEXT("Parkour_Data_Asset INITIALIZATION FAILED"));
-
-
+	/*Getting a pointer to the Parkour_Action_Data_Class*/
+	//Get_Pointer_To_Parkour_Action_Data_Class();
+	
 	/*Attach Arrow from "&ACharacter_Direction_Arrow" to the Character*/
 	Attach_Arrow_Actor_To_Character(Character);
 }
@@ -1352,7 +1369,7 @@ void UCustom_Movement_Component::Initialize_Parkour_Pointers(ATechnical_Animator
 
 #pragma region Parkour_Helper
 
-FVector UCustom_Movement_Component::Move_Vector_Up(const FVector& Initial_Location, const float& Move_Value)
+FVector UCustom_Movement_Component::Move_Vector_Up(const FVector& Initial_Location, const float& Move_Value) const
 {
 	const FVector Move_Direction{UpdatedComponent->GetUpVector()};
 	const FVector Destination{Initial_Location + (Move_Direction * Move_Value)};
@@ -1360,7 +1377,7 @@ FVector UCustom_Movement_Component::Move_Vector_Up(const FVector& Initial_Locati
 	return Destination;
 }
 
-FVector UCustom_Movement_Component::Move_Vector_Down(const FVector& Initial_Location, const float& Move_Value)
+FVector UCustom_Movement_Component::Move_Vector_Down(const FVector& Initial_Location, const float& Move_Value) const
 {
 	const FVector Move_Direction{UpdatedComponent->GetUpVector()};
 	const FVector Destination{Initial_Location + (-Move_Direction * Move_Value)};
@@ -1368,7 +1385,7 @@ FVector UCustom_Movement_Component::Move_Vector_Down(const FVector& Initial_Loca
 	return Destination;
 }
 
-FVector UCustom_Movement_Component::Move_Vector_Left(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+FVector UCustom_Movement_Component::Move_Vector_Left(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value) const
 {
 	const FVector Move_Direction{UKismetMathLibrary::GetRightVector(Rotation)};
 	const FVector Destination{Initial_Location + (-Move_Direction * Move_Value)};
@@ -1376,7 +1393,7 @@ FVector UCustom_Movement_Component::Move_Vector_Left(const FVector& Initial_Loca
 	return Destination;
 }
 
-FVector UCustom_Movement_Component::Move_Vector_Right(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+FVector UCustom_Movement_Component::Move_Vector_Right(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value) const
 {
 	const FVector Move_Direction{UKismetMathLibrary::GetRightVector(Rotation)};
 	const FVector Destination{Initial_Location + (Move_Direction * Move_Value)};
@@ -1384,7 +1401,7 @@ FVector UCustom_Movement_Component::Move_Vector_Right(const FVector& Initial_Loc
 	return Destination;
 }
 
-FVector UCustom_Movement_Component::Move_Vector_Forward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+FVector UCustom_Movement_Component::Move_Vector_Forward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value) const
 {
 	const FVector Move_Direction{UKismetMathLibrary::GetForwardVector(Rotation)};
 	const FVector Destination{Initial_Location + (Move_Direction * Move_Value)};
@@ -1392,7 +1409,7 @@ FVector UCustom_Movement_Component::Move_Vector_Forward(const FVector& Initial_L
 	return Destination;
 }
 
-FVector UCustom_Movement_Component::Move_Vector_Backward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
+FVector UCustom_Movement_Component::Move_Vector_Backward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value) const
 {
 	const FVector Move_Direction{UKismetMathLibrary::GetForwardVector(Rotation)};
 	const FVector Destination{Initial_Location + (-Move_Direction * Move_Value)};
@@ -1400,7 +1417,7 @@ FVector UCustom_Movement_Component::Move_Vector_Backward(const FVector& Initial_
 	return Destination;
 }
 
-FRotator UCustom_Movement_Component::Add_Rotator(const FRotator& Initial_Rotation, const float& Add_To_Rotation)
+FRotator UCustom_Movement_Component::Add_Rotator(const FRotator& Initial_Rotation, const float& Add_To_Rotation) const
 {
 	const FRotator New_Rotation_Roll{Initial_Rotation.Roll + Add_To_Rotation};
 	const FRotator New_Rotation_Pitch{Initial_Rotation.Pitch + Add_To_Rotation};
@@ -1410,7 +1427,7 @@ FRotator UCustom_Movement_Component::Add_Rotator(const FRotator& Initial_Rotatio
 	return New_Rotation;
 }
 
-FRotator UCustom_Movement_Component::Reverse_Wall_Normal_Rotation_Z(const FVector& Initial_Wall_Normal)
+FRotator UCustom_Movement_Component::Reverse_Wall_Normal_Rotation_Z(const FVector& Initial_Wall_Normal) const
 {
 	                                              //The direction of the wall normal is its X axis (pointing forward).
 	const FRotator Wall_Normal{UKismetMathLibrary::MakeRotFromX(Initial_Wall_Normal)};
@@ -1420,7 +1437,7 @@ FRotator UCustom_Movement_Component::Reverse_Wall_Normal_Rotation_Z(const FVecto
 	return  Delta_Rotaton;
 }
 
-void UCustom_Movement_Component::Draw_Debug_Sphere(const FVector& Location, const float& Radius, const FColor& Color, const float& Duration, const bool& bDraw_Debug_Shape_Persistent, const float& Lifetime)
+void UCustom_Movement_Component::Draw_Debug_Sphere(const FVector& Location, const float& Radius, const FColor& Color, const float& Duration, const bool& bDraw_Debug_Shape_Persistent, const float& Lifetime) const
 {
 	UWorld* World = GetWorld();
 
@@ -1902,6 +1919,86 @@ void UCustom_Movement_Component::Calculate_Vault_Height()
 	} 
 }
 
+void UCustom_Movement_Component::Validate_Is_On_Ground()
+{
+	/*This function will be called every "Tick()" within the function "Parkour_Call_In_Tick()". The goal of this function is to determine whether the character is 
+	grounded or airborne. By using a BoxTraceSingleForObjects that generates a box ray cast that is located at the same location as the root bone of the character 
+	the result of whether there is a blocking hit or not stored in the local FHitResult variable "Out_Hit" can be used to set the value of the global bool variable 
+	"Is_On_Ground".*/
+
+	//If the current "Parkour_State" set on the character is "Parkour.State.Climb" then it is evident that the character is not grounded. In this case the global bool
+	//variable "Is_On_Ground" will be set to false.
+	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+	{
+		Is_On_Ground = false;
+	}
+
+	else
+	{
+		FHitResult Out_Hit{};
+
+		UKismetSystemLibrary::BoxTraceSingleForObjects(
+			this,
+			Mesh->GetSocketLocation(FName(TEXT("root"))),
+			Mesh->GetSocketLocation(FName(TEXT("root"))),
+			FVector(10, 10, 4),
+			UKismetMathLibrary::MakeRotFromX(UpdatedComponent->GetForwardVector()),
+			Parkour_Validate_On_Land_Trace_Types,
+			false,
+			TArray<AActor*>(),
+			EDrawDebugTrace::ForOneFrame,
+			Out_Hit,
+			false
+		);
+
+		if(Out_Hit.bBlockingHit)
+		Is_On_Ground = true;
+
+		else
+		Is_On_Ground = false;
+	}
+}
+
+void UCustom_Movement_Component::Decide_Climb_Style(const FVector& Impact_Point, const FRotator& Direction_For_Character_To_Face)
+{
+	/*The goal of this function is to use the impact point of the global FHitResult "Wall_Top_Result" and the direction of 
+	the global FRotator "Reversed_Front_Wall_Normal_Z as the cornerstone of a new sphere trace. The location filled into the 
+	input parameter "Impact_Point" is that of the global FHitResult "Wall_Top_Result" and the Rotation filled into the input
+	argument "Direction_For_Character_To_Face" is that of the global FRotator "Reversed_Front_Wall_Normal_Z. 
+	Using the helper function "Move_Vector_Down()", this location will be moved down 125 units. Next, from that location 
+	it will be moved backwards 10 units using the helper function "Move_Vector_Backwards (this is the start location of 
+	the sphere trace). Finally from the start location of the sphere trace the vector will be moved forward 25 units 
+	(this will be the end location of the sphere trace). If the local FHitResult "Out_Hit" has a blocking hit then this 
+	means there is a wall in front of the character (at the height of where the feet will be during a Braced_Climb) and 
+	the climb style should be braced. If there is no blocking hit then this means there is no wall in front of the character 
+	(at the height of where the feet will be during a Braced_Climb) and the climb style should be Free_Hang. The idea of this 
+	sphere trace is to cast a ray trace from the height of where the character's feet will be during a braced climb to 
+	determine if there is a wall there for the feet to land on during a Braced_Climb.*/
+	FHitResult Out_Hit{};
+	const FVector Move_Vector_Down_To_Feet_Level{Move_Vector_Down(Impact_Point, 125)};
+	const FVector Start{Move_Vector_Backward(Move_Vector_Down_To_Feet_Level, Direction_For_Character_To_Face, 10.f)};
+	const FVector End{Move_Vector_Forward(Start, Direction_For_Character_To_Face, 25.f)};
+
+	UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		10.f,
+		Parkour_Decide_Climb_Style_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::ForDuration,
+		Out_Hit,
+		false
+		);
+	
+	if(Out_Hit.bBlockingHit)
+	Set_Parkour_Climb_Style(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))));
+
+	else
+	Set_Parkour_Climb_Style(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Free.Hang"))));
+}
+
 #pragma endregion
 
 #pragma region Parkour_Core  
@@ -1919,13 +2016,13 @@ void UCustom_Movement_Component::Set_Parkour_State(const FGameplayTag& New_Parko
 	if(Parkour_State != New_Parkour_State)
 	{
 		Parkour_State = New_Parkour_State;
-		if(Parkour_Interface) Parkour_Interface->Set_Parkour_State(Parkour_State);
-		Setting_Parkour_State(Parkour_State);
+		if(Parkour_Interface) Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
+		Set_Parkour_State_Attributes(Parkour_State);
 	}
 	else return;
 }
 
-void UCustom_Movement_Component::Setting_Parkour_State(const FGameplayTag& Current_Parkour_State)
+void UCustom_Movement_Component::Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_State)
 {
 	if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
 	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, false);
@@ -1948,7 +2045,7 @@ void UCustom_Movement_Component::Set_Parkour_Climb_Style(const FGameplayTag& New
 	if(Parkour_Climb_Style != New_Climb_Style)
 	{
 		Parkour_Climb_Style = New_Climb_Style;
-		Parkour_Interface->Set_Climb_Style(Parkour_Climb_Style);
+		Parkour_Interface->Execute_Set_Climb_Style(Anim_Instance, Parkour_Climb_Style);
 	}
 	else return;
 }
@@ -1958,7 +2055,7 @@ void UCustom_Movement_Component::Set_Parkour_Direction(const FGameplayTag& New_C
 	if(Parkour_Climb_Direction != New_Climb_Direction)
 	{
 		Parkour_Climb_Direction = New_Climb_Direction;
-		Parkour_Interface->Set_Climb_Direction(Parkour_Climb_Direction);
+		Parkour_Interface->Execute_Set_Climb_Direction(Anim_Instance, Parkour_Climb_Direction);
 	}
 	else return;
 }
@@ -2061,6 +2158,7 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 						else
 						{
 							Debug::Print("Parkour_No_Action");
+							Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))));
 						}
 						
 					}
@@ -2068,6 +2166,7 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 					else
 					{
 						Debug::Print("Parkour_No_Action");
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))));
 					}
 				}
 
@@ -2081,12 +2180,31 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 			{
 				if(Wall_Height < 280)
 				{
+					
 					Debug::Print("Parkour_Climb");
+					Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+					
+					/*The FHitResult stored in the global FHitResult variable "Wall_Top_Result" is copied to the the global 
+					FHitResult variable New_Climb_Hit_Result so that when the function "Reset_Parkour_Variables()" is called
+					after each Parkour Action is complete there will still be a location to begin the next sequence of ray casts.
+					*/
+					New_Climb_Hit_Result = Wall_Top_Result;
+					
+					if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))))
+					{
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb"))));
+					}
+					
+					else
+					{
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Free.Hang"))));
+					}
 				}
 
 				else
 				{
 					Debug::Print("No_Action");
+					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))));
 				}
 			}
 		}
@@ -2095,51 +2213,13 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 	else
 	{
 		Debug::Print("Parkour_No_Action");
-	}
-}
-
-void UCustom_Movement_Component::Validate_Is_On_Ground()
-{
-	/*This function will be called every "Tick()" within the funtion "Parkour_Call_In_Tick()". The goal of this function is to determine whether the character is grounded or airborne. By using a BoxTraceSingleForObjects that generates a box ray cast 
-	that is located at the same location as the root bone of the character the result of whether there is a blocking hit or not stored in the local FHitResult varaible
-	"Out_Hit" can be used to set the value of the global bool variable "Is_On_Ground".*/
-
-	//If the current "Parkour_State" set on the character is "Parkour.State.Climb" then it is evident that the character is not grounded. In this case the global bool
-	//variable "Is_On_Ground" will be set to false.
-	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
-	{
-		Is_On_Ground = false;
-	}
-
-	else
-	{
-		FHitResult Out_Hit{};
-
-		UKismetSystemLibrary::BoxTraceSingleForObjects(
-			this,
-			Mesh->GetSocketLocation(FName(TEXT("root"))),
-			Mesh->GetSocketLocation(FName(TEXT("root"))),
-			FVector(10, 10, 4),
-			UKismetMathLibrary::MakeRotFromX(UpdatedComponent->GetForwardVector()),
-			Parkour_Validate_On_Land_Trace_Types,
-			false,
-			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
-			Out_Hit,
-			false
-		);
-
-		if(Out_Hit.bBlockingHit)
-		Is_On_Ground = true;
-
-		else
-		Is_On_Ground = false;
+		Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))));
 	}
 }
 
 void UCustom_Movement_Component::Reset_Parkour_Variables()
 {
-	/*This function will be called every "Tick()" within the funtion "Parkour_Call_In_Tick()". The goal of this variable is to reset the values stored in 
+	/*This function will be called every "Tick()" within the funtion "Parkour_Call_In_Tick()". The goal of this function is to reset the values stored in 
 	the global FHitResults "Initial_Ground_Level_Front_Wall_Hit_Result", "Front_Wall_Top_Edge_Best_Hit", "Wall_Top_Result", "Wall_Depth_Result" and 
 	"Wall_Vault_Result" as well as the double variables "Wall_Height", "Wall_Depth" and "Vault_Height". The resseting of the values stored in said global variables 
 	needs to be completed every tick so that each time "Execute_Parkour_Action()" is called, there will be a new beginning to set the next "Parkour_State" and "Parkour_Action".*/
@@ -2169,7 +2249,7 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 	Depending on the value set on the global bool variable "Is_On_Ground" within said function another check will be performed to check if the value set to the gameplay tag "Parkour_Action" 
 	is equal to "Parkour.Action.No.Action". If this is the case, then the character is on the ground and is not performing any parkour. Therefore a call to reset the values stored in 
 	the global FHitResults "Initial_Ground_Level_Front_Wall_Hit_Result", "Front_Wall_Top_Edge_Best_Hit", "Wall_Top_Result", "Wall_Depth_Result" and "Wall_Vault_Result" as well as the 
-	double variables "Wall_Height", "Wall_Depth" and "Vault_Height". will be made. The resetting of said vaules will happen within the function call "Reset_Parkour_Variables()".*/
+	double variables "Wall_Height", "Wall_Depth" and "Vault_Height". will be made. The resetting of said values will happen within the function call "Reset_Parkour_Variables()".*/
 
 	Validate_Is_On_Ground();
 	
@@ -2190,18 +2270,160 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 	}
 }
 
- void UCustom_Movement_Component::Get_Parkour_Data_Asset(UParkour_Action_Data* Parkour_Action_Data)
+ /*void UCustom_Movement_Component::Get_Parkour_Data_Asset(UParkour_Action_Data* Parkour_Data_Asset_To_Use)
  {
-	/*This function uses the global pointer that is passed in via the input argument (which is a UParkour_Action_Data* (child of UPrimaryDataAsset)) and gets the data stored within the 
-	data asset which is located at the address of said pointer (the pointer is a UPROPERTY so the data asset will be developed in the editor then stored within the character Blueprint 
-	class via the "Custom_Movement_Component" component). This happens by using the developed function call "Get_Parkour_Data_Asset_Information()" which located at said pointer's class. By passing in
-	the the global pointer which is passed into this function via the input argument, as the input parameter of the developed function call "Get_Parkour_Data_Asset_Information(), the information
-	stored within the array element of the data asset located at the address of the global pointer which is passed into this function can be obtained (again, the information is set in the editor 
-	via developing a Data Asset that is a child of the class of said pointer (UParkour_Action_Data)).*/
+	//This function uses the global pointer that is passed in via the input argument (which is a UParkour_Action_Data* (child of UPrimaryDataAsset)) and gets the data stored within the 
+	//data asset which is located at the address of said pointer (the pointer is a UPROPERTY so the data asset will be developed in the editor then stored within the character Blueprint 
+	//class via the "Custom_Movement_Component" component). This happens by using the developed function call "Get_Parkour_Data_Asset_Information()" which located at said pointer's class. By passing in
+	//the the global pointer which is passed into this function via the input argument, as the input parameter of the developed function call "Get_Parkour_Data_Asset_Information(), the information
+	//stored within the array element of the data asset located at the address of the global pointer which is passed into this function can be obtained (again, the information is set in the editor 
+	//via developing a Data Asset that is a child of the class of said pointer (UParkour_Action_Data)).
 	
 	if(Parkour_Data_Asset == nullptr) return;
-	Parkour_Data_Asset->Get_Parkour_Data_Asset_Information(Parkour_Data_Asset);
- }
+	Parkour_Data_Asset->Get_Parkour_Data_Asset_Information(Parkour_Data_Asset_To_Use);
+ }*/
+
+void UCustom_Movement_Component::Set_Parkour_Action(const FGameplayTag& New_Parkour_Action)
+{
+	/*The goal of this function is to use the FGameplayTag input argument passed into it via the function 
+	"Decide_Parkour_Action()" to check if the global FGameplaytag variable "Parkour_Action" has the same FGameplaytag 
+	value. If said global variable does not have the same FGameplaytag  as what is passed in via the input argument 
+	then said FGameplaytag  should be set to equal the value of what is passed in via the input argument.This is followed 
+	by setting the "Parkour_Action" in the interface by using the pointer to said interface and calling the generated 
+	(at compile) interface function which begins with the prefix "Execute_" "Set_Parkour_Action()". Lastly, there 
+	are "if '' and "else if" checks which need to be analyzed to check whether the FGameplaytag global variable which 
+	has just been set equals specific Gameplay tags. If the global FGameplaytag == "Parkour.Action.No.Action" then the 
+	function "Reset_Parkour_Variables()" should be called. Otherwise other "else if" statements should follow to check 
+	whether said global FGameplaytag variable "Parkour_Action"   == any of the other Parkour Action gameplay tags. 
+	Whichever tag said global variable equals the function "Play_Parkour_Montage()" should be called, passing in the 
+	"UParkour_Action_Data*"which holds the address to the Asset Data object that is stored inside the character Blueprint 
+	within the Custom_Movement_Component.*/
+
+	if(Parkour_Action != New_Parkour_Action)
+	Parkour_Action = New_Parkour_Action;
+
+	Parkour_Interface->Execute_Set_Parkour_Action(Anim_Instance, Parkour_Action);
+
+	if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
+	Reset_Parkour_Variables();
+
+	else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb"))))
+	Play_Parkour_Montage(Braced_Jump_To_Climb);
+
+	else if(Parkour_Action == FGameplayTag::RequestGameplayTag("Parkour.Action.Free.Hang"))
+	Play_Parkour_Montage(Free_Hang_Jump_To_Climb);
+
+}
+
+void UCustom_Movement_Component::Play_Parkour_Montage(UParkour_Action_Data* Parkour_Data_Asset_To_Use)
+{
+	/*Safety check to make sure the pointer that is passed in via input argument through the function "Set_Parkour_Action()"
+	is not a nullptr. Said pointer holds the address to the Data Asset Object which stores the animation montage to play, the 
+	FGameplaytags "In_State" and "Out_State" as well as all the offset values which may need to be used by the MotionWarping 
+	Component to offset the location and rotation of the root bone in relation to the impact point of the FHitResult "Wall_Top_Result"
+	(this is the FHitResult which will mostly be used to set the location of the Parkour Actions when the character is in "Climb_State").*/
+	 
+	if(!Parkour_Data_Asset_To_Use) return;
+
+	/*Obtain the FGameplaytag "Parkour_In_State" from within the object of the input argument "UParkour_Action_Data* 
+	Parkour_Data_Asset_To_Use" (a Data Asset that is created within the editor which inherits from the developed class 
+	"UParkour_Action_Data" (said class Inherits from "UPrimaryDataAsset")), via a getter function and use the value retrieved 
+	as an input argument for the function "Set_Parkour_State()" This quickly sets the global FGameplaytag Parkour_State to the
+	"In_State" which is set within the object of the input argument (within the editor). */
+	Set_Parkour_State(Parkour_Data_Asset_To_Use->Get_Parkour_In_State());
+
+	/*Use the "Motion_Warping_Component*" to call the function "AddOrUpdateWarpTargetFromLocationAndRotation()". 
+	Said Motion Warping function is called three times because the objects of the input argument "UParkour_Action_Data* 
+	Parkour_Data_Asset_To_Use may have up to three sections which may be filled with location values which may need to be used 
+	to offset the location of the root bone. If the locations are left blank within said Data Asset objects, then a value of 0 
+	will be passed into the input argument of the function "AddOrUpdateWarpTargetFromLocationAndRotation()" and in result the 
+	location of root bone won't modified. One of the input parameters for said function is "FVector TargetLocation". For this 
+	input argument, a function named "Find_Parkour_Warp_Location()" will be developed to calculate the location to offset the 
+	root bone based on the location of the global FHitResult "Wall_Top_Result".*/
+	Motion_Warping_Component->AddOrUpdateWarpTargetFromLocationAndRotation(
+		FName(Parkour_Data_Asset_To_Use->Get_Parkour_Warp_Target_Name_1()),
+		Find_Parkour_Warp_Location(
+			Wall_Top_Result.ImpactPoint, 
+			Reversed_Front_Wall_Normal_Z, 
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_1_X_Offset(),
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_1_Z_Offset()),
+			Reversed_Front_Wall_Normal_Z);
+
+	Motion_Warping_Component->AddOrUpdateWarpTargetFromLocationAndRotation(
+		FName(Parkour_Data_Asset_To_Use->Get_Parkour_Warp_Target_Name_2()),
+		Find_Parkour_Warp_Location(
+			Wall_Top_Result.ImpactPoint, 
+			Reversed_Front_Wall_Normal_Z, 
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_2_X_Offset(),
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_2_Z_Offset()),
+			Reversed_Front_Wall_Normal_Z);
+
+	Motion_Warping_Component->AddOrUpdateWarpTargetFromLocationAndRotation(
+		FName(Parkour_Data_Asset_To_Use->Get_Parkour_Warp_Target_Name_3()),
+		Find_Parkour_Warp_Location(
+			Wall_Top_Result.ImpactPoint, 
+			Reversed_Front_Wall_Normal_Z, 
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_3_X_Offset(),
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_3_Z_Offset()),
+			Reversed_Front_Wall_Normal_Z);
+
+
+	/*After the location to offset the root bone is set, use the "Anim_Instance*" to call the function "Montage_Play(). The input argument 
+	"UParkour_Action_Data* Parkour_Data_Asset_To_Use" will be used to call the function "Get_Montage_To_Play()" which is a getter function that returns the 
+	Animation Montage that is stored within the Data Asset object of said input argument.*/
+	Anim_Instance->Montage_Play(Parkour_Data_Asset_To_Use->Get_Montage_To_Play());
+
+	/*Next, another global pointer of the same type as the input argument "UParkour_Action_Data* Parkour_Data_Asset_To_Use" will be declared 
+	"Parkour_Data_Asset", followed by being set to equal same address as the the input argument "UParkour_Action_Data* Parkour_Data_Asset_To_Use". 
+	This is because the address of the object that is passed into this function needs to be stored globally so that said address may be passed into 
+	the function "Parkour_State()" as an input argument that obtains the FGameplayTag "Out_State" from the Data Asset object which is being used in this 
+	function. "Parkour_State()" will be called from within the function "Function_To_Execute_On_Animation_Blending_Out()". "Function_To_Execute_On_Animation_Blending_Out()" 
+	will be called when the developed local "FOnMontageEnded Blending_Out_Delegate" is called (when Parkour_Data_Asset_To_Use->Get_Montage_To_Play() is blending out).*/
+	Parkour_Data_Asset = Parkour_Data_Asset_To_Use;
+
+	/*Develop a delegate which will call the function "Function_To_Execute_On_Animation_Blending_Out()"" when the animation montage is blending out.
+	Within said function the global "FGameplayTag "Parkour_State" will be updated with the FGameplayTag "Out_State" which is set in the object of the 
+	input argument to this function "UParkour_Action_Data* Parkour_Data_Asset_To_Use". The address to this object is copied to the global 
+	"UParkour_Action_Data* Parkour_Data_Asset". Therefore global "UParkour_Action_Data* Parkour_Data_Asset" is used to obtain the FGameplayTag "Out_State"
+	from within the Data Asset Object which is being used in this function.*/
+	FOnMontageEnded Blending_Out_Delegate{};
+	Blending_Out_Delegate.BindUObject(this, &UCustom_Movement_Component::Function_To_Execute_On_Animation_Blending_Out);
+	Anim_Instance->Montage_SetBlendingOutDelegate(Blending_Out_Delegate, Parkour_Data_Asset_To_Use->Get_Montage_To_Play());
+	
+	/*When this function is done with everything else, set the Parkour Action to "Parkour.Action.No.Action" so that 
+	Reset_Parkour_Variables() can be called to reset the values stored in the global FHitResults "Initial_Ground_Level_Front_Wall_Hit_Result", 
+	"Front_Wall_Top_Edge_Best_Hit", "Wall_Top_Result", "Wall_Depth_Result" and "Wall_Vault_Result" as well as the double variables "Wall_Height", 
+	"Wall_Depth" and "Vault_Height".*/
+	Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))));
+}
+
+FVector UCustom_Movement_Component::Find_Parkour_Warp_Location(const FVector& Impact_Point_To_Use, const FRotator& Direction_For_Character_To_Face, const float& X_Axis_Offset, const float& Z_Axis_Offset) const
+{
+	/*The goal of this function is to take the input parameters "Impact_Point_To_Use", "Direction_For_Character_To_Face", 
+	"X_Axis_Offset" and "Z_Axis_Offset" and move the vector forward or backwards using the helper function "Move_Vector_Forward", 
+	followed by moving the result of the previous helper function "Move_Vector_Forward" up or down by using the helper function 
+	"Move_Vector_Up". The result of the latter will be returned and this will be the location for the Motion Warping Component 
+	to place the root bone for the respective Motion Warping anim notify. The input arguments for this function will be filled 
+	in with the values from the Data Asset pointer that is passed into the function "Play_Parkour_Montage()".*/
+
+	const FVector Warp_Location_First_Edit{Move_Vector_Forward(Impact_Point_To_Use, Direction_For_Character_To_Face, X_Axis_Offset)};
+	const FVector Warp_Location_Second_Edit{Move_Vector_Up(Warp_Location_First_Edit, Z_Axis_Offset)};
+
+	const FVector Destination{Warp_Location_Second_Edit};
+
+	return Destination;
+}
+
+void UCustom_Movement_Component::Function_To_Execute_On_Animation_Blending_Out(UAnimMontage *Montage, bool bInterrupted)
+{
+	/*This function will be called from within the function "Play_Parkour_Montage()" to set the global FGameplayTag "Parkour_State" to equal the FGameplayTag "Out_State"
+	found within the Data_Asset object which is being used in the function "Play_Parkour_Montage" (Data_Asset object is passed in via the input argument of said function). 
+	The "UParkour_Action_Data* Parkour_Data_Asset" is initialized with the address of the Data_Asset which is being used in the function "Play_Parkour_Montage()". Said 
+	initialization also happens within the function "Play_Parkour_Montage()" Lastly this function serves as a response to an delegate call back which triggers when the montage 
+	in the function "Play_Parkour_Montage()" is blending out.*/ 
+	Set_Parkour_State(Parkour_Data_Asset->Get_Parkour_Out_State());
+	return Debug::Print(TEXT("Parkour_State set from Parkour_Action_Data"));
+}
 
 void UCustom_Movement_Component::Execute_Parkour_Action()
 {

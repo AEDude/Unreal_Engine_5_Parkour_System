@@ -36,7 +36,6 @@ void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
     Get_Take_Cover_Velocity();
 }
 
-
 void UCharacter_Animation_Instance::Get_Ground_Speed()
 {
    Ground_Speed = UKismetMathLibrary::VSizeXY(Climbing_System_Character->GetVelocity());
@@ -60,11 +59,11 @@ void UCharacter_Animation_Instance::Get_Is_Falling()
     bIs_Falling = Custom_Movement_Component->IsFalling();
 }
 
-
 void UCharacter_Animation_Instance::Get_Is_Climbing()
 {
     bIs_Climbing = Custom_Movement_Component->Is_Climbing();
 }
+
 void UCharacter_Animation_Instance::Get_Climb_Velocity()
 {
   Climb_Velocity = Custom_Movement_Component->Get_Unrotated_Climb_Velocity();
@@ -78,4 +77,24 @@ void UCharacter_Animation_Instance::Get_Is_Taking_Cover()
 void UCharacter_Animation_Instance::Get_Take_Cover_Velocity()
 {
     Take_Cover_Velocity = Custom_Movement_Component->Get_Unrotated_Take_Cover_Velocity();
+}
+
+bool UCharacter_Animation_Instance::Set_Parkour_State_Implementation(const FGameplayTag &New_Parkour_State)
+{
+    return false;
+}
+
+bool UCharacter_Animation_Instance::Set_Parkour_Action_Implementation(const FGameplayTag &New_Parkour_Action)
+{
+    return false;
+}
+
+bool UCharacter_Animation_Instance::Set_Climb_Style_Implementation(const FGameplayTag &New_Climb_Style)
+{
+    return false;
+}
+
+bool UCharacter_Animation_Instance::Set_Climb_Direction_Implementation(const FGameplayTag &New_Climb_Direction)
+{
+    return false;
 }

@@ -4,30 +4,23 @@
 #include "Data_Asset/Parkour_Action_Data.h"
 #include "Components/Custom_Movement_Component.h"
 
-UParkour_Action_Data::UParkour_Action_Data()
+/*UParkour_Action_Data::UParkour_Action_Data()
 {
-    Parkour_Action_Data = Cast<UParkour_Action_Data>(this);
-	
-    Custom_Movement_Component = Cast<UCustom_Movement_Component>(GetOuter()->GetClass());
+    Pointer_To_This_Class = Cast<UParkour_Action_Data>(this);
+}*/
 
-    if(Custom_Movement_Component)
+/*UParkour_Action_Data* UParkour_Action_Data::Get_Pointer_To_This_Class()
+{
+    if(Pointer_To_This_Class)
     {
-       UE_LOG(LogTemp, Warning, TEXT("Succeeded to use Custom_Movement_Component"));
-       Get_Pointer_To_This_Class();
+      return Pointer_To_This_Class; 
     }
     
     else
-    {
-       UE_LOG(LogTemp, Warning, TEXT("Failed to use Custom_Movement_Component")); 
-    }
-}
+    return nullptr;
+}*/
 
-void UParkour_Action_Data::Get_Pointer_To_This_Class()
-{
-    Custom_Movement_Component->Get_Pointer_To_Parkour_Action_Data_Class(Parkour_Action_Data);
-}
-
-void UParkour_Action_Data::Get_Parkour_Data_Asset_Information(UParkour_Action_Data* Data_Asset_To_Use)
+/*void UParkour_Action_Data::Get_Parkour_Data_Asset_Information(UParkour_Action_Data* Data_Asset_To_Use)
 {
     //This function will be called from within "&UCustom_Movement_Component::Get_Parkour_Data_Asset()". The input argument which will be passed into this function
 	//is a UPROPERTY pointer of the type of this class (UParkour_Action_Data). Said pointer is declared within "UCustom_Movement_Component" and holds the address 
@@ -45,4 +38,4 @@ void UParkour_Action_Data::Get_Parkour_Data_Asset_Information(UParkour_Action_Da
         Data_Asset_To_Use->Parkour_Settings.GetData();
         UE_LOG(LogTemp, Warning, TEXT("Succeeded in using Parkour Data Asset"));
     }
-}
+}*/
