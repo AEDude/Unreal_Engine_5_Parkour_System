@@ -5,6 +5,7 @@
 #include "Character/Technical_AnimatorCharacter.h"
 #include "Components/Custom_Movement_Component.h"
 #include "Kismet/KismetMathLibrary.h"
+#include "Debug/DebugHelper.h"
 
 
 void UCharacter_Animation_Instance::NativeInitializeAnimation()
@@ -79,22 +80,31 @@ void UCharacter_Animation_Instance::Get_Take_Cover_Velocity()
     Take_Cover_Velocity = Custom_Movement_Component->Get_Unrotated_Take_Cover_Velocity();
 }
 
-bool UCharacter_Animation_Instance::Set_Parkour_State_Implementation(const FGameplayTag &New_Parkour_State)
+void UCharacter_Animation_Instance::Set_Parkour_State_Implementation(const FGameplayTag &New_Parkour_State)
 {
-    return false;
+   Parkour_State = New_Parkour_State;
 }
 
-bool UCharacter_Animation_Instance::Set_Parkour_Action_Implementation(const FGameplayTag &New_Parkour_Action)
+void UCharacter_Animation_Instance::Set_Parkour_Action_Implementation(const FGameplayTag &New_Parkour_Action)
 {
-    return false;
+    Parkour_Action = New_Parkour_Action;
 }
 
-bool UCharacter_Animation_Instance::Set_Climb_Style_Implementation(const FGameplayTag &New_Climb_Style)
+void UCharacter_Animation_Instance::Set_Climb_Style_Implementation(const FGameplayTag &New_Climb_Style)
 {
-    return false;
+   Parkour_Climb_Style = New_Climb_Style;
 }
 
-bool UCharacter_Animation_Instance::Set_Climb_Direction_Implementation(const FGameplayTag &New_Climb_Direction)
+void UCharacter_Animation_Instance::Set_Climb_Direction_Implementation(const FGameplayTag &New_Climb_Direction)
 {
-    return false;
+    Parkour_Direction = New_Climb_Direction;
+
+    if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))))
+    Debug::Print("Parkour_Direction_Right");
+
+    else if((Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left")))))
+    Debug::Print("Parkour_Direction_Left");
+
+    if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))))
+     Debug::Print("Parkour_Direction_None");
 }

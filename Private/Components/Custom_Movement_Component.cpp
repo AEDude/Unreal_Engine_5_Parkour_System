@@ -13,6 +13,7 @@
 #include "DrawDebugHelpers.h"
 #include "Character_Direction/Character_Direction_Arrow.h"
 #include "Data_Asset/Parkour_Action_Data.h"
+#include "Kismet/GameplayStatics.h"
 
 void UCustom_Movement_Component::BeginPlay()
 {
@@ -1296,7 +1297,7 @@ void UCustom_Movement_Component::Attach_Arrow_Actor_To_Character(ATechnical_Anim
 	FActorSpawnParameters Spawn_Info{};
 
 	//Spawn the arrow component which is within "&ACharacter_Direction_Arrow" using "GetWorld()->SpawnActor". Use the two input parameters initialized above (Location, Spawn_Info).
-	ACharacter_Direction_Arrow* Character_Direction_Arrow{GetWorld()->SpawnActor<ACharacter_Direction_Arrow>(ACharacter_Direction_Arrow::StaticClass(), Location, Spawn_Info)};
+	Character_Direction_Arrow = GetWorld()->SpawnActor<ACharacter_Direction_Arrow>(ACharacter_Direction_Arrow::StaticClass(), Location, Spawn_Info);
 	
 	//After spawning the arrow and attach it to the character using the character pointer passed in by (ATechnical_AnimatorCharacter* Character). Snap it to the target.
 	Character_Direction_Arrow->AttachToActor(Character, FAttachmentTransformRules::SnapToTargetIncludingScale);
@@ -1987,7 +1988,7 @@ void UCustom_Movement_Component::Decide_Climb_Style(const FVector& Impact_Point,
 		Parkour_Decide_Climb_Style_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForDuration,
+		EDrawDebugTrace::ForOneFrame,
 		Out_Hit,
 		false
 		);
@@ -1995,13 +1996,308 @@ void UCustom_Movement_Component::Decide_Climb_Style(const FVector& Impact_Point,
 	if(Out_Hit.bBlockingHit)
 	Set_Parkour_Climb_Style(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))));
 
-	else
+	else if(!Out_Hit.bBlockingHit)
 	Set_Parkour_Climb_Style(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Free.Hang"))));
+}
+
+void UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, FHitResult& Parkour_Climbing_Wall_Top_Result)
+{
+	//The main goal of this function is to detect whether or not there is a wall infront of the character when the global FGameplayTag "Parkour_State" is set to 
+	//"Parkour.State.Climb". When the character is shimmying across the surface of a wall the mountable surface of the wall may end and therefore the charcater will need to
+	//stop moving. There are two sphere traces which happen in this function. The sphere trace in the outer for loop handles determining whether or not there is a wall 
+	//ahead of the character. The sphere trace in the inner for loop uses the impact point of the sphere trace of the outer for loop to determine the wall top result while
+	//shimmying across the wall. This sphere trace also handles determining whether or not there is another enough space above the surface of the hands to continue shimmying. 
+
+	//Since the value stored in the global double variable "Right_Left_Movement_Value" has a maximum of 1 (value represents the input from the controller for whether the character should move to the 
+	//left or right with the value 1 being full input in the respective direction and 0 being no input for the character to move), whatever value is stored in said global variable will be multiplied
+	//by 10 within the local double variable "Horizontal_Move_Direction_Update". 
+	const float Right_Left_Movement_Value_Multiplier{10.f};
+
+	//Get the value which the controller is putting into the global double value "Right_Left_Movement_Value" and multiply it by 10. This product is used as an offset value to begin generating the ray 
+	//casts in the outer for loop. If the value is a negative number the ray cast will be on the left side of the arrow actor (which means the character is moving to the left). If the value is not
+	//a negative number then the character is moving to the right and the sphere traces will be on the right side of the arrow actor. 
+	const double Horizontal_Move_Direction_Update{Right_Left_Movement_Value * Right_Left_Movement_Value_Multiplier};
+
+	//Offset the start location of the sphere trace according to the current FGameplayTag set on the global FGameplayTag variable "Parkour_Climb_Style".
+	//This needs to happen because during shimmying across some surfaces the character moves to close to the surface of the wall. If this happens then the sphere trace
+	//will not get a blocking hit abnd in result no wall will be detected.
+	const float Value_To_Offset_Sphere_Trace_Backwards{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 0.f, 30.f)};
+
+	int Index_1{};
+	//This sphere trace generates sphere traces to the right or left of the arrow actor which is placed right ontop of the character. The side of the arrow actor which
+	//the sphere traces are generated is determined by the value placed into the global double variable "Right_Left_Movement_Value". The value here is calculated by the input
+	//into the controller within the function "&UCustom_Movement_Component::Add_Movement_Input" Three sphere traces are generated downwards until there is a blocking hit. If no
+	//all sphere traces are generated and there is no blocking hit, then this means there is no surface which the character can shimmy across. If ".bStartPenetrating" is true
+	//during any iteration of this for loop then this means the character is too close to the surface. In both instances "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables", 
+    //"Reset_Movement_Input_Variables" and "return" should be called.
+	for(Index_1; Index_1 <= 2; Index_1++)
+	{
+		//Get locattion of the Arrow actor.
+		const FVector Arrow_Location{Character_Direction_Arrow->GetActorLocation()};
+		//Get the rotation of the Arrow actor
+		const FRotator Arrow_Direction{Character_Direction_Arrow->GetActorRotation()};
+		
+		//Offset the location of the sphere trace start backwards according to the current FGameplayTag set on the global FGameplayTag variable "Parkour_Climb_Style". 
+		const FVector Offset_Start_1{Move_Vector_Backward(Arrow_Location, Arrow_Direction, Value_To_Offset_Sphere_Trace_Backwards)};
+		//Offset the location to the sphere trace to the right or left depending on the value stored in the local double variable "Horizontal_Move_Direction_Update".
+		//The value stored in this variable is dependent on the input from the controller.
+		const FVector Offset_Start_2{Move_Vector_Right(Offset_Start_1, Arrow_Direction, Horizontal_Move_Direction_Update)};
+		//During each iteration of the loop move the sphere trace down by 10 units.
+		const FVector Start{Move_Vector_Down(Offset_Start_2, Index_1 * 10)};
+		//The sphere trace should have a lenght of 80.
+		const FVector End {Move_Vector_Forward(Start, Arrow_Direction, 80)};
+
+		UKismetSystemLibrary::SphereTraceSingleForObjects(
+			this,
+			Start,
+			End,
+			5.f,
+			Parkour_Climbing_Detect_Wall_Trace_Types,
+			false,
+			TArray<AActor*>(),
+			EDrawDebugTrace::ForOneFrame,
+			Parkour_Climbing_Detect_Wall_Hit_Result,
+			false
+			);
+
+		//If ".bStartPenetrating" is true "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables", "Reset_Movement_Input_Variables" and "return" should be called. This is because the character
+		//is too close to the surface of the wall and in result can't continue shimmying.  
+		if(Parkour_Climbing_Detect_Wall_Hit_Result.bStartPenetrating)
+		{
+			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			return;
+		}
+
+		//If ".bStartPenetrating" is false, then continue to check if the HitResult of the current loop iteration has a ".bBlockingHit". 
+		else
+		{
+			//If the HitResult of the outer for loop iteration has a blocking hit continue to develop another sphere trace algorithem which will obtain the 
+			//the "Parkour_Climbing_Wall_Top_Result".
+			if(Parkour_Climbing_Detect_Wall_Hit_Result.bBlockingHit)
+			{
+				//Replace the current reversed wall normal stored in the global variable "Reversed_Front_Wall_Normal_Z" with the Reversed Wall Normal which may be calculated 
+                //with the FHitResult from the outer for loop. This will be then new "Reversed_Front_Wall_Normal_Z" for as long as the character is shimmying.
+				Reversed_Front_Wall_Normal_Z = Reverse_Wall_Normal_Rotation_Z(Parkour_Climbing_Detect_Wall_Hit_Result.ImpactNormal);
+
+				//This for loop generates a sphere trace which shoots downwards from a forward and upward offset position of the "Parkour_Climbing_Detect_Wall_Hit_Result.ImpactPoint". The goal of this for loop is to perform a ray trace which starts inside
+				//of the wall (infront and slightly upwards from the local FHitResult variable "Parkour_Climbing_Detect_Wall_Hit_Result"). With every iteration of the for loop the ray trace starting position will move up by five units. This is to obtain the new  
+				//"Parkour_Climbing_Wall_Top_Result" (the const reference input parameter). If ".bStartPenetrating" is true and the outer for loop and this inner for loop are both complete then "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" 
+				//and "return" will be called. In this outcome there is no wall top to be obtained and in result the character will not be able to move via the "Move_Character_To_New_Climb_Position_Interpolation_Settings" function. Said function uses the "Parkour_Climbing_Wall_Top_Result"
+				//as the location to to move the character (on the "Z" axis) while simultaneously using "Parkour_Climbing_Detect_Wall_Hit_Result" as the location to move the characer to on the "X" and "Y" axis. Also, if ".bStartPenetrating" is true and both the outer and inner for loop are
+				//complete then this means that there is no room above the hands for the character to shimmy. Due to the starting point of the sphere trace raising on the "Z" axis with every iteration of the for loop until until the threshold is reached the character will have the opportunity 
+				//to shimmy up and down surface ledges. Once there is a blocking hit on this trace "break" will be called as the "Parkour_Climbing_Wall_Top_Result" will be stored, hence ther is room for the character to shimmy. Remember, this trace happens at the same "Y" location as the 
+				//location stored in the FHitResult "Parkour_Climbing_Detect_Wall_Hit_Result". This means when the character is moveing to the left this sphere trace will be on the left side of the arrow actor (which is just above the character) and when the character is moveing to the left 
+				//the sphere trace will be on the left side of the arrow actor. This is calculated using the local double variable "Horizontal_Move_Direction_Update" which is the global double variable "Right_Left_Movement_Value" multiplied by the input parameter 
+				//"Right_Left_Movement_Value_Multiplier".
+
+				int Index_2{};
+				for(Index_2; Index_2 <= 7; Index_2++)
+				{
+					//Offset the vector from the hit result of the outer for loop "Parkour_Climbing_Detect_Wall_Hit_Result.ImpactPoint" forward (in front of the character) by two units. At this location the vector will be inisde of the wall.
+					const FVector Nested_For_Loop_Offset_Start_1{Move_Vector_Forward(Parkour_Climbing_Detect_Wall_Hit_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z, 2.f)};
+					//Offset the vector from the hit result of the outer for loop "Parkour_Climbing_Detect_Wall_Hit_Result.ImpactPoint" up by 5 units. At this location the vecor will be a bit under the top surface of the wall (still inside the wall).
+					const FVector Nested_For_Loop_Offset_Start_2{Move_Vector_Up(Nested_For_Loop_Offset_Start_1, 5.f)};
+					//With each iteration of this inner nested for loop move the start location up by five units from its previous start location.
+					const FVector Nested_For_Loop_Start{Move_Vector_Up(Nested_For_Loop_Offset_Start_2, Index_2 * 5)};
+					//The height of the sphere trace will be 30 units.
+					const FVector Nested_For_Loop_End{Move_Vector_Down(Nested_For_Loop_Start, 30.f)};
+
+					UKismetSystemLibrary::SphereTraceSingleForObjects(
+						this,
+						Nested_For_Loop_Start,
+						Nested_For_Loop_End,
+						3.f,
+						Parkour_Climbing_Wall_Top_Result_Trace_Types,
+						false,
+						TArray<AActor*>(),
+						EDrawDebugTrace::ForOneFrame,
+						Parkour_Climbing_Wall_Top_Result,
+						false
+						);
+
+					//If ".bStartPenetrating" is true and the outer for loop and this inner for loop are both complete then "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" will be called. 
+					//In this outcome there is no wall top to be obtained and in result the character will not be able to move via the "Move_Character_To_New_Climb_Position_Interpolation_Settings" function. Otherwise "continue" will be called.
+					//This is because the threshold for the maximum height that the character can reach up to shimmy up a ledge hasn't been reahced. Otherwise "continue" will be called so that the the wall may continue to be analyzed.
+					if(Parkour_Climbing_Wall_Top_Result.bStartPenetrating)
+					{
+						if(Index_1 == 2 && Index_2 == 7)
+						{
+							Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+							return;
+						}
+						
+						else
+						{
+							continue;
+						}
+					}
+
+					//If ".bStartPenetrating" is false, check to see if the there is a blocking hit on the FHitResult 'Parkour_Climbing_Wall_Top_Result". If there is a blocking hit, return out of this function as the wall has been analyzed and in result the
+					//"Parkour_Climbing_Detect_Wall_Hit_Result" and the "Parkour_Climbing_Wall_Top_Result" has both been obtained. If there is no blocking hit for the FHitResult "Parkour_Climbing_Wall_Top_Result", then check to see if both the outer and inner
+					//for loop are complete. If both for loops are complete, call "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return". Otherwise call "continue" so the wall may be be analyzed further.
+					else
+					{
+						if(Parkour_Climbing_Wall_Top_Result.bBlockingHit)
+						{
+							return;
+						}
+
+						else
+						{
+							if(Index_1 == 2 && Index_2 == 7)
+							{
+								Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+								return;
+							}
+						
+							else
+							{
+								continue;
+							}
+						}
+					}
+				}
+			}
+
+			//If the HitResult of the outer loop iteration does not have a blocking hit check to see if the loop has completed. If this is the case call "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables"
+			//and "return". Otherwise call "continue".
+			else
+			{
+				if(Index_1 == 2)
+				{
+					Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+					return;
+				}
+					
+				else
+				{
+					continue;
+				}
+			}
+		}
+	}
+}
+
+bool UCustom_Movement_Component::Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Hands(const FVector& Starting_Impact_Point)
+{
+	/*This function develops line traces from an offset location above the FHitResult "Parkour_Climbing_Wall_Top_Result" (declared as a local variable within the function "Parkour_Climb_Handle_Shimmying_Movement"). Because said line traces
+	use "Parkour_Climbing_Wall_Top_Result" as their starting point, the line traces will be generated on the side of the arrow actor that the character is shimmying. So if the character is moving to the left, the line traces will be on the
+	left side of the arrow actor (offset just above the hands). Same goes for the right side. This is because "Parkour_Climbing_Wall_Top_Result" uses "Parkour_Climbing_Detect_Wall_Hit" as its starting point and "Parkour_Climbing_Detect_Wall_Hit 
+	is generated on the side of the arrow actor which the character is moving. Said location is calculated by moving the vector to the right side of the arrow actor (or left if the value is negative) by using the helper function "Move_Vector_Right" 
+	(passing in the "Right_Left_Movement_Value" multiplied by the "Right_Left_Movement_Value_Multiplier"). With each iteration of the for loop performed the line trace start point will be raised up five units from its previous start location. However, the line
+	traces will only be generated if there is a blocking hit on the line trace which is generated on the first iteration of the for loop. If the first line trace which is generated does not have a blocking hit then this means there is no obstacle 
+	on the respective side of the character's hands (the hand on the side of the body in which the character is shimmying). If there is a blocking hit on the first line trace which is generated, then the for loop will continue to generate more line
+	traces which will all start five units above the previous line trace. This will happen until the threshold is reahced (which means that there is a obsticle on the side of the characters hands) and in result "true" should be returned 
+	(which results in "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" being called within the scope of the if chech which this function is used in within the function "Parkour_Climb_Handle_Shimmying_Movement") or until there
+	is no blocking hit on the most recent line trace. In which case "break" will be called.*/
+	
+	//Offset the starting location of the line trace two units above the input parameter "Starting_Impact_Point". This location will be the "Parkour_Climbing_Wall_Top_Result".
+	const FVector Offset_Starting_Impact_Point{Move_Vector_Up(Starting_Impact_Point, 2.f)};
+	
+	int Index{};
+	FHitResult Parkour_Climbing_Check_Sides{};
+
+	for(Index; Index <= 5; Index++)
+	{
+		const FVector Start{Move_Vector_Up(Offset_Starting_Impact_Point, Index * 5)};
+		const FVector End{Move_Vector_Right(Start, Reversed_Front_Wall_Normal_Z, Right_Left_Movement_Value * 15.f)};
+
+		UKismetSystemLibrary::LineTraceSingleForObjects(
+			this,
+			Start,
+			End,
+			Parkour_Climbing_Check_Sides_Of_Hands_Trace_Types,
+			false,
+			TArray<AActor*>(),
+			EDrawDebugTrace::ForOneFrame,
+			Parkour_Climbing_Check_Sides,
+			false
+			);
+		
+		//Check to see if the line traced generated has a blocking hit. If it does have a blocking hit, check to see if the for loop is complete. If the for loop is complete, this means the threshold has been reached and there is a obstacle on the respective
+		//side of the character's hands. in this case true will be returned which will lead to "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" being called in the scope of the if chech that uses this function within the
+		//fucntion "Parkour_Climb_Handle_Shimmying_Movement". If the for loop is not complete "continue" is called so the area on the respective side of the character's hands may be analyzed for obstacles.
+
+		//IF there is no blocking hit on any line trace which is generated before the threshold is reahced "false" will be retruned.
+		if(Parkour_Climbing_Check_Sides.bBlockingHit)
+		{
+			if(Index == 5)
+			{
+				return true;
+			}
+			
+			else
+			{
+				continue;
+			}
+		}
+
+		else
+		{
+			return false;
+		}
+	}
+
+	//Default return value. This line is needed to meet the requirements of this function return type.
+	return true;
+}
+
+bool UCustom_Movement_Component::Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Body(const FVector& Movemement_Impact_Location) const
+{
+	/*This function develops a dynamic a ray trace on the side of the characters body (the same side the character is shimmying) to determine if there is a obsticle which the character shouldn't be able to shimmy across.
+	The starting location for the capsule trace is ofset to to the right side or left side (depending which direction the character is moving), as well as down depending on the "Parkour_Climb_Style". which the character is currently 
+	in.*/
+
+	//Dynamically set the height of the capsule trace based on the "Parkour_Climb_Style"
+	const float Capsule_Trace_Dynamic_Down_Offset_And_Height{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 55.f, 90.f)};
+	//Dynamically set the start location of the capsule trace based on the "Parkour_Climb_Style"
+	const float Capsule_Trace_Dynamic_Start{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 25.f, 7.f)};
+	////Dynamically set the end location of the capsule trace based on the "Parkour_Climb_Style"
+	const float Capsule_Trace_Dynamic_End{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 35.f, 15.f)};
+	
+	FHitResult Out_Hit{};
+	
+	//The arrow actor is always facing the same direction as the character.
+	const FRotator Direction_Character_Is_Facing{Character_Direction_Arrow->GetActorRotation()};
+	
+	//The sphere trace is offset to the right or left side of the arrow actor. Depending on the direction the character is shimmying (based on "Right_Left_Movement_Value" which is set within the 
+	//function &UCustom_Movement_Component::Add_Movement_Input).
+	const FVector Offset_Vector_To_The_Right{Move_Vector_Right(Movemement_Impact_Location, Direction_Character_Is_Facing, Right_Left_Movement_Value * 20.f)};
+	//The sphere trace is offset down dynamically from the "Offset_Vector_To_The_Right" location.
+	const FVector Offset_Vector_Down{Move_Vector_Down(Offset_Vector_To_The_Right, Capsule_Trace_Dynamic_Down_Offset_And_Height)};
+	
+	//The start location of the capsule trace location is set dynamically based on the "Parkour_Climb_Style".
+	const FVector Start{Move_Vector_Backward(Offset_Vector_Down, Direction_Character_Is_Facing, Capsule_Trace_Dynamic_Start)};
+	//The end location of the capsule trace location is set dynamically based on the "Parkour_Climb_Style"
+	const FVector End{Move_Vector_Backward(Start, Direction_Character_Is_Facing, Capsule_Trace_Dynamic_End)};
+
+	UKismetSystemLibrary::CapsuleTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		5.f,
+		Capsule_Trace_Dynamic_Down_Offset_And_Height,
+		Parkour_Climbing_Check_Sides_Of_Body_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::ForOneFrame,
+		Out_Hit,
+		false
+		);
+	
+	//If there is no a blocking hit "false" will be returned and the character will be allowed to shimmy in that direction.
+	if(!Out_Hit.bBlockingHit)
+	return false;
+
+	//If there is a blocking hit "true" will be returned and in result "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" will be called within the scope of 
+	//the if check in which this function is used within "&UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement"
+	else
+	return true;
 }
 
 #pragma endregion
 
-#pragma region Parkour_Core  
+#pragma region Parkour_Core
 
 void UCustom_Movement_Component::Parkour_State_Settings(const ECollisionEnabled::Type& Collision_Type, const EMovementMode& New_Movement_Mode, const bool& bStop_Movement_Immediately)
 {
@@ -2009,17 +2305,6 @@ void UCustom_Movement_Component::Parkour_State_Settings(const ECollisionEnabled:
 	Character_Movement->SetMovementMode(New_Movement_Mode);
 	
 	if(bStop_Movement_Immediately) Character_Movement->StopMovementImmediately();
-}
-
-void UCustom_Movement_Component::Set_Parkour_State(const FGameplayTag& New_Parkour_State)
-{
-	if(Parkour_State != New_Parkour_State)
-	{
-		Parkour_State = New_Parkour_State;
-		if(Parkour_Interface) Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
-		Set_Parkour_State_Attributes(Parkour_State);
-	}
-	else return;
 }
 
 void UCustom_Movement_Component::Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_State)
@@ -2040,6 +2325,17 @@ void UCustom_Movement_Component::Set_Parkour_State_Attributes(const FGameplayTag
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, false);
 }
 
+void UCustom_Movement_Component::Set_Parkour_State(const FGameplayTag& New_Parkour_State)
+{
+	if(Parkour_State != New_Parkour_State)
+	{
+		Parkour_State = New_Parkour_State;
+		if(Parkour_Interface) Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
+		Set_Parkour_State_Attributes(Parkour_State);
+	}
+	else return;
+}
+
 void UCustom_Movement_Component::Set_Parkour_Climb_Style(const FGameplayTag& New_Climb_Style)
 {
 	if(Parkour_Climb_Style != New_Climb_Style)
@@ -2047,6 +2343,7 @@ void UCustom_Movement_Component::Set_Parkour_Climb_Style(const FGameplayTag& New
 		Parkour_Climb_Style = New_Climb_Style;
 		Parkour_Interface->Execute_Set_Climb_Style(Anim_Instance, Parkour_Climb_Style);
 	}
+	
 	else return;
 }
 
@@ -2057,10 +2354,11 @@ void UCustom_Movement_Component::Set_Parkour_Direction(const FGameplayTag& New_C
 		Parkour_Climb_Direction = New_Climb_Direction;
 		Parkour_Interface->Execute_Set_Climb_Direction(Anim_Instance, Parkour_Climb_Direction);
 	}
+	
 	else return;
 }
 
-float UCustom_Movement_Component::Climb_Style_Values(const FGameplayTag& Climb_Style, const float& Braced_Value, const float& Free_Hang_Value) const
+float UCustom_Movement_Component::Select_Value_Based_On_Climb_Style(const FGameplayTag& Climb_Style, const float& Braced_Value, const float& Free_Hang_Value) const
 {
 	const float& Parkour_Braced_Value{Braced_Value};
 	const float& Parkour_Free_Hang_Value{Free_Hang_Value};
@@ -2136,7 +2434,20 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 				{
 					if(Vault_Height >= 70 && Vault_Height <= 120)
 					{
-						if(UpdatedComponent->GetComponentVelocity().Size() > 20)
+						if(Wall_Depth >= 20 && Wall_Depth <= 30)
+						{
+							if(UpdatedComponent->GetComponentVelocity().Size() > 20)
+							{
+								Debug::Print("Parkour_Low_Vault");
+							}
+
+							else
+							{
+								Debug::Print("Parkour_Thin_Vault");
+							}
+						}
+						
+						else if(UpdatedComponent->GetComponentVelocity().Size() > 20)
 						{
 							Debug::Print("Parkour_Low_Vault");
 						}
@@ -2264,7 +2575,7 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 	
 	else
 	{
-		Debug::Print("In_Air");
+		//Debug::Print("In_Air");
 		//if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
 		//Execute_Parkour_Action();
 	}
@@ -2347,7 +2658,7 @@ void UCustom_Movement_Component::Play_Parkour_Montage(UParkour_Action_Data* Park
 			Reversed_Front_Wall_Normal_Z, 
 			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_1_X_Offset(),
 			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_1_Z_Offset()),
-			Reversed_Front_Wall_Normal_Z);
+		Reversed_Front_Wall_Normal_Z);
 
 	Motion_Warping_Component->AddOrUpdateWarpTargetFromLocationAndRotation(
 		FName(Parkour_Data_Asset_To_Use->Get_Parkour_Warp_Target_Name_2()),
@@ -2356,7 +2667,7 @@ void UCustom_Movement_Component::Play_Parkour_Montage(UParkour_Action_Data* Park
 			Reversed_Front_Wall_Normal_Z, 
 			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_2_X_Offset(),
 			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_2_Z_Offset()),
-			Reversed_Front_Wall_Normal_Z);
+		Reversed_Front_Wall_Normal_Z);
 
 	Motion_Warping_Component->AddOrUpdateWarpTargetFromLocationAndRotation(
 		FName(Parkour_Data_Asset_To_Use->Get_Parkour_Warp_Target_Name_3()),
@@ -2365,7 +2676,7 @@ void UCustom_Movement_Component::Play_Parkour_Montage(UParkour_Action_Data* Park
 			Reversed_Front_Wall_Normal_Z, 
 			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_3_X_Offset(),
 			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_3_Z_Offset()),
-			Reversed_Front_Wall_Normal_Z);
+		Reversed_Front_Wall_Normal_Z);
 
 
 	/*After the location to offset the root bone is set, use the "Anim_Instance*" to call the function "Montage_Play(). The input argument 
@@ -2422,7 +2733,296 @@ void UCustom_Movement_Component::Function_To_Execute_On_Animation_Blending_Out(U
 	initialization also happens within the function "Play_Parkour_Montage()" Lastly this function serves as a response to an delegate call back which triggers when the montage 
 	in the function "Play_Parkour_Montage()" is blending out.*/ 
 	Set_Parkour_State(Parkour_Data_Asset->Get_Parkour_Out_State());
-	return Debug::Print(TEXT("Parkour_State set from Parkour_Action_Data"));
+	return Debug::Print(TEXT("Animation Blended out and Parkour_State set from Data Asset used."));
+}
+
+void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value, const bool& bIs_Forward_Backward_Movement)
+{
+	//This function is called within the character class in "&ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Triggered". It handles the ground locomotion of the 
+	//character when the FGameplaytag for the "Parkour_State" is set to "Parkour.State.Free.Roam" as well as the locomotion of the character when the FGameplayTag for the 
+	//"Parkour_State" is set to "Parkour.State.Climb".
+	
+	//This boolean variable is set to true or false within the call to this function within the character blueprint. When it is set to true, the global double variable "Forward_Backward_Movement_Value"
+	//is set to be the same value as the the input parameter variable "Scale_Value.Y" when it is set to false the global double variable "Right_Left_Movement_Value" is set to
+	//the same value as the input parameter variable "Scale_Value.X". These two variables determine whether the character is moving forward or backward (Forward_Backward_Movement_Value) or left to right (Right_Left_Movement_Value).
+	if(bIs_Forward_Backward_Movement)
+	Forward_Backward_Movement_Value = Scale_Value.Y;
+
+	else
+	Right_Left_Movement_Value = Scale_Value.X;
+
+	//checking to see the current "Parkour_State" of the character. If the value equals "Parkour.State.Free.Roam" then this means the character should have it's normal ground locomotion.
+	//If the "Parkour_State" is set to "Parkour.State.Climb" then a call to handle "Parkour_Climb_Movement()" should be made.
+	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	{
+		//This variable is set within the character class in one of the calls to this function. One call sets this variable to true the other sets this variable to false. In each respective call to this function the global double variables
+		//Forward_Backward_Movement_Value" and "Right_Left_Movement_Value" is set with the correct "Y" and "X" values from the "FInputAction Value"from the character class so the gound locomotion may work as expected. (The "FInputAction Value" is converted to
+		//an FVector2D within the character class using "Value.Get<FVector2D>()").
+		if(bIs_Forward_Backward_Movement)
+		{	
+			/*Get the forward vector from the controller by accessing the controller rotation Yaw and getting it's forward vecor. Use said forward vector to "AddMovementInput" to the character using the "Forward_Backward_Movement_Value"*/
+			
+			//Store the controller rotation in a variable.
+			const FRotator& Controller_Rotation{Owning_Player_Character->GetControlRotation()};
+			
+			//Subtract the Pitch and the Roll from the controller rotation and store the Yaw into a variable.
+			const FRotator& Controller_Rotation_Modified{FRotator(Controller_Rotation.Pitch - Controller_Rotation.Pitch, Controller_Rotation.Yaw, Controller_Rotation.Roll - Controller_Rotation.Roll)};
+			
+			//Store the forward vector of the controller Yaw into a variable.
+			const FVector& Forward_Direction{UKismetMathLibrary::GetForwardVector(Controller_Rotation_Modified)};
+
+			//Add movement input to the character using the forward vector of the controller along with the "Forward_Backward_Movement_Value".
+			Owning_Player_Character->AddMovementInput(Forward_Direction, Forward_Backward_Movement_Value);
+		}
+
+		else
+		{
+			/*Get the right vector from the controller by accessing the controller rotation Yaw and Roll. Use said right vector to "AddMovementInput" to the character using the "Right_Left_Movement_Value"*/
+
+			//Store the controller rotation in a variable.
+			const FRotator& Controller_Rotation{Owning_Player_Character->GetControlRotation()};
+
+			//Subtract the Pitch from the controller rotation and store the Yaw and Roll into a variable.
+			const FRotator& Controller_Rotation_Modified{FRotator (Controller_Rotation.Pitch - Controller_Rotation.Pitch, Controller_Rotation.Yaw, Controller_Rotation.Roll)};
+			
+			//Store the right vector of the controller Yaw and Roll into a variable.
+			const FVector& Right_Direction{UKismetMathLibrary::GetRightVector(Controller_Rotation_Modified)};
+
+			//Add movement input to the character using the right vector of the controller along with the "Right_Left_Movement_Value".
+			Owning_Player_Character->AddMovementInput(Right_Direction, Right_Left_Movement_Value);
+		}
+	}
+
+	//If the Parkour_State is set to "Parkour.State.Climb" check to see if there is an animation playing. If so call "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables()". This call will ensure that the character clamps to the surface
+	//of the wall when transitioning the global FGameplayTag "Parkour_State" from "Parkour.State.Free.Roam" to "Parkour.State.Climb" as well as when other montages as played when the global FGameplayTag "Parkour_State" is set to
+	//"Parkour.State.Climb". If no animation is playing call the function "Parkour_Climb_Movement()". This function handles all the logic for the climb movement.
+	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+	{
+		if(Anim_Instance->IsAnyMontagePlaying())
+		{
+			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		}
+		
+		else
+		{
+			Parkour_Climb_Movement();
+		}
+	}
+}
+
+void UCustom_Movement_Component::Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables()
+{
+	//This function is called within the character class in "&ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Triggered" as 
+	//well as within this class. It resets the values of the global double variables named "Forward_Backward_Movement_Value" and 
+	//"Right_Left_Movement_Value" (both set within the "Add_Movement_Input" function). 
+	//In this function the Parkour Direction is also set to "Parkour.Direction.None".
+
+	//This function also stops the movement of the character immediately.
+	Character_Movement->StopMovementImmediately();
+	
+	Set_Parkour_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))));
+
+	Forward_Backward_Movement_Value = 0.f;
+
+	Right_Left_Movement_Value = 0.f;
+}
+
+void UCustom_Movement_Component::Parkour_Climb_Movement()
+{
+	 
+	if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Corner.Move"))))
+	{
+		Parkour_Climb_Handle_Corner_Movement();
+	}
+
+	else
+	{
+		Parkour_Climb_Handle_Shimmying_Movement();
+	}
+}
+
+void UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement()
+{
+	/*This function handles calling the functions which will validate whether the character can shimmy in the direction of the input which is passed into the gloabal double variable "Right_Left_Movement_Value". 
+	within the function "&UCustom_Movement_Component::Add_Movement_Input".*/
+	
+	//Store the absolute value of the value which is passed into the global double variable "Right_Left_Movement_Value". This value will be used to check if the input to move the character to the right or left
+	//within the function "&UCustom_Movement_Component::Add_Movement_Input" is above the threshold to accept input.
+	const double Right_Left_Movement_Value_Absolute_Value{UKismetMathLibrary::Abs(Right_Left_Movement_Value)};
+
+	//Check to see if the absolute value of the value which is passed into the global double variable "Right_Left_Movement_Value" is above the threshold to allow shimmying movement.
+	//If the check is passed, check to see if the value is above or below 0. If the value is above 0 the character is moving to the right, if the value is below 0 the character is 
+	//moving to the left.
+	if(Right_Left_Movement_Value_Absolute_Value > .7)
+	{
+		if(Right_Left_Movement_Value > 0)
+		{
+			Set_Parkour_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))));
+		}
+
+		else if(Right_Left_Movement_Value < 0)
+		{
+			Set_Parkour_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))));
+		}
+
+		//These variables are filled with values within the function "Parkour_Climb_State_Detect_Wall" (they are passsed in as references via the input arguments in said function). 
+		//The FHitResult stored within the variables "Parkour_Climbing_Detect_Wall_Hit_Result" and "Parkour_Climbing_Wall_Top_Result" are be used to determine whether there is a wall 
+		//in front of the character which the character can shimmy across/ up or down via the functions "Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Hands"  and
+		//"Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Body". Said FHitResult variables are passed in as const references via the input arguments (they are filled with data 
+		//within the function "Parkour_Climb_State_Detect_Wall").
+		FHitResult Parkour_Climbing_Detect_Wall_Hit_Result{};
+		FHitResult Parkour_Climbing_Wall_Top_Result{};
+		
+
+		//This function executes an algorithm which determines whether there is a wall infront of the character for climb movememnt to happen, as well as determining if the wall
+		//in the direction in which the character is moving is too high or low to shimmy across. For example if the character is moving to the left and the surface which the character
+		//is shimmying across has a ledge that is too high for the character to reach aka bStartPenetrating is true, (calculated by the maximum number of iterations in the inner for loop), 
+		//then "Parkour_Climbing_Wall_Top_Result" will not be calculated and "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" along with "return" will be called 
+		//within the function in the appropriate location. Same goes for the "Parkour_Climbing_Detect_Wall_Hit_Result". If there is no blocking hit or "bStartPenetrating" is true 
+		//"Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" along with "return" will be called within the function in the appropriate location within the function.
+		Parkour_Climb_State_Detect_Wall(Parkour_Climbing_Detect_Wall_Hit_Result, Parkour_Climbing_Wall_Top_Result);
+		
+		//This if check determines whether there are obstacles on the side of the character's hands which the should stop the character from shimmying any furhther is that direction.
+		//The function "Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Hands" uses "Parkour_Climbing_Wall_Top_Result.ImpactPoint" as the starting location (const reference input parameter)
+		//of the line traces executed within said function.
+		if(Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Hands(Parkour_Climbing_Wall_Top_Result.ImpactPoint))
+		{
+			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			return;
+		}
+
+		//This check determines whether there is a obstacle on the side of the character's body which should deter the character from shimmying any further. The starting location 
+		//(const reference input parameter) of the capsule trace executed within the bool function "Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Body" is the impact point of 
+		//"Parkour_Climbing_Detect_Wall_Hit_Result".
+		else if(Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Body(Parkour_Climbing_Detect_Wall_Hit_Result.ImpactPoint))
+		{
+			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			return;
+		}
+
+		//If this line of code is reached then character has room to move and in result "Calculate_And_Move_Character_To_New_Climb_Position" should be called passing in the FHitResults
+		//"Parkour_Climbing_Detect_Wall_Hit_Result" and "Parkour_Climbing_Wall_Top_Result" into the input argument. This function uses the location of said FHitResults to interpolate the
+		//character to their location. Considering the locations of said FHitResults are always right infornt of the arrow (offset to the right or left side of the arrow actor depending
+		//on whether the character is moving to the right or left side) the character will always be "chasing"	the location to interpolate its location to causeing an infinite interpolation
+		//to the location of the FHitResults and in return "Shimmying_Movement" as long as ther is input into the controller.
+		else
+		{
+			Calculate_And_Move_Character_To_New_Climb_Position(Parkour_Climbing_Detect_Wall_Hit_Result, Parkour_Climbing_Wall_Top_Result);
+		}
+	}
+
+	//If "Right_Left_Movement_Value_Absolute_Value" i not above .7 then this means the minimum threshold to activate "Shimmying_Movement" has not been met by the input from the player's
+	//controller. In this case, "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" should be called.
+	else
+	{
+		Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		return;
+	}
+}
+
+void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Climb_Position(const FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, const FHitResult& Parkour_Climbing_Wall_Top_Result)
+{
+	/*This function is called calculates the location to interpolate the character to and passes in the said location into the function "&UCustom_Movement_Component::Move_Character_To_New_Climb_Position_Interpolation_Settings"
+	as an input argument, well as calling the function which decides the Climb_Style which the character should be in depending on the surface of the wall in which the character is shimmying. */
+	
+	//Offset value to be used to offset the character backwards from the wall. This is because the impact points found within the input parameter "Parkour_Climbing_Detect_Wall_Hit_Result" is right on
+	//the surface of the wall. Therefore the character needs to be moved back so that the animation playing will look realistic and natural. 
+	const float& Offset_Character_Backwards_From_Wall_Value{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 44.f, 7.f)};
+	const FVector Offset_Vector_Backwards_From_Wall{Move_Vector_Backward(Parkour_Climbing_Detect_Wall_Hit_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z, Offset_Character_Backwards_From_Wall_Value)};
+
+
+
+	//According to the "Parkour_Climb_Style" this is the value to offset the character in the "Z" axis from the location of the "Parkour_Climbing_Wall_Top_Result.ImpactPoint.Z". 
+	const float& Pick_Climb_Style_Value_Character_Height{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 92.f, 115.f)};
+	
+	
+
+	/*These values are used to make a custom FVector variable ("Move_Character_To_This_Location").*/
+
+	//Value to use on the "X" axis of the custom FVector "Move_Character_To_This_Location".	
+	const double& Set_Character_To_This_Position_Perpendicular_From_Wall{Offset_Vector_Backwards_From_Wall.X};			
+	//Value to use on the "Y" axis of the custom FVector "Move_Character_To_This_Location".	
+	const double& Set_Character_To_This_Position_Parallel_From_Wall{Offset_Vector_Backwards_From_Wall.Y};
+	//Value to use on the "Z" axis of the custom FVector "Move_Character_To_This_Location".	
+	const double& Set_Character_To_This_Height_Position{Parkour_Climbing_Wall_Top_Result.ImpactPoint.Z - Pick_Climb_Style_Value_Character_Height};
+
+
+	//Custom FVector to pass into the function "&UCustom_Movement_Component::Move_Character_To_New_Climb_Position_Interpolation_Settings" as an input argument. This will be the location to interpolate 
+	//the character to as long as there is input into the player controller and the validation and checks performed in the function "&UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement"
+	//are successful.. 
+	const FVector& Move_Character_To_This_Location(FVector(Set_Character_To_This_Position_Perpendicular_From_Wall, 
+														   Set_Character_To_This_Position_Parallel_From_Wall, 
+														   Set_Character_To_This_Height_Position));
+
+
+	//This function uses the location which is calculated above (using the variable from the FHitResult input argument "Parkour_Climbing_Detect_Wall_Hit_Result") to interpolate the character to said 
+	//FVector. Considering the locations of the custom FVector will always be updating due to it being dependant on the input argument variable "Parkour_Climbing_Detect_Wall_Hit_Result",  
+	//the character will always be "chasing" the location to interpolate its location to causeing an infinite interpolation. This is because the impact point of the input argument 
+	//"Parkour_Climbing_Detect_Wall_Hit_Result" is offset to the right or left side of the arrow actor (the arrow actor is just above the character) depending on whether the character is moving
+	//to the right or left.
+	Move_Character_To_New_Climb_Position_Interpolation_Settings(Move_Character_To_This_Location, Reversed_Front_Wall_Normal_Z);
+
+	//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+	//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+	//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.Free.Hang".
+	Decide_Climb_Style(Parkour_Climbing_Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+
+
+
+	//const FVector Offset_Decide_Climb_Style_Impact_Point{Move_Vector_Right(Parkour_Climbing_Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z, Right_Left_Movement_Value * -10.f)};
+	//Decide_Climb_Style(Offset_Decide_Climb_Style_Impact_Point, Reversed_Front_Wall_Normal_Z);
+}
+
+void UCustom_Movement_Component::Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
+{
+	/*Using the location from the input argument "Location_To_Move_Character" which is is calculated in the function "&UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Climb_Position"
+	(via said functions const reference FHitResult input argument "Parkour_Climbing_Detect_Wall_Hit_Result"), this function handles interpolating the character to said location. 
+	Considering the location of the input parameter FVector "Location_To_Move_Character" will always be updating due to it being dependant on the input argument variable (of the function 
+	"&UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Climb_Position") "Parkour_Climbing_Detect_Wall_Hit_Result", the character will always be "chasing" the location to interpolate 
+	its location to causeing an infinite interpolation. This is because the impact point of the input argument (of the function "&UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Climb_Position") 
+	"Parkour_Climbing_Detect_Wall_Hit_Result" is offset to the right or left side of the arrow actor (the arrow actor is just above the character) depending on whether the character is moving
+	to the right or left.*/
+	
+	//Depending on the "Parkour_Climb_Style" the interpolation speed for the "X" and "Y" axis (speed which the character moves when shimmying forwards/backwards or from the left to right) will be selected.
+	const float& Pick_Climb_Style_Value_Interpolation_Speed_For_X_And_Y_Axis{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 5.f, 3.f)};
+	
+	//Depending on the "Parkour_Climb_Style" the interpolation speed for the "Z" axis (speed which the character moves when shimmying up or down a ledge) will be selected.
+	const float& Pick_Climb_Style_Value_Interpolation_Speed_For_Z_Axis{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 2.f, 1.f)};
+
+	/*These variables hold the data for each of the axis for which to interpolate the character. Said data is passed in via const reference input argument "Location_To_Move_Character". The reason why the data is divided into 
+	seperate axes is because for each axis, different interpolation values will be set based on the "Parkour_Climb_Style"*/
+	const double& Location_To_Move_Character_X{Location_To_Move_Character.X};
+	const double& Location_To_Move_Character_Y{Location_To_Move_Character.Y};
+	const double& Location_To_Move_Character_Z{Location_To_Move_Character.Z};
+
+	/*These variables hold the data for the current location of the "UpdatedComponent". The reason why the data is divided into seperate axes is because for each axis, different interpolation values will be set based on 
+	the "Parkour_Climb_Style"*/
+	const FVector Component_Location{UpdatedComponent->GetComponentLocation()};
+	const double& Component_Location_X{Component_Location.X};
+	const double& Component_Location_Y{Component_Location.Y};
+	const double& Component_Location_Z{Component_Location.Z};
+
+	//"DeltaTime" is needed to fulfill the requirements of the input argument for the funtion "UKismetMathLibrary::FInterpTo". By using DeltaTime there will be a smooth interpolation from the previous location to the new location.
+	const double& DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+	/*These variables hold the data of the interpolation from the "UpdatedComponent's" current location to the location which the character needs to move to. The reason why the data is divided into seperate axes is because for 
+	each axis, different interpolation values are set based on the "Parkour_Climb_Style".*/
+	const double X_Interpolation{UKismetMathLibrary::FInterpTo(Component_Location_X, Location_To_Move_Character_X, DeltaTime, Pick_Climb_Style_Value_Interpolation_Speed_For_X_And_Y_Axis)};
+	const double Y_Interpolation{UKismetMathLibrary::FInterpTo(Component_Location_Y, Location_To_Move_Character_Y, DeltaTime, Pick_Climb_Style_Value_Interpolation_Speed_For_X_And_Y_Axis)};
+	const double Z_Interpolation{UKismetMathLibrary::FInterpTo(Component_Location_Z, Location_To_Move_Character_Z, DeltaTime, Pick_Climb_Style_Value_Interpolation_Speed_For_Z_Axis)};
+
+	//This variable holds the interpolated data of where the caracter needs to move to.
+	const FVector& Interpolated_Location_To_Move_Character{FVector(X_Interpolation, Y_Interpolation, Z_Interpolation)};
+
+	//Call "SetActorLocationAndRotation" and pass in the variable which holds the interpolated data where the caracter needs to move to (Interpolated_Location_To_Move_Character).
+	Owning_Player_Character->SetActorLocationAndRotation(Interpolated_Location_To_Move_Character, Rotation_For_Character_To_Face);
+
+	return;
+}
+
+void UCustom_Movement_Component::Parkour_Climb_Handle_Corner_Movement()
+{
+
 }
 
 void UCustom_Movement_Component::Execute_Parkour_Action()

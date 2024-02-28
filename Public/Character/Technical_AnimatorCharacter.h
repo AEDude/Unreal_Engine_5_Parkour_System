@@ -21,7 +21,7 @@ class UMotionWarpingComponent;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class ATechnical_AnimatorCharacter : public ACharacter, public IParkour_Locomotion_Interface
+class ATechnical_AnimatorCharacter : public ACharacter
 
 {
 	GENERATED_BODY()
@@ -112,14 +112,17 @@ private:
 #pragma endregion
 
 #pragma region Input_Callback
+	
 	/** Called for movement input */
+	void Handle_Ground_Movement_Input_Triggered(const FInputActionValue& Value);
 
-	void Handle_Ground_Movement_Input(const FInputActionValue& Value);
+	void Handle_Ground_Movement_Input_Completed(const FInputActionValue& Value);
 
 	void Handle_Climb_Movement_Input(const FInputActionValue& Value);
 
 	void Handle_Take_Cover_Movement_Input(const FInputActionValue& Value);
 
+	
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
 

@@ -26,7 +26,7 @@ public:
     //in the animation instance cpp file, however, the version of the function with the "UFUNCTION(BlueprintCallable, BlueprintNativeEvent)" macro
     //will only be defined within the animation blueprint within the editor.
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    bool Set_Parkour_State(const FGameplayTag& New_Parkour_State);
+    void Set_Parkour_State(const FGameplayTag& New_Parkour_State);
 
 
     //Used to set new Parkour State within the Animation Blueprint. This function will be called from UCustom_Movemement_Component using
@@ -39,7 +39,7 @@ public:
     //in the animation instance cpp file, however, the version of the function with the "UFUNCTION(BlueprintCallable, BlueprintNativeEvent)" macro
     //will only be defined within the animation blueprint within the editor.
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    bool Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
+    void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
 
 
     //Used to set new Parkour State within the Animation Blueprint. This function will be called from UCustom_Movemement_Component using
@@ -52,7 +52,7 @@ public:
     //in the animation instance cpp file, however, the version of the function with the "UFUNCTION(BlueprintCallable, BlueprintNativeEvent)" macro
     //will only be defined within the animation blueprint within the editor.
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    bool Set_Climb_Style(const FGameplayTag& New_Climb_Style);
+    void Set_Climb_Style(const FGameplayTag& New_Climb_Style);
     
 
     //Used to set new Parkour State within the Animation Blueprint. This function will be called from UCustom_Movemement_Component using
@@ -65,6 +65,6 @@ public:
     //in the animation instance cpp file, however, the version of the function with the "UFUNCTION(BlueprintCallable, BlueprintNativeEvent)" macro
     //will only be defined within the animation blueprint within the editor.
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    bool Set_Climb_Direction(const FGameplayTag& New_Climb_Direction);
+    void Set_Climb_Direction(const FGameplayTag& New_Climb_Direction);
 
 };

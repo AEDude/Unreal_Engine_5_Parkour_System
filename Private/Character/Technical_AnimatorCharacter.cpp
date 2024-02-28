@@ -136,7 +136,8 @@ void ATechnical_AnimatorCharacter::SetupPlayerInputComponent(UInputComponent* Pl
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Triggered);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Completed);
 		EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Climb_Movement_Input);
 		EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Take_Cover_Movement_Input);
 
@@ -160,71 +161,96 @@ void ATechnical_AnimatorCharacter::SetupPlayerInputComponent(UInputComponent* Pl
 		}
 }
 
-void ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input(const FInputActionValue& Value)
+void ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Triggered(const FInputActionValue& Value)
 {
 	// input is a Vector2D
-	const FVector2D MovementVector = Value.Get<FVector2D>();
+	const FVector2D Movement_Vector{Value.Get<FVector2D>()};
 
-	if (Controller != nullptr)
+	if(Controller)
+	{
+		if(Custom_Movement_Component)
+		{	//Ground movement is handled in the Custom_Movement Component, alongside the Parkour Locomotion. Within this function
+		// 
+			Custom_Movement_Component->Add_Movement_Input(Movement_Vector, true);
+			Custom_Movement_Component->Add_Movement_Input(Movement_Vector, false);
+		}
+	}
+
+	/*if (Controller != nullptr)
 	{
 		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
+		const FRotator Rotation{Controller->GetControlRotation()};
+		const FRotator Yaw_Rotation{(0, Rotation.Yaw, 0)};
 
 		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+		const FVector Forward_Direction{FRotationMatrix(Yaw_Rotation).GetUnitAxis(EAxis::X)};
 	
 		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+		const FVector Right_Direction{FRotationMatrix(Yaw_Rotation).GetUnitAxis(EAxis::Y)};
 
 		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		AddMovementInput(Forward_Direction, Movement_Vector.Y);
+		AddMovementInput(Right_Direction, Movement_Vector.X);
+	}*/
+}
+
+void ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Completed(const FInputActionValue& Value)
+{
+	if(Controller)
+	{
+		if(Custom_Movement_Component)
+		{	
+			//When the call to "Handle_Ground_Movement_Input_Started" is completed this function will be called. It resets the values
+			//of the "Forward_Backward_Movement_Value" and the "Right_Left_Movement_Value" which are set within 
+			//"&Ucustom_Movement_Component::Add_Movement_Input". It also sets the FGameplaytag "Parkour_Direction" to
+			//"Parkour.Direction.None".
+			Custom_Movement_Component->Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		}
 	}
 }
 
 void ATechnical_AnimatorCharacter::Handle_Climb_Movement_Input(const FInputActionValue& Value)
 {
 	// input is a Vector2D
-	const FVector2D MovementVector = Value.Get<FVector2D>();
+	const FVector2D Movement_Vector{Value.Get<FVector2D>()};
 
 	if (Controller != nullptr)
 	{
-		const FVector ForwardDirection = FVector::CrossProduct(
+		const FVector Forward_Direction{FVector::CrossProduct(
 			-Custom_Movement_Component->Get_Climbable_Surface_Normal(),
 			GetActorRightVector()
-		);
+		)};
 
-		const FVector RightDirection = FVector::CrossProduct(
+		const FVector Right_Direction{FVector::CrossProduct(
 			-Custom_Movement_Component->Get_Climbable_Surface_Normal(),
 			-GetActorUpVector()
-		);
+		)};
 
 		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		AddMovementInput(Forward_Direction, Movement_Vector.Y);
+		AddMovementInput(Right_Direction, Movement_Vector.X);
 	}
 }
 
 void ATechnical_AnimatorCharacter::Handle_Take_Cover_Movement_Input(const FInputActionValue& Value)
 {
 	// input is a Vector2D
-	const FVector2D MovementVector = Value.Get<FVector2D>();
+	const FVector2D Movement_Vector{Value.Get<FVector2D>()};
 
 	if (Controller != nullptr)
 	{
-		const FVector ForwardDirection = FVector::CrossProduct(
+		const FVector Forward_Direction{FVector::CrossProduct(
 			-Custom_Movement_Component->Get_Take_Cover_Surface_Normal(),
 			GetActorRightVector()
-		);
+		)};
 
-		const FVector RightDirection = FVector::CrossProduct(
+		const FVector Right_Direction{FVector::CrossProduct(
 			-Custom_Movement_Component->Get_Take_Cover_Surface_Normal(),
 			-GetActorUpVector()
-		);
+		)};
 
 		// add movement 
-		AddMovementInput(RightDirection, MovementVector.X); 
+		AddMovementInput(Right_Direction, Movement_Vector.X); 
 	}
 }
 
