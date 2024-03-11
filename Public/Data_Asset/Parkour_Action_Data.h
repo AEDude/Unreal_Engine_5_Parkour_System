@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
-#include "Gameplay_Tags/Gameplay_Tags.h"
+//#include "Gameplay_Tags/Gameplay_Tags.h"
+#include "Native_Gameplay_Tags/Native_Gameplay_Tags.h"
 #include "Parkour_Action_Data.generated.h"
 
 

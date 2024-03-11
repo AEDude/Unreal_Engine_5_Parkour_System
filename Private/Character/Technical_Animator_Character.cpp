@@ -1,6 +1,6 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
-#include "Character/Technical_AnimatorCharacter.h"
+#include "Character/Technical_Animator_Character.h"
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
@@ -18,13 +18,13 @@
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 //////////////////////////////////////////////////////////////////////////
-// ATechnical_AnimatorCharacter
+// ATechnical_Animator_Character
 
-ATechnical_AnimatorCharacter::ATechnical_AnimatorCharacter(const FObjectInitializer& ObjectInitializer)
+ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitializer& ObjectInitializer)
 	:	Super(ObjectInitializer.SetDefaultSubobjectClass<UCustom_Movement_Component>(ACharacter::CharacterMovementComponentName))
 {
 	// Set size for collision capsule
-	GetCapsuleComponent()->InitCapsuleSize(42.f, 96.0f);
+	GetCapsuleComponent()->InitCapsuleSize(42.f, 98.0f);
 		
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -62,7 +62,7 @@ ATechnical_AnimatorCharacter::ATechnical_AnimatorCharacter(const FObjectInitiali
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 }
 
-void ATechnical_AnimatorCharacter::BeginPlay()
+void ATechnical_Animator_Character::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
@@ -89,14 +89,14 @@ void ATechnical_AnimatorCharacter::BeginPlay()
 	UE_LOG(LogTemp, Warning, TEXT("Custom_Movement_Component && Character_Reference && Motion_Warping_Component && Follow_Camera INITIALIZATION FAILED"));
 }
 
-void ATechnical_AnimatorCharacter::Tick(float Deltatime)
+void ATechnical_Animator_Character::Tick(float Deltatime)
 {
 	// Call the base class  
 	Super::Tick(Deltatime);
 
 }
 
-void ATechnical_AnimatorCharacter::Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority)
+void ATechnical_Animator_Character::Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority)
 {
 	if(!Context_To_Add) return;
 
@@ -109,7 +109,7 @@ void ATechnical_AnimatorCharacter::Add_Input_Mapping_Context(UInputMappingContex
 		}
 }
 
-void ATechnical_AnimatorCharacter::Remove_Input_Mapping_Context(UInputMappingContext* Context_To_Remove)
+void ATechnical_Animator_Character::Remove_Input_Mapping_Context(UInputMappingContext* Context_To_Remove)
 {
 	if(!Context_To_Remove) return;
 
@@ -125,7 +125,7 @@ void ATechnical_AnimatorCharacter::Remove_Input_Mapping_Context(UInputMappingCon
 //////////////////////////////////////////////////////////////////////////
 // Input
 
-void ATechnical_AnimatorCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
@@ -136,24 +136,24 @@ void ATechnical_AnimatorCharacter::SetupPlayerInputComponent(UInputComponent* Pl
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Triggered);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Completed);
-		EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Climb_Movement_Input);
-		EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Handle_Take_Cover_Movement_Input);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed);
+		EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Climb_Movement_Input);
+		EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input);
 
 
 		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATechnical_AnimatorCharacter::Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Look);
 
-		EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Parkour_Started);
+		EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
 
-		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Parkour_Ended);
+		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Parkour_Ended);
 
-		EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Climb_Action_Started);
+		EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Action_Started);
 
-		EnhancedInputComponent->BindAction(Climb_Hop_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Climb_Hop_Action_Started);
+		EnhancedInputComponent->BindAction(Climb_Hop_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Hop_Action_Started);
 
-		EnhancedInputComponent->BindAction(Take_Cover_Action, ETriggerEvent::Started, this, &ATechnical_AnimatorCharacter::On_Take_Cover_Action_Started);
+		EnhancedInputComponent->BindAction(Take_Cover_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Take_Cover_Action_Started);
 		}
 		else
 		{
@@ -161,7 +161,7 @@ void ATechnical_AnimatorCharacter::SetupPlayerInputComponent(UInputComponent* Pl
 		}
 }
 
-void ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Triggered(const FInputActionValue& Value)
+void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	const FVector2D Movement_Vector{Value.Get<FVector2D>()};
@@ -194,7 +194,7 @@ void ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Triggered(const 
 	}*/
 }
 
-void ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Completed(const FInputActionValue& Value)
+void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed(const FInputActionValue& Value)
 {
 	if(Controller)
 	{
@@ -209,7 +209,7 @@ void ATechnical_AnimatorCharacter::Handle_Ground_Movement_Input_Completed(const 
 	}
 }
 
-void ATechnical_AnimatorCharacter::Handle_Climb_Movement_Input(const FInputActionValue& Value)
+void ATechnical_Animator_Character::Handle_Climb_Movement_Input(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	const FVector2D Movement_Vector{Value.Get<FVector2D>()};
@@ -232,7 +232,7 @@ void ATechnical_AnimatorCharacter::Handle_Climb_Movement_Input(const FInputActio
 	}
 }
 
-void ATechnical_AnimatorCharacter::Handle_Take_Cover_Movement_Input(const FInputActionValue& Value)
+void ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	const FVector2D Movement_Vector{Value.Get<FVector2D>()};
@@ -254,7 +254,7 @@ void ATechnical_AnimatorCharacter::Handle_Take_Cover_Movement_Input(const FInput
 	}
 }
 
-void ATechnical_AnimatorCharacter::Look(const FInputActionValue& Value)
+void ATechnical_Animator_Character::Look(const FInputActionValue& Value)
 {
 	// input is a Vector2D
 	FVector2D LookAxisVector = Value.Get<FVector2D>();
@@ -267,18 +267,34 @@ void ATechnical_AnimatorCharacter::Look(const FInputActionValue& Value)
 	}
 }
 
-void ATechnical_AnimatorCharacter::On_Parkour_Started(const FInputActionValue& Value)
+void ATechnical_Animator_Character::On_Parkour_Started(const FInputActionValue& Value)
 {
-	Debug::Print(TEXT("Parkour Is Working"));
-	Custom_Movement_Component->Execute_Parkour_Action();
+	if(Custom_Movement_Component)
+	{
+		if(Custom_Movement_Component->Get_bIs_Falling())
+		{
+			Debug::Print("Parkour_Cool_Down_Activated", FColor::MakeRandomColor(), 11);
+			return;
+		}
+
+		else
+		{
+			Debug::Print(TEXT("Parkour_Is_Working"), FColor::MakeRandomColor(), 8);
+			Custom_Movement_Component->Execute_Parkour_Action();
+		}
+	}
 }
 
-void ATechnical_AnimatorCharacter::On_Parkour_Ended(const FInputActionValue& Value)
+void ATechnical_Animator_Character::On_Parkour_Ended(const FInputActionValue& Value)
 {
-	Debug::Print(TEXT("Exited Parkour"));
+	if(Custom_Movement_Component)
+	{
+		Custom_Movement_Component->Release_From_Shimmying();
+		Debug::Print(TEXT("Exited Parkour"), FColor::MakeRandomColor(), 8);
+	}
 }
 
-void ATechnical_AnimatorCharacter::On_Climb_Action_Started(const FInputActionValue& Value)
+void ATechnical_Animator_Character::On_Climb_Action_Started(const FInputActionValue& Value)
 {
 	if(!Custom_Movement_Component) return;
 
@@ -292,31 +308,31 @@ void ATechnical_AnimatorCharacter::On_Climb_Action_Started(const FInputActionVal
 	}
 }
 
-void ATechnical_AnimatorCharacter::On_Player_Enter_Climb_State()
+void ATechnical_Animator_Character::On_Player_Enter_Climb_State()
 {
 	Add_Input_Mapping_Context(Climbing_Mapping_Context, 1);
 	Debug::Print(TEXT("Entered Climb State."));
 }
 
-void ATechnical_AnimatorCharacter::On_Player_Exit_Climb_State()
+void ATechnical_Animator_Character::On_Player_Exit_Climb_State()
 {
 	Remove_Input_Mapping_Context(Climbing_Mapping_Context);
 	Debug::Print(TEXT("Exited Climb State."));
 }
 
-void ATechnical_AnimatorCharacter::On_Player_Enter_Take_Cover_State()
+void ATechnical_Animator_Character::On_Player_Enter_Take_Cover_State()
 {
 	Add_Input_Mapping_Context(Take_Cover_Mapping_Context, 2);
 	Debug::Print(TEXT("Entered Take Cover State."));
 }
 
-void ATechnical_AnimatorCharacter::On_Player_Exit_Take_Cover_State()
+void ATechnical_Animator_Character::On_Player_Exit_Take_Cover_State()
 {
 	Remove_Input_Mapping_Context(Take_Cover_Mapping_Context);
 	Debug::Print(TEXT("Exited Take Cover State."));
 }
 
-void ATechnical_AnimatorCharacter::On_Climb_Hop_Action_Started(const FInputActionValue &Value)
+void ATechnical_Animator_Character::On_Climb_Hop_Action_Started(const FInputActionValue &Value)
 {
 	if(Custom_Movement_Component)
 	{
@@ -325,7 +341,7 @@ void ATechnical_AnimatorCharacter::On_Climb_Hop_Action_Started(const FInputActio
 	Debug::Print(TEXT("Hopping Started"));
 }
 
-void ATechnical_AnimatorCharacter::On_Take_Cover_Action_Started(const FInputActionValue &Value)
+void ATechnical_Animator_Character::On_Take_Cover_Action_Started(const FInputActionValue &Value)
 {
 	if(!Custom_Movement_Component) return;
 

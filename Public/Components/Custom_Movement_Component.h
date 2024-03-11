@@ -4,7 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "Gameplay_Tags/Gameplay_Tags.h"
+//#include "Gameplay_Tags/Gameplay_Tags.h"
+#include "Native_Gameplay_Tags/Native_Gameplay_Tags.h"
 #include "Custom_Movement_Component.generated.h"
 
 DECLARE_DELEGATE(F_On_Enter_Climb_State)
@@ -14,7 +15,7 @@ DECLARE_DELEGATE(F_On_Exit_Take_Cover_State)
 
 class UCharacterMovementComponent;
 class UCapsuleComponent;
-class ATechnical_AnimatorCharacter;
+class ATechnical_Animator_Character;
 class USkeletalMeshComponent;
 class UMotionWarpingComponent;
 class UAnimInstance;
@@ -73,7 +74,7 @@ private:
 	UAnimInstance* Owning_Player_Animation_Instance;
 
 	UPROPERTY()
-	ATechnical_AnimatorCharacter* Owning_Player_Character;
+	ATechnical_Animator_Character* Owning_Player_Character;
 
 #pragma region Climb_Region
 
@@ -395,16 +396,23 @@ private:
 	
 	void Calculate_Vault_Height();
 
-	void Validate_Is_On_Ground();
+	void Validate_bIs_On_Ground();
 
 	void Decide_Climb_Style(const FVector& Impact_Point, const FRotator& Direction_For_Character_To_Face);
 
-	void Parkour_Climb_State_Detect_Wall(FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, FHitResult& Parkour_Climbing_Wall_Top_Result);
+	bool Parkour_Climb_State_Detect_Wall(FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, FHitResult& Parkour_Climbing_Wall_Top_Result);
 
 	bool Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Hands(const FVector& Starting_Impact_Point);
 
 	bool Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Body(const FVector& Movemement_Impact_Location) const;
 
+	void Parkour_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand);
+
+	void Parkour_Climb_Dynamic_IK_Hands(const bool& bIs_Left_Hand);
+
+	void Parkour_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot);
+
+	void Parkour_Climb_Dynamic_IK_Feet(const bool& bIs_Left_Foot);
 
 #pragma endregion
 
@@ -420,6 +428,8 @@ private:
 
 	void Set_Parkour_Direction(const FGameplayTag& New_Climb_Direction);
 
+	void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
+
 	float Select_Value_Based_On_Climb_Style(const FGameplayTag& Climb_Style, const float& Braced_Value, const float& Free_Hang_Value) const;
 
 	void Measure_Wall();
@@ -431,8 +441,6 @@ private:
 	void Parkour_Call_In_Tick();
 
 	//void Get_Parkour_Data_Asset(UParkour_Action_Data* Parkour_Action_Data);
-
-	void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
 
 	FVector Find_Parkour_Warp_Location(const FVector& Impact_Point_To_Use, const FRotator& Direction_For_Character_To_Face, const float& X_Axis_Offset, const float& Z_Axis_Offset) const;
 
@@ -448,8 +456,21 @@ private:
 
 	void Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Input_Location_To_Move_Character, const FRotator& Input_Rotation_For_Character_To_Face);
 
-	void Parkour_Climb_Handle_Corner_Movement();
+	void Dynamic_IK_Limbs();
 
+	void Reset_Parkour_IK_Hands(bool bIs_Left_Hand);
+
+	void Reset_Parkour_IK_Feet(bool bIs_Left_Hand);
+
+	void Handle_Release_From_Shimmying();
+
+	void Set_bIs_Falling_To_False();
+
+	bool Validate_Can_Start_Shimmying_While_Airborne() const;
+
+	FGameplayTag Get_Controller_Direction() const;
+
+	void Parkour_Climb_Handle_Corner_Movement();
 
 #pragma endregion
 
@@ -460,7 +481,7 @@ private:
 
 	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb")))};
 
-	FGameplayTag Parkour_Climb_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
+	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
 
 	FGameplayTag Parkour_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))};
 
@@ -484,7 +505,7 @@ private:
 
 	FHitResult Wall_Vault_Result{};
 
-	FHitResult New_Climb_Hit_Result{};
+	FHitResult Initialize_Parkour_IK_Limbs_Hit_Result{};
 	
 	#pragma endregion
 
@@ -494,11 +515,17 @@ private:
 
 	double Distance_In_Grid_Scan_For_Hit_Results_Previous_Iteration{};
 
-	bool Is_On_Ground{false};
+	bool bIs_On_Ground{false};
 
 	double Forward_Backward_Movement_Value{};
 
 	double Right_Left_Movement_Value{};
+
+	bool bIs_Falling{false};
+
+	FTimerHandle Set_bIs_Falling_To_False_Timer_Handle{};
+
+	const float Set_bIs_Falling_To_False_Timer_Duration{1.f};
 
 	#pragma endregion
 
@@ -515,6 +542,8 @@ private:
 #pragma endregion
 
 #pragma region Parkour_BP_Variables
+
+	#pragma region trace_Types
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	int Grid_Scan_Width{4};
@@ -555,6 +584,26 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Climbing_Check_Sides_Of_Body_Trace_Types{};
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Initialize_IK_Hands_Detect_Wall_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Initialize_IK_Hands_Wall_Top_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Dynamic_IK_Hands_Detect_Wall_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Dynamic_IK_Hands_Wall_Top_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Initialize_IK_Feet_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Dynamic_IK_Feet_Detect_Wall_Trace_Types{};
+
+	#pragma endregion
+
 
 	#pragma region Parkour_Data_Assets
 
@@ -566,6 +615,24 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Free_Hang_Jump_To_Climb;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Fall_Down;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Fall_Down_180_R;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Fall_Down_180_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Braced_Jump_To_Climb_Airborne;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Free_Hang_Jump_To_Climb_Airborne;
 
 	#pragma endregion
 
@@ -596,21 +663,29 @@ public:
 
 #pragma endregion
 
-#pragma region Initializing_And_Starting_Parkour
+#pragma region Initializing_Starting_And_Ending_Parkour
 
-	void Attach_Arrow_Actor_To_Character(ATechnical_AnimatorCharacter* Character);
+	void Attach_Arrow_Actor_To_Character(ATechnical_Animator_Character* Character);
 
 	void Get_Pointer_To_Parkour_Locomotion_Interface_Class();
 
 	//void Get_Pointer_To_Parkour_Action_Data_Class();
 	
-	void Initialize_Parkour_Pointers(ATechnical_AnimatorCharacter* Character, UMotionWarpingComponent* Motion_Warping, UCameraComponent* Camera);
+	void Initialize_Parkour_Pointers(ATechnical_Animator_Character* Character, UMotionWarpingComponent* Motion_Warping, UCameraComponent* Camera);
 
 	void Add_Movement_Input(const FVector2D& Scale_Value, const bool& bIs_Forward_Backward_Movement);
 	
 	void Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+
+	FORCEINLINE void Set_Parkour_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
+
+	FORCEINLINE void Set_Parkour_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot) {Parkour_Climb_Initialize_IK_Feet(bIs_Left_Foot);}
 	
 	void Execute_Parkour_Action();
+
+	void Release_From_Shimmying();
+
+	FORCEINLINE bool Get_bIs_Falling() const {return bIs_Falling;}
 
 #pragma endregion
 

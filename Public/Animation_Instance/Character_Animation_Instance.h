@@ -5,10 +5,11 @@
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
 #include "Interfaces/Parkour_Locomotion_Interface.h"
-#include "Gameplay_Tags/Gameplay_Tags.h"
+//#include "Gameplay_Tags/Gameplay_Tags.h"
+#include "Native_Gameplay_Tags/Native_Gameplay_Tags.h"
 #include "Character_Animation_Instance.generated.h"
 
-class ATechnical_AnimatorCharacter;
+class ATechnical_Animator_Character;
 class UCustom_Movement_Component;
 /**
  * 
@@ -25,7 +26,7 @@ public:
 
 private:
 	UPROPERTY()
-	ATechnical_AnimatorCharacter* Climbing_System_Character;
+	ATechnical_Animator_Character* Climbing_System_Character;
 	
 	UPROPERTY()
 	UCustom_Movement_Component* Custom_Movement_Component;
@@ -73,8 +74,11 @@ private:
 protected:
 
 	#pragma region Parkour
-
+	
 	#pragma region Parkour_Interface
+
+
+	#pragma region Parkour_Locomotion
 
 	/*Used to set new Parkour State within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
@@ -121,19 +125,121 @@ protected:
 
 	#pragma endregion
 
+
+	#pragma region Limbs_Location_And_Rotations
+
+
+	#pragma region Left_Limbs
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess ="true"))
+	FVector Left_Hand_Shimmy_Location{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	FRotator Left_Hand_Shimmy_Rotation{};
+	
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	FVector Left_Foot_Shimmy_Location{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	FRotator Left_Foot_Shimmy_Rotation{};
+
+
+
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Left_Hand_Shimmy_Location(const FVector& New_Left_Hand_Shimmy_Location);
+
+	virtual void Set_Left_Hand_Shimmy_Location_Implementation(const FVector& New_Left_Hand_Shimmy_Location) override;
+
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Left_Hand_Shimmy_Rotation(const FRotator& New_Left_Hand_Rotation);
+
+	virtual void Set_Left_Hand_Shimmy_Rotation_Implementation(const FRotator& New_Left_Hand_Shimmy_Rotation) override;
+
+
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Left_Foot_Shimmy_Location(const FVector& New_Left_Foot_Location);
+
+	virtual void Set_Left_Foot_Shimmy_Location_Implementation(const FVector& New_Left_Foot_Shimmy_Location) override;
+
+
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Left_Foot_Shimmy_Rotation(const FRotator& New_Left_Foot_Rotation);
+
+	virtual void Set_Left_Foot_Shimmy_Rotation_Implementation(const FRotator& New_Left_Foot_Shimmy_Rotation) override;
+
+	#pragma endregion
+
+
+	#pragma region Right_Limbs
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	FVector Right_Hand_Shimmy_Location{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	FRotator Right_Hand_Shimmy_Rotation{};
+	
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	FVector Right_Foot_Shimmy_Location{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	FRotator Right_Foot_Shimmy_Rotation{};
+
+
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Right_Hand_Shimmy_Location(const FVector& New_Right_Hand_Location);
+
+	virtual void Set_Right_Hand_Shimmy_Location_Implementation(const FVector& New_Right_Hand_Shimmy_Location) override;
+
+
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Right_Hand_Shimmy_Rotation(const FRotator& New_Right_Hand_Rotation);
+
+	virtual void Set_Right_Hand_Shimmy_Rotation_Implementation(const FRotator& New_Right_Hand_Shimmy_Rotation) override;
+
+
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Right_Foot_Shimmy_Location(const FVector& New_Right_Foot_Location);
+
+	virtual void Set_Right_Foot_Shimmy_Location_Implementation(const FVector& New_Right_Foot_Shimmy_Location) override;
+
+
+
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Right_Foot_Shimmy_Rotation(const FRotator& New_Right_Foot_Rotation);
+
+	virtual void Set_Right_Foot_Shimmy_Rotation_Implementation(const FRotator& New_Right_Foot_Shimmy_Rotation) override;
+
+    #pragma endregion
+
+
+	#pragma endregion
+
+
+	#pragma endregion
+
+
 	#pragma region Parkour_Gameplay_Tags
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Parkour, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag Parkour_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam")))};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Parkour, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag Parkour_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Parkour, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb")))};
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Parkour, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
+	
 	#pragma endregion
 
 	#pragma endregion

@@ -6,7 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Interfaces/Parkour_Locomotion_Interface.h"
 #include "Logging/LogMacros.h"
-#include "Technical_AnimatorCharacter.generated.h"
+#include "Technical_Animator_Character.generated.h"
 
 class USpringArmComponent;
 class UCameraComponent;
@@ -21,20 +21,20 @@ class UMotionWarpingComponent;
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
-class ATechnical_AnimatorCharacter : public ACharacter
+class ATechnical_Animator_Character : public ACharacter
 
 {
 	GENERATED_BODY()
 
 public:
-	ATechnical_AnimatorCharacter(const FObjectInitializer& ObjectInitializer);
+	ATechnical_Animator_Character(const FObjectInitializer& ObjectInitializer);
 
 private:
 
 #pragma region Components
 
 	UPROPERTY()
-	ATechnical_AnimatorCharacter* Character_Reference;
+	ATechnical_Animator_Character* Character_Reference;
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))

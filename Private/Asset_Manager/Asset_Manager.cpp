@@ -4,26 +4,26 @@
 #include "Asset_Manager/Asset_Manager.h"
 #include "Gameplay_Tags/Gameplay_Tags.h"
 
-UAsset_Manager::UAsset_Manager()
-{
-}
+// UAsset_Manager::UAsset_Manager()
+// {
+// }
 
-UAsset_Manager &UAsset_Manager::Get()
-{
-    // TODO: insert return statement here
+// UAsset_Manager &UAsset_Manager::Get()
+// {
+//     // TODO: insert return statement here
     
-    check(GEngine)
-    {
-        UAsset_Manager* Asset_Manager = Cast<UAsset_Manager>(GEngine->AssetManager);
+//     check(GEngine)
+//     {
+//         UAsset_Manager* Asset_Manager = Cast<UAsset_Manager>(GEngine->AssetManager);
 
-        return *Asset_Manager;
-    }
-}
+//         return *Asset_Manager;
+//     }
+// }
 
-void UAsset_Manager::StartInitialLoading()
-{
-    Super::StartInitialLoading();
+// void UAsset_Manager::StartInitialLoading()
+// {
+//     Super::StartInitialLoading();
 
-    //Load Native Gameplay Tags.
-    F_Gameplay_Tags::Initialize_Native_Tags();
-}
+//     //Load Native Gameplay Tags.
+//     F_Gameplay_Tags::Initialize_Native_Tags();
+// }

@@ -2,17 +2,18 @@
 
 
 #include "Animation_Instance/Character_Animation_Instance.h"
-#include "Character/Technical_AnimatorCharacter.h"
+#include "Character/Technical_Animator_Character.h"
 #include "Components/Custom_Movement_Component.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Debug/DebugHelper.h"
+#include "Kismet/GameplayStatics.h"
 
 
 void UCharacter_Animation_Instance::NativeInitializeAnimation()
 {
     Super::NativeInitializeAnimation();
 
-    Climbing_System_Character = Cast<ATechnical_AnimatorCharacter>(TryGetPawnOwner());
+    Climbing_System_Character = Cast<ATechnical_Animator_Character>(TryGetPawnOwner());
 
     if(Climbing_System_Character)
     {
@@ -80,6 +81,11 @@ void UCharacter_Animation_Instance::Get_Take_Cover_Velocity()
     Take_Cover_Velocity = Custom_Movement_Component->Get_Unrotated_Take_Cover_Velocity();
 }
 
+
+#pragma region Parkour_Interface
+
+#pragma region Parkour_Locomotion
+
 void UCharacter_Animation_Instance::Set_Parkour_State_Implementation(const FGameplayTag &New_Parkour_State)
 {
    Parkour_State = New_Parkour_State;
@@ -100,11 +106,196 @@ void UCharacter_Animation_Instance::Set_Climb_Direction_Implementation(const FGa
     Parkour_Direction = New_Climb_Direction;
 
     if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))))
-    Debug::Print("Parkour_Direction_Right");
+    Debug::Print("Parkour_Direction_Right", FColor::MakeRandomColor(), 1);
 
     else if((Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left")))))
-    Debug::Print("Parkour_Direction_Left");
+    Debug::Print("Parkour_Direction_Left", FColor::MakeRandomColor(), 1);
 
     if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))))
-     Debug::Print("Parkour_Direction_None");
+    Debug::Print("Parkour_Direction_None", FColor::MakeRandomColor(), 1);
 }
+
+#pragma endregion
+
+
+#pragma region Limbs_Location_And_Rotations
+
+#pragma region Left_Limbs
+
+void UCharacter_Animation_Instance::Set_Left_Hand_Shimmy_Location_Implementation(const FVector& New_Left_Hand_Shimmy_Location)
+{   
+    const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    double Left_Hand_Shimmy_Location_Interpolation_Speed{};
+    
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    Left_Hand_Shimmy_Location_Interpolation_Speed = 15.f;
+
+    else
+    Left_Hand_Shimmy_Location_Interpolation_Speed = 700.f;
+    
+    const FVector Left_Hand_Shimmy_Location_Interpolated{UKismetMathLibrary::VInterpTo(Left_Hand_Shimmy_Location,
+                                                                                      New_Left_Hand_Shimmy_Location,
+                                                                                      Delta_Time,
+                                                                                      Left_Hand_Shimmy_Location_Interpolation_Speed
+                                                                                      )};
+    
+    Left_Hand_Shimmy_Location = Left_Hand_Shimmy_Location_Interpolated;
+}
+
+void UCharacter_Animation_Instance::Set_Left_Hand_Shimmy_Rotation_Implementation(const FRotator& New_Left_Hand_Shimmy_Rotation)
+{
+    const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    double Left_Hand_Shimmy_Rotation_Interpolation_Speed{};
+
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    Left_Hand_Shimmy_Rotation_Interpolation_Speed = 15.f;
+    
+    else
+    Left_Hand_Shimmy_Rotation_Interpolation_Speed = 700.f;
+
+    const FRotator Left_Hand_Shimmy_Rotation_Interpolated{UKismetMathLibrary::RInterpTo(Left_Hand_Shimmy_Rotation,
+                                                                                        New_Left_Hand_Shimmy_Rotation,
+                                                                                        Delta_Time,
+                                                                                        Left_Hand_Shimmy_Rotation_Interpolation_Speed)};
+
+    Left_Hand_Shimmy_Rotation = Left_Hand_Shimmy_Rotation_Interpolated;
+
+}
+
+void UCharacter_Animation_Instance::Set_Left_Foot_Shimmy_Location_Implementation(const FVector& New_Left_Foot_Shimmy_Location)
+{
+    const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    double Left_Foot_Shimmy_Location_Interpolation_Speed{};
+    
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    Left_Foot_Shimmy_Location_Interpolation_Speed = 35.f;
+
+    else
+    Left_Foot_Shimmy_Location_Interpolation_Speed = 700.f;
+    
+    const FVector Left_Foot_Shimmy_Location_Interpolated{UKismetMathLibrary::VInterpTo(Left_Foot_Shimmy_Location,
+                                                                                      New_Left_Foot_Shimmy_Location,
+                                                                                      Delta_Time,
+                                                                                      Left_Foot_Shimmy_Location_Interpolation_Speed
+                                                                                      )};
+    
+    Left_Foot_Shimmy_Location = Left_Foot_Shimmy_Location_Interpolated;
+}
+
+void UCharacter_Animation_Instance::Set_Left_Foot_Shimmy_Rotation_Implementation(const FRotator& New_Left_Foot_Shimmy_Rotation)
+{
+    const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    double Left_Foot_Shimmy_Rotation_Interpolation_Speed{};
+
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    Left_Foot_Shimmy_Rotation_Interpolation_Speed = 30.f;
+    
+    else
+    Left_Foot_Shimmy_Rotation_Interpolation_Speed = 700.f;
+
+    const FRotator Left_Foot_Shimmy_Rotation_Interpolated{UKismetMathLibrary::RInterpTo(Left_Foot_Shimmy_Rotation,
+                                                                                        New_Left_Foot_Shimmy_Rotation,
+                                                                                        Delta_Time,
+                                                                                        Left_Foot_Shimmy_Rotation_Interpolation_Speed)};
+
+    Left_Foot_Shimmy_Rotation = Left_Foot_Shimmy_Rotation_Interpolated;
+}
+
+#pragma endregion
+
+
+#pragma region Right_Limbs
+
+void UCharacter_Animation_Instance::Set_Right_Hand_Shimmy_Location_Implementation(const FVector& New_Right_Hand_Shimmy_Location)
+{
+    const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    double Right_Hand_Shimmy_Location_Interpolation_Speed{};
+    
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    Right_Hand_Shimmy_Location_Interpolation_Speed = 15.f;
+
+    else
+    Right_Hand_Shimmy_Location_Interpolation_Speed = 700.f;
+    
+    const FVector Right_Hand_Shimmy_Location_Interpolated{UKismetMathLibrary::VInterpTo(Right_Hand_Shimmy_Location,
+                                                                                       New_Right_Hand_Shimmy_Location,
+                                                                                       Delta_Time,
+                                                                                       Right_Hand_Shimmy_Location_Interpolation_Speed
+                                                                                       )};
+    
+    Right_Hand_Shimmy_Location = Right_Hand_Shimmy_Location_Interpolated;
+}
+
+void UCharacter_Animation_Instance::Set_Right_Hand_Shimmy_Rotation_Implementation(const FRotator& New_Right_Hand_Shimmy_Rotation)
+{
+    const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    double Right_Hand_Shimmy_Rotation_Interpolation_Speed{};
+
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    Right_Hand_Shimmy_Rotation_Interpolation_Speed = 15.f;
+    
+    else
+    Right_Hand_Shimmy_Rotation_Interpolation_Speed = 700.f;
+
+    const FRotator Right_Hand_Shimmy_Rotation_Interpolated{UKismetMathLibrary::RInterpTo(Right_Hand_Shimmy_Rotation,
+                                                                                        New_Right_Hand_Shimmy_Rotation,
+                                                                                        Delta_Time,
+                                                                                        Right_Hand_Shimmy_Rotation_Interpolation_Speed)};
+
+    Right_Hand_Shimmy_Rotation = Right_Hand_Shimmy_Rotation_Interpolated;
+}
+
+void UCharacter_Animation_Instance::Set_Right_Foot_Shimmy_Location_Implementation(const FVector& New_Right_Foot_Shimmy_Location)
+{
+    const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    double Right_Foot_Shimmy_Location_Interpolation_Speed{};
+    
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    Right_Foot_Shimmy_Location_Interpolation_Speed = 35.f;
+
+    else
+    Right_Foot_Shimmy_Location_Interpolation_Speed = 700.f;
+    
+    const FVector Right_Foot_Shimmy_Location_Interpolated{UKismetMathLibrary::VInterpTo(Right_Foot_Shimmy_Location,
+                                                                                       New_Right_Foot_Shimmy_Location,
+                                                                                       Delta_Time,
+                                                                                       Right_Foot_Shimmy_Location_Interpolation_Speed
+                                                                                       )};
+    
+    Right_Foot_Shimmy_Location = Right_Foot_Shimmy_Location_Interpolated;
+}
+
+void UCharacter_Animation_Instance::Set_Right_Foot_Shimmy_Rotation_Implementation(const FRotator& New_Right_Foot_Shimmy_Rotation)
+{
+    const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    double Right_Foot_Shimmy_Rotation_Interpolation_Speed{};
+
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    Right_Foot_Shimmy_Rotation_Interpolation_Speed = 15.f;
+    
+    else
+    Right_Foot_Shimmy_Rotation_Interpolation_Speed = 700.f;
+
+    const FRotator Right_Foot_Shimmy_Rotation_Interpolated{UKismetMathLibrary::RInterpTo(Right_Foot_Shimmy_Rotation,
+                                                                                        New_Right_Foot_Shimmy_Rotation,
+                                                                                        Delta_Time,
+                                                                                        Right_Foot_Shimmy_Rotation_Interpolation_Speed)};
+
+    Right_Foot_Shimmy_Rotation = Right_Foot_Shimmy_Rotation_Interpolated;
+}
+
+#pragma endregion
+
+
+#pragma endregion
+
+#pragma endregion
+

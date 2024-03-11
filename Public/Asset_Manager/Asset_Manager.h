@@ -14,18 +14,18 @@ class TECHNICAL_ANIMATOR_API UAsset_Manager : public UAssetManager
 {
 	GENERATED_BODY()
 
-public:
+// public:
 
-	//Constructor
-	UAsset_Manager();
-
-
-	//Returns the Asset_Manager singleton object.
-	static UAsset_Manager& Get();
+// 	//Constructor
+// 	UAsset_Manager();
 
 
-protected:
+// 	//Returns the Asset_Manager singleton object.
+// 	static UAsset_Manager& Get();
 
-	//Immediately initialize Native Gameplay Tags on engine startup.
-	virtual void StartInitialLoading() override;
+
+// protected:
+
+// 	//Immediately initialize Native Gameplay Tags on engine startup.
+// 	virtual void StartInitialLoading() override;
 };
