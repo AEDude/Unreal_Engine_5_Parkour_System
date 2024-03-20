@@ -414,6 +414,10 @@ private:
 
 	void Parkour_Climb_Dynamic_IK_Feet(const bool& bIs_Left_Foot);
 
+	bool Validate_Out_Corner_Shimmying();
+
+	bool Validate_In_Corner_Shimmying();
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -448,8 +452,6 @@ private:
 
 	void Function_To_Execute_On_Animation_Blending_Out(UAnimMontage *Montage, bool bInterrupted);
 
-	void Parkour_Climb_Movement();
-
 	void Parkour_Climb_Handle_Shimmying_Movement();
 
 	void Calculate_And_Move_Character_To_New_Climb_Position(const FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, const FHitResult& Parkour_Climbing_Wall_Top_Result);
@@ -470,13 +472,20 @@ private:
 
 	FGameplayTag Get_Controller_Direction() const;
 
-	void Parkour_Climb_Handle_Corner_Movement();
+	void Parkour_Shimmy_Handle_Corner_Movement();
+
+	void Parkour_Shimmy_Corner_Movement(const FHitResult& New_Corner_Detect_Wall_Hit_Result, const FHitResult& New_Corner_Wall_Top_Result);
+
+	void Set_bOut_Corner_Movement_To_False();
+
+	void Set_bIn_Corner_Movement_To_False();
 
 #pragma endregion
 
 #pragma region Parkour_Core_Variables
 
 	#pragma region Gameplay_Tags
+	
 	FGameplayTag Parkour_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam")))};
 
 	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb")))};
@@ -506,6 +515,14 @@ private:
 	FHitResult Wall_Vault_Result{};
 
 	FHitResult Initialize_Parkour_IK_Limbs_Hit_Result{};
+
+	FHitResult Parkour_Shimmying_Detect_Out_Corner_Wall_Hit_Result{};
+
+	FHitResult Parkour_Shimmying_Out_Corner_Wall_Top_Result{};
+
+	FHitResult Parkour_Shimmying_Detect_In_Corner_Wall_Hit_Result{};
+
+	FHitResult Parkour_Shimmying_In_Corner_Wall_Top_Result{};
 	
 	#pragma endregion
 
@@ -527,6 +544,21 @@ private:
 
 	const float Set_bIs_Falling_To_False_Timer_Duration{1.f};
 
+	FLatentActionInfo Corner_Movement_Latent_Action_Info{};
+
+	bool bOut_Corner_Movement{false};
+
+	FTimerHandle Set_bOut_Corner_Movement_To_False_Timer_Handle{};
+
+	const float Set_bOut_Corner_Movement_To_False_Timer_Duration{.4f};
+
+	bool bIn_Corner_Movement{false};
+
+	FTimerHandle Set_bIn_Corner_Movement_To_False_Timer_Handle{};
+
+	const float Set_bIn_Corner_Movement_To_False_Timer_Duration{.4f};
+	
+
 	#pragma endregion
 
 	#pragma region Measure_Wall
@@ -543,7 +575,7 @@ private:
 
 #pragma region Parkour_BP_Variables
 
-	#pragma region trace_Types
+	#pragma region Trace_Types
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	int Grid_Scan_Width{4};
@@ -602,6 +634,25 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Dynamic_IK_Feet_Detect_Wall_Trace_Types{};
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Validate_Out_Corner_Wall_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Detect_Out_Corner_Wall_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Out_Corner_Wall_Top_Result_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Detect_In_Corner_Wall_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_In_Corner_Wall_Top_Result_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Validate_In_Corner_Wall_Space_Trace_Types{};
+
+
 	#pragma endregion
 
 
@@ -633,6 +684,30 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Free_Hang_Jump_To_Climb_Airborne;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Corner_Outer_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Corner_Outer_R;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_Corner_Outer_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_Corner_Outer_R;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Corner_Inner_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Corner_Inner_R;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_Corner_Inner_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_Corner_Inner_R;
 
 	#pragma endregion
 
