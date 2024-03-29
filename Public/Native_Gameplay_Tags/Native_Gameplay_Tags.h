@@ -32,6 +32,10 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Hop_Right_Up);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Hop_Down);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Hop_Left_Down);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Hop_Right_Down);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Falling_Climb);

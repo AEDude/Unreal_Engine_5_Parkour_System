@@ -242,6 +242,23 @@ protected:
 	
 	#pragma endregion
 
+
+	#pragma region Others
+
+	UPROPERTY(BlueprintReadOnly, Category = "Parkour_Shimmying", meta = (AllowPrivateAccess = "true"))
+	double Forward_Backward_Movement_Value{};
+
+	UPROPERTY(BlueprintReadOnly, Category = "Parkour_Shimmying", meta = (AllowPrivateAccess = "true"))
+	double Right_Left_Movement_Value{};
+
+	UPROPERTY(BlueprintReadOnly, Category = "Parkour_Shimmying", meta = (AllowPrivateAccess = "true"))
+	float Left_Hand_Curve_Alpha{};
+
+	UPROPERTY(BlueprintReadOnly, Category = "Parkour_Shimmying", meta = (AllowPrivateAccess = "true"))
+	float Right_Hand_Curve_Alpha{};
+
+	#pragma endregion
+
 	#pragma endregion
 
 };	

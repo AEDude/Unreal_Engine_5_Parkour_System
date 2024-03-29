@@ -205,6 +205,9 @@ void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed(const
 			//"&Ucustom_Movement_Component::Add_Movement_Input". It also sets the FGameplaytag "Parkour_Direction" to
 			//"Parkour.Direction.None".
 			Custom_Movement_Component->Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+
+			Custom_Movement_Component->Forward_Backward_Movement_Value = 0.f;
+			Custom_Movement_Component->Right_Left_Movement_Value = 0.f;
 		}
 	}
 }

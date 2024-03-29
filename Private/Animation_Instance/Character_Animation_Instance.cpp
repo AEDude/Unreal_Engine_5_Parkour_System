@@ -36,6 +36,11 @@ void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
     Get_Climb_Velocity();
     Get_Is_Taking_Cover();
     Get_Take_Cover_Velocity();
+
+    Forward_Backward_Movement_Value = Custom_Movement_Component->Forward_Backward_Movement_Value;
+
+    Right_Left_Movement_Value = Custom_Movement_Component->Right_Left_Movement_Value;
+
 }
 
 void UCharacter_Animation_Instance::Get_Ground_Speed()
@@ -104,6 +109,30 @@ void UCharacter_Animation_Instance::Set_Climb_Style_Implementation(const FGamepl
 void UCharacter_Animation_Instance::Set_Climb_Direction_Implementation(const FGameplayTag &New_Climb_Direction)
 {
     Parkour_Direction = New_Climb_Direction;
+
+    if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))) || 
+       Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Right"))) ||
+       Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))))
+    {
+        Left_Hand_Curve_Alpha = 1.f;
+        Right_Hand_Curve_Alpha = 0.f;
+    }
+    
+    else if((Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left")))) ||
+            (Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left")))))
+    {
+        Left_Hand_Curve_Alpha = 0.f;
+        Right_Hand_Curve_Alpha = 1.f;
+    }
+
+    else if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward"))) ||
+            Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Left"))) ||
+            Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Right"))))   
+    {
+        Left_Hand_Curve_Alpha = 1.f;
+        Right_Hand_Curve_Alpha = 1.f;
+    }
+            
 
     if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))))
     Debug::Print("Parkour_Direction_Right", FColor::MakeRandomColor(), 1);
