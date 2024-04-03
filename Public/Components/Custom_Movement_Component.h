@@ -418,6 +418,8 @@ private:
 
 	bool Validate_In_Corner_Shimmying();
 
+	bool Validate_Shimmy_180_Shimmy();
+
 	bool Validate_Can_Mantle() const;
 
 	void Hop_Grid_Scan_For_Hop_Hit_Result(const FVector& Previous_Trace_Location, const FRotator& Previous_Trace_Rotation, const int& Scan_Width_Value, const int& Scan_Height_Value);
@@ -427,6 +429,14 @@ private:
 	void Realize_Front_Wall_Top_Edge_Best_Hop_Hit();
 
 	void Get_Hop_Top_Result();
+
+	bool Validate_Can_Fly_Hanging_Jump() const;
+
+	bool Validate_Can_Jump_From_Braced_Climb() const;
+
+	bool Validate_Can_Jump_From_Free_Hang() const;
+
+	bool Validate_Drop_To_Shimmy(const int& Maximum_Distance_To_Check_For_Drop);
 
 #pragma endregion
 
@@ -478,6 +488,10 @@ private:
 
 	void Set_bIs_Falling_To_False();
 
+	void Set_bCan_Jump_From_Braced_Climb_To_True();
+
+	void Set_bCan_Jump_From_Free_Hang_To_True();
+
 	bool Validate_Can_Start_Shimmying_While_Airborne() const;
 
 	FGameplayTag Get_Controller_Direction() const;
@@ -490,7 +504,7 @@ private:
 
 	void Set_bIn_Corner_Movement_To_False();
 
-	void Decide_Mantle_Or_Hop();
+	void Decide_Shimmy_180_Shimmy_Mantle_Or_Hop();
 
 	void Execute_Random_Montage(TArray<UParkour_Action_Data*>& Array_To_Select_From);
 
@@ -511,6 +525,7 @@ private:
 	void Perform_Hop_Action(const FGameplayTag& Hop_Action);
 
 
+
 #pragma endregion
 
 #pragma region Parkour_Core_Variables
@@ -519,7 +534,7 @@ private:
 	
 	FGameplayTag Parkour_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam")))};
 
-	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb")))};
+	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.None")))};
 
 	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
 
@@ -567,6 +582,10 @@ private:
 
 	#pragma region Others
 
+	float Ground_Speed{};
+
+	float Air_Speed{};
+	
 	double Distance_In_Grid_Scan_For_Hit_Results_Current_Iteration{};
 
 	double Distance_In_Grid_Scan_For_Hit_Results_Previous_Iteration{};
@@ -578,6 +597,18 @@ private:
 	FTimerHandle Set_bIs_Falling_To_False_Timer_Handle{};
 
 	const float Set_bIs_Falling_To_False_Timer_Duration{1.f};
+
+	bool bCan_Jump_From_Braced_Climb{true};
+
+	FTimerHandle Set_bCan_Jump_From_Braced_Climb_Timer_Handle{};
+
+	const float Set_bCan_Jump_From_Braced_Climb_Timer_Duration{1.f};
+
+	bool bCan_Jump_From_Free_Hang{true};
+
+	FTimerHandle Set_bCan_Jump_From_Free_Hang_Timer_Handle{};
+
+	const float Set_bCan_Jump_From_Free_Hang_Timer_Duration{1.f};
 
 	FLatentActionInfo Corner_Movement_Latent_Action_Info{};
 
@@ -597,8 +628,31 @@ private:
 
 	double Distance_In_Grid_Scan_For_Hop_Hit_Results_Previous_Iteration{};
 
-	TArray<UParkour_Action_Data*> Airborne_To_Braced_Climb_Array{Braced_Jump_To_Climb_Airborne,
-														         Leap_Entry_To_Climb_Hang_Idle};
+	float Horizontal_Hop_Distance{};
+
+	float Vertical_Hop_Distance{};
+	
+	#pragma endregion
+
+	#pragma region Measure_Wall
+
+	double Wall_Height{};
+
+	double Wall_Depth{};
+
+	double Vault_Height{};
+
+	#pragma endregion
+	
+	#pragma region Data_Assets_TArrays
+
+
+	TArray<UParkour_Action_Data*> Braced_And_Ledge_Shimmy_180_Shimmy_Array{Climb_Shimmy_To_Shimmy_180_Vault,
+																		   Ledge_Turn_L_Vault,
+																		   Ledge_Turn_R_Vault};
+
+	TArray<UParkour_Action_Data*> Hanging_Shimmy_180_Shimmy_Array{Hanging_180_L,
+																  Hanging_180_R};
 
 	TArray<UParkour_Action_Data*> Ledge_Climb_Up_Array{Ledge_Climb_Up_Reverse, 
 													   Ledge_Climb_Up_TwoHand_L,
@@ -625,32 +679,29 @@ private:
 																   Ledge_Jump_R,
 																   Climb_Shimmy_Long_R_Right};
 
-	TArray<UParkour_Action_Data*> Braced_And_Ledge_Hop_Down{Braced_Hang_Hop_Down,
+	TArray<UParkour_Action_Data*> Braced_And_Ledge_Hop_Down_Array{Braced_Hang_Hop_Down,
 															Ledge_Jump_Down,
 															Climb_Leap_Down_To_Ledge};
 
-	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Left{/*Braced_Hang_Hop_Left_Up,*/
+	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Left_Array{Braced_Hang_Hop_Left_Up,
 																   Climb_Shimmy_Long_L_Up_Left};
 
-	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Right{/*Braced_Hang_Hop_Right_Up,*/
+	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Right_Array{Braced_Hang_Hop_Right_Up,
 																   Climb_Shimmy_Long_R_Up_Right};
 
-	float Horizontal_Hop_Distance{};
+	TArray<UParkour_Action_Data*> Exit_Ledge_Jump_Array{Exit_Ledge_Jump_L,
+												        Exit_Ledge_Jump_R};
 
-	float Vertical_Hop_Distance{};
+	TArray <UParkour_Action_Data*> Drop_Ledge_Array{Accelerating_Drop_Ledge_L,
+													Accelerating_Drop_Ledge_R,
+													Accelerating_Drop_Slide_Ledge_L,
+													Accelerating_Drop_Slide_Ledge_R};
 	
+	TArray <UParkour_Action_Data*> Drop_Hanging_Array{Accelerating_Drop_Hanging_L,
+													  Accelerating_Drop_Hanging_R};
+																   
 	#pragma endregion
 
-	#pragma region Measure_Wall
-
-	double Wall_Height{};
-
-	double Wall_Depth{};
-
-	double Vault_Height{};
-
-	#pragma endregion
-	
 #pragma endregion
 
 #pragma region Parkour_BP_Variables
@@ -733,10 +784,38 @@ private:
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Validate_In_Corner_Wall_Space_Trace_Types{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Shimmy_180_Rotation_To_Shimmy_Detect_Wall_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Shimmy_180_Rotation_To_Shimmy_Wall_Top_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Climb_Or_Hop_Trace_Types{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Hop_Top_Result_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Can_Fly_Hanging_Jump_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Can_Jump_From_Braced_Climb_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Can_Jump_From_Free_Hang_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Accelerating_Drop_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Accelerating_Drop_Detect_Wall_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Accelerating_Drop_Wall_Top_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Accelerating_Drop_Space_Check_Trace_Types{};
+
 
 
 	#pragma endregion
@@ -773,6 +852,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Leap_Entry_To_Climb_Hang_Idle;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Fly_Hanging_Jump;
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -907,6 +989,62 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Climb_Leap_Down_To_Ledge;
+
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Climb_Shimmy_To_Shimmy_180_Vault;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Turn_L_Vault;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Ledge_Turn_R_Vault;
+
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_180_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_180_R;
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Exit_Ledge_Jump_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Exit_Ledge_Jump_R;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Exit_Hanging_Jump;
+
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Accelerating_Drop_Ledge_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Accelerating_Drop_Ledge_R;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Accelerating_Drop_Slide_Ledge_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Accelerating_Drop_Slide_Ledge_R;
+
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Accelerating_Drop_Hanging_L;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Accelerating_Drop_Hanging_R;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Braced_Drop_Down;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* FreeHang_Drop_Down;
 	
 	#pragma endregion
 
@@ -958,6 +1096,10 @@ public:
 	void Execute_Parkour_Action();
 
 	void Release_From_Shimmying();
+
+	void Execute_Jump_Out_Of_Shimmy();
+
+	void Execute_Drop_Into_Shimmy();
 
 	FORCEINLINE bool Get_bIs_Falling() const {return bIs_Falling;}
 

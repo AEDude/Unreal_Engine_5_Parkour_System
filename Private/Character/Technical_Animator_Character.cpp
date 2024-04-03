@@ -132,7 +132,7 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 		{
 		
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATechnical_Animator_Character::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
@@ -147,7 +147,7 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 
 		EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
 
-		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Parkour_Ended);
+		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
 
 		EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Action_Started);
 
@@ -159,6 +159,16 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 		{
 			UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 		}
+}
+
+void ATechnical_Animator_Character::Jump()
+{
+	Super::Jump();
+
+	if(Custom_Movement_Component)
+	{
+		Custom_Movement_Component->Execute_Jump_Out_Of_Shimmy();
+	}
 }
 
 void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered(const FInputActionValue& Value)
@@ -293,7 +303,7 @@ void ATechnical_Animator_Character::On_Parkour_Ended(const FInputActionValue& Va
 	if(Custom_Movement_Component)
 	{
 		Custom_Movement_Component->Release_From_Shimmying();
-		Debug::Print(TEXT("Exited Parkour"), FColor::MakeRandomColor(), 8);
+		Custom_Movement_Component->Execute_Drop_Into_Shimmy();
 	}
 }
 

@@ -148,6 +148,8 @@ protected:
 
 	virtual void Tick(float Deltatime);
 
+	virtual void Jump() override;
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE USpringArmComponent* Get_Camera_Boom() const {return Camera_Boom;}

@@ -15,7 +15,13 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_No_Action, "Parkour.Action.No.Action")
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb, "Parkour.Action.Braced.Climb");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Accelerating_Drop, "Parkour.Action.Braced.Climb.Accelerating.Drop");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Normal_Drop, "Parkour.Action.Braced.Climb.Normal.Drop");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Falling_Climb, "Parkour.Action.Braced.Climb.Falling.Climb");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Falling_Climb_Slipped, "Parkour.Action.Braced.Climb.Falling.Climb.Slipped");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Climb_Up, "Parkour.Action.Braced.Climb.Climb.Up");
 
@@ -35,9 +41,19 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Hop_Left_Down, "Parkour.A
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Hop_Right_Down, "Parkour.Action.Braced.Climb.Hop.Right.Down");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Shimmy_180_Shimmy, "Parkour.Action.Braced.Climb.Shimmy.180.Shimmy");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb_Exit_Jump, "Parkour.Action.Braced.Climb.Exit.Jump");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang, "Parkour.Action.FreeHang");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Accelerating_Drop, "Parkour.Action.FreeHang.Accelerating.Drop");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Normal_Drop, "Parkour.Action.FreeHang.Normal.Drop");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Falling_Climb, "Parkour.Action.FreeHang.Falling.Climb");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Falling__Climb_Hanging_Jump, "Parkour.Action.FreeHang.Falling.Climb.Hanging.Jump");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Climb_Up, "Parkour.Action.FreeHang.Climb.Up");
 
@@ -46,6 +62,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Hop_Left, "Parkour.Action.Fre
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Hop_Right, "Parkour.Action.FreeHang.Hop.Right");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Hop_Down, "Parkour.Action.FreeHang.Hop.Down");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Shimmy_180_Shimmy, "Parkour.Action.FreeHang.Shimmy.180.Shimmy");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Exit_Jump, "Parkour.Action.FreeHang.Exit.Jump");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Corner_Move, "Parkour.Action.Corner.Move");
 
@@ -72,6 +92,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_Forward_Right, "Parkour.Direction.F
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_Backward_Left, "Parkour.Direction.Backward.Left");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_Backward_Right, "Parkour.Direction.Backward.Right");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Climb_Style_None, "Parkour.Climb.Style.None");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Climb_Style_Braced_Climb, "Parkour.Climb.Style.Braced.Climb");
 

@@ -16,7 +16,13 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_No_Action);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Accelerating_Drop);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Normal_Drop);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Falling_Climb);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Falling_Climb_Slipped);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Climb_Up);
 
@@ -36,9 +42,19 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Hop_Left_Down);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Hop_Right_Down);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Shimmy_180_Shimmy);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb_Exit_Jump);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Accelerating_Drop);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Normal_Drop);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Falling_Climb);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Falling__Climb_Hanging_Jump);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Climb_Up);
 
@@ -47,6 +63,10 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Hop_Left);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Hop_Right);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Hop_Down);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Shimmy_180_Shimmy);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_FreeHang_Exit_Jump);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Corner_Move);
 
@@ -73,6 +93,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_Forward_Right);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_Backward_Left);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_Backward_Right);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Climb_Style_None);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Climb_Style_Braced_Climb);
 
