@@ -66,48 +66,51 @@ private:
 	
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* DefaultMappingContext;
+	UInputMappingContext* DefaultMappingContext{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* Climbing_Mapping_Context;
+	UInputMappingContext* Climbing_Mapping_Context{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputMappingContext* Take_Cover_Mapping_Context;
+	UInputMappingContext* Take_Cover_Mapping_Context{};
 
 	/** Jump Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* JumpAction;
+	UInputAction* JumpAction{};
 
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* MoveAction;
+	UInputAction* MoveAction{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Climbing_Move_Action;
+	UInputAction* Climbing_Move_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Take_Cover_Move_Action;
+	UInputAction* Take_Cover_Move_Action{};
 
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* LookAction;
+	UInputAction* LookAction{};
 
-	//Parkour and Climb Inputs & Functions
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Parkour_Action;
+	//Parkour, Wall_Run, Climb Inputs & Functions
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Exit_Parkour_Action;
+	UInputAction* Parkour_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Climb_Action;
+	UInputAction* Exit_Parkour_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Climb_Hop_Action;
+	UInputAction* Wall_Run_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Take_Cover_Action;
+	UInputAction* Climb_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Climb_Hop_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Take_Cover_Action{};
 
 #pragma endregion
 
@@ -129,7 +132,9 @@ private:
 	void On_Parkour_Started(const FInputActionValue& Value);
 
 	void On_Parkour_Ended(const FInputActionValue& Value);
-	
+
+	void On_Wall_Run_Started(const FInputActionValue& Value);
+
 	void On_Climb_Action_Started(const FInputActionValue& Value);
 
 	void On_Climb_Hop_Action_Started(const FInputActionValue& Value);

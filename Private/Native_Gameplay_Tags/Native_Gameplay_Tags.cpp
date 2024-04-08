@@ -7,6 +7,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Ready_To_Climb, "Parkour.State.Ready.To
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Climb,"Parkour.State.Climb");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Wall_Run_Initialize, "Parkour.State.Wall.Run.Initialize");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Wall_Run, "Parkour.State.Wall.Run");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Mantle, "Parkour.State.Mantle");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Vault, "Parkour.State.Vault");
@@ -69,6 +73,22 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_FreeHang_Exit_Jump, "Parkour.Action.Fr
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Corner_Move, "Parkour.Action.Corner.Move");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_Start_Left, "Parkour.Action.Wall.Run.Start.Left");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_Start_Right, "Parkour.Action.Wall.Run.Start.Right");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_L_Jump_F, "Parkour.Action.Wall.Run.L.Jump.F");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_R_Jump_F, "Parkour.Action.Wall.Run.R.Jump.F");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_Left_Jump_90_R, "Parkour.Action.Wall.Run.Left.Jump.90.R");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_Right_Jump_90_L, "Parkour.Action.Wall.Run.Right.Jump.90.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_L_Finish, "Parkour.Action.Wall.Run.L.Finish");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_R_Finish, "Parkour.Action.Wall.Run.R.Finish");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Mantle, "Parkour.Action.Mantle");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Low_Vault, "Parkour.Action.Low.Vault");
@@ -98,3 +118,9 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Climb_Style_None, "Parkour.Climb.Style.None")
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Climb_Style_Braced_Climb, "Parkour.Climb.Style.Braced.Climb");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Climb_Style_FreeHang, "Parkour.Climb.Style.FreeHang");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Wall_Run_Side_None, "Parkour.Wall.Run.Side.None");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Wall_Run_Side_Left, "Parkour.Wall.Run.Side.Left");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Wall_Run_Side_Right, "Parkour.Wall.Run.Side.Right");

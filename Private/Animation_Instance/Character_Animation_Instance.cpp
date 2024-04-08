@@ -101,12 +101,17 @@ void UCharacter_Animation_Instance::Set_Parkour_Action_Implementation(const FGam
     Parkour_Action = New_Parkour_Action;
 }
 
-void UCharacter_Animation_Instance::Set_Climb_Style_Implementation(const FGameplayTag &New_Climb_Style)
+void UCharacter_Animation_Instance::Set_Parkour_Climb_Style_Implementation(const FGameplayTag &New_Climb_Style)
 {
    Parkour_Climb_Style = New_Climb_Style;
 }
 
-void UCharacter_Animation_Instance::Set_Climb_Direction_Implementation(const FGameplayTag &New_Climb_Direction)
+void UCharacter_Animation_Instance::Set_Parkour_Wall_Run_Side_Implementation(const FGameplayTag& New_Wall_Run_Side)
+{
+    Parkour_Wall_Run_Side = New_Wall_Run_Side;
+}
+
+void UCharacter_Animation_Instance::Set_Parkour_Direction_Implementation(const FGameplayTag &New_Climb_Direction)
 {
     Parkour_Direction = New_Climb_Direction;
 

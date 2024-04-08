@@ -149,6 +149,8 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 
 		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
 
+		EnhancedInputComponent->BindAction(Wall_Run_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Run_Started);
+
 		EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Action_Started);
 
 		EnhancedInputComponent->BindAction(Climb_Hop_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Hop_Action_Started);
@@ -168,6 +170,7 @@ void ATechnical_Animator_Character::Jump()
 	if(Custom_Movement_Component)
 	{
 		Custom_Movement_Component->Execute_Jump_Out_Of_Shimmy();
+		Custom_Movement_Component->Execute_Exit_Wall_Run_With_Jump_Forward();
 	}
 }
 
@@ -305,6 +308,12 @@ void ATechnical_Animator_Character::On_Parkour_Ended(const FInputActionValue& Va
 		Custom_Movement_Component->Release_From_Shimmying();
 		Custom_Movement_Component->Execute_Drop_Into_Shimmy();
 	}
+}
+
+void ATechnical_Animator_Character::On_Wall_Run_Started(const FInputActionValue& Value)
+{
+	if(Custom_Movement_Component)
+	Custom_Movement_Component->Execute_Wall_Run();
 }
 
 void ATechnical_Animator_Character::On_Climb_Action_Started(const FInputActionValue& Value)

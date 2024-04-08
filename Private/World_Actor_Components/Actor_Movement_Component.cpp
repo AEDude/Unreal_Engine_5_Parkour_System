@@ -63,7 +63,7 @@ void UActor_Movement_Component::Move_Component(const float& DeltaTime)
 		Component_Starting_Location = Component_Starting_Location + (Components_Movement_Normal * Maximum_Move_Distance);
 		//Set the location of the component
 		Component_Owner->SetActorLocation(Component_Starting_Location);
-		//Reverse teh velocity of the component.
+		//Reverse the velocity of the component.
 		Component_Velocity = -Component_Velocity;
 	}
 }
