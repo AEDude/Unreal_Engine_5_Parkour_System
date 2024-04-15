@@ -6,6 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 //#include "Gameplay_Tags/Gameplay_Tags.h"
 #include "Native_Gameplay_Tags/Native_Gameplay_Tags.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Custom_Movement_Component.generated.h"
 
 DECLARE_DELEGATE(F_On_Enter_Climb_State)
@@ -552,6 +553,8 @@ private:
 
 	void Set_bCan_Jump_From_Wall_Run_To_True();
 
+	void Stabilize_Movement_While_Free_Roaming();
+
 
 #pragma endregion
 
@@ -682,6 +685,10 @@ private:
 	FTimerHandle Set_bCan_Jump_From_Wall_Run_Timer_Handle{};
 
 	float Set_bCan_Jump_From_Wall_Run_Timer_Duration{1.f};
+
+	bool Do_Once_1{true};
+
+	bool Do_Once_2{true};
 	
 	#pragma endregion
 
@@ -711,10 +718,8 @@ private:
 													   Ledge_Climb_Up_Monkey, 
 													   Climb_Up_The_Ledge};
 
-	TArray<UParkour_Action_Data*> Hanging_Climb_Up_Array{Climb_Up_The_Ledge,
-														 Hanging_Climb_Up,
-														 Free_Hang_Climb_Up,
-														 Ledge_Climb_Up_Monkey};
+	TArray<UParkour_Action_Data*> Hanging_Climb_Up_Array{Hanging_Climb_Up,
+														 Free_Hang_Climb_Up};
 
 	TArray<UParkour_Action_Data*> Hop_Up_Array{Braced_Hang_Hop_Up,
 											   Ledge_Jump_Up_Power,
@@ -736,10 +741,10 @@ private:
 															Ledge_Jump_Down,
 															Climb_Leap_Down_To_Ledge};
 
-	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Left_Array{Braced_Hang_Hop_Left_Up,
+	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Left_Array{/*Braced_Hang_Hop_Left_Up,*/
 																   Climb_Shimmy_Long_L_Up_Left};
 
-	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Right_Array{Braced_Hang_Hop_Right_Up,
+	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Right_Array{/*Braced_Hang_Hop_Right_Up,*/
 																   Climb_Shimmy_Long_R_Up_Right};
 
 	TArray<UParkour_Action_Data*> Exit_Ledge_Jump_Array{Exit_Ledge_Jump_L,
@@ -1198,6 +1203,20 @@ public:
 	double Forward_Backward_Movement_Value{};
 
 	double Right_Left_Movement_Value{};
+
+	FVector Current_Input_Vector{};
+
+	FRotator Current_Input_Rotation{};
+
+	FRotator Target_Input_Rotation{};
+
+	double Interpolated_Forward_Backward_Movement_Value{};
+
+	double Interpolated_Right_Left_Movement_Value{};
+
+	FORCEINLINE FGameplayTag Get_Parkour_State() const {return Parkour_State;}
+
+	EDrawDebugTrace::Type Debug_Action{EDrawDebugTrace::None};
 
 #pragma endregion
 

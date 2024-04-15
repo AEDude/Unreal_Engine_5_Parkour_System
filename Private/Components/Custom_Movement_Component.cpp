@@ -2,7 +2,6 @@
 
 
 #include "Components/Custom_Movement_Component.h"
-#include "Kismet/KismetSystemLibrary.h"
 #include "Debug/DebugHelper.h"
 #include "Components/CapsuleComponent.h"
 #include "Character/Technical_Animator_Character.h"
@@ -1502,7 +1501,7 @@ void UCustom_Movement_Component::Parkour_Detect_Wall()
 			Parkour_Detect_Wall_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Initial_Front_Wall_Hit_Result,
 			false
 			);
@@ -1576,7 +1575,7 @@ void UCustom_Movement_Component::Grid_Scan_For_Hit_Results(const FVector& Previo
 				Parkour_Grid_Scan_For_Hit_Results_Trace_Types,
 				false,
 				TArray<AActor*>(),
-				EDrawDebugTrace::ForOneFrame,
+				Debug_Action,
 				Out_Hit,
 				true
 			);
@@ -1770,7 +1769,7 @@ void UCustom_Movement_Component::Calculate_Wall_Top_Surface()
 			Parkour_Analyzing_Top_Wall_Surface_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::None,
+			Debug_Action,
 			Out_Hit_1,
 			false
 			);
@@ -1817,7 +1816,7 @@ void UCustom_Movement_Component::Calculate_Wall_Top_Surface()
 			Parkour_Wall_Depth_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::None,
+			Debug_Action,
 			Out_Hit_2,
 			false
 		);
@@ -1851,7 +1850,7 @@ void UCustom_Movement_Component::Calculate_Wall_Vault_Location()
 		Parkour_Vault_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::None,
+		Debug_Action,
 		Out_Hit,
 		false
 	);
@@ -1949,7 +1948,7 @@ void UCustom_Movement_Component::Validate_bIs_On_Ground()
 			Parkour_Validate_On_Land_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Out_Hit,
 			false
 		);
@@ -1990,7 +1989,7 @@ void UCustom_Movement_Component::Decide_Climb_Style(const FVector& Impact_Point,
 		Parkour_Decide_Climb_Style_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::None,
+		Debug_Action,
 		Out_Hit,
 		false
 		);
@@ -2064,7 +2063,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 			Parkour_Climbing_Detect_Wall_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Parkour_Climbing_Detect_Wall_Hit_Result,
 			false
 			);
@@ -2119,7 +2118,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 						Parkour_Climbing_Wall_Top_Result_Trace_Types,
 						false,
 						TArray<AActor*>(),
-						EDrawDebugTrace::ForOneFrame,
+						Debug_Action,
 						Parkour_Climbing_Wall_Top_Result,
 						false
 						);
@@ -2220,7 +2219,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Are_There_Obstacles_On_Side
 			Parkour_Climbing_Check_Sides_Of_Hands_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Parkour_Climbing_Check_Sides,
 			false
 			);
@@ -2292,7 +2291,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Are_There_Obstacles_On_Side
 		Parkour_Climbing_Check_Sides_Of_Body_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForOneFrame,
+		Debug_Action,
 		Out_Hit,
 		false
 		);
@@ -2367,7 +2366,7 @@ void UCustom_Movement_Component::Parkour_Climb_Initialize_IK_Hands(const bool& b
 			Parkour_Shimmying_Initialize_IK_Hands_Detect_Wall_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForDuration,
+			Debug_Action,
 			Initialize_Parkour_Shimmying_IK_Hands_Detect_Wall_Hit_Result,
 			false
 		);
@@ -2411,7 +2410,7 @@ void UCustom_Movement_Component::Parkour_Climb_Initialize_IK_Hands(const bool& b
 					Parkour_Shimmying_Initialize_IK_Hands_Wall_Top_Trace_Types,
 					false,
 					TArray<AActor*>(),
-					EDrawDebugTrace::ForDuration,
+					Debug_Action,
 					Initialize_Parkour_Shimmying_IK_Hands_Wall_Top_Hit_Result,
 					false
 				);
@@ -2533,7 +2532,7 @@ void UCustom_Movement_Component::Parkour_Climb_Dynamic_IK_Hands(const bool& bIs_
 			Parkour_Shimmying_Dynamic_IK_Hands_Detect_Wall_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Parkour_Shimmying_Dynamic_IK_Hands_Detect_Wall_Hit_Result,
 			false
 		);
@@ -2575,7 +2574,7 @@ void UCustom_Movement_Component::Parkour_Climb_Dynamic_IK_Hands(const bool& bIs_
 					Parkour_Shimmying_Dynamic_IK_Hands_Wall_Top_Trace_Types,
 					false,
 					TArray<AActor*>(),
-					EDrawDebugTrace::ForOneFrame,
+					Debug_Action,
 					Parkour_Shimmying_Dynamic_IK_Hands_Wall_Top_Hit_Result,
 					false
 				);
@@ -2882,7 +2881,7 @@ void UCustom_Movement_Component::Parkour_Climb_Initialize_IK_Feet(const bool& bI
 			Parkour_Shimmying_Initialize_IK_Feet_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForDuration,
+			Debug_Action,
 			Initialize_Parkour_Shimmying_IK_Feet_Detect_Wall,
 			false
 		);
@@ -3000,7 +2999,7 @@ void UCustom_Movement_Component::Parkour_Climb_Dynamic_IK_Feet(const bool& bIs_L
 			Parkour_Shimmying_Dynamic_IK_Feet_Detect_Wall_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Parkour_Shimmying_Dynamic_IK_Feet_Detect_Wall_Hit_Result,
 			false
 		);
@@ -3107,7 +3106,7 @@ bool UCustom_Movement_Component::Validate_Out_Corner_Shimmying()
 			Parkour_Shimmying_Validate_Out_Corner_Wall_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Parkour_Shimmying_Validate_Out_Corner_Wall_Hit_Result,
 			false
 		);
@@ -3295,7 +3294,7 @@ bool UCustom_Movement_Component::Validate_In_Corner_Shimmying()
 			Parkour_Shimmying_Detect_In_Corner_Wall_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Parkour_Shimmying_Detect_In_Corner_Wall_Hit_Result,
 			false
 		);
@@ -3335,7 +3334,7 @@ bool UCustom_Movement_Component::Validate_In_Corner_Shimmying()
 						Parkour_Shimmying_In_Corner_Wall_Top_Result_Trace_Types,
 						false,
 						TArray<AActor*>(),
-						EDrawDebugTrace::ForOneFrame,
+						Debug_Action,
 						Parkour_Shimmying_In_Corner_Wall_Top_Result,
 						false
 					);
@@ -3385,7 +3384,7 @@ bool UCustom_Movement_Component::Validate_In_Corner_Shimmying()
 								Parkour_Shimmying_Validate_In_Corner_Wall_Space_Trace_Types,
 								false,
 								TArray<AActor*>(),
-								EDrawDebugTrace::ForOneFrame,
+								Debug_Action,
 								Parkour_Shimmying_Validate_In_Corner_Wall_Space,
 								false
 							);
@@ -3478,7 +3477,7 @@ bool UCustom_Movement_Component::Validate_Shimmy_180_Shimmy()
 			Validate_Shimmy_180_Rotation_To_Shimmy_Detect_Wall_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForDuration,
+			Debug_Action,
 			Shimmy_180_Rotation_To_Shimmy_Detect_Wall_Result,
 			false
 		);
@@ -3510,7 +3509,7 @@ bool UCustom_Movement_Component::Validate_Shimmy_180_Shimmy()
 					Validate_Shimmy_180_Rotation_To_Shimmy_Wall_Top_Trace_Types,
 					false,
 					TArray<AActor*>(),
-					EDrawDebugTrace::ForDuration,
+					Debug_Action,
 					Shimmy_180_Rotation_To_Shimmy_Wall_Top_Result,
 					false
 				);
@@ -3587,7 +3586,7 @@ bool UCustom_Movement_Component::Validate_Can_Mantle() const
 			Validate_Climb_Or_Hop_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForDuration,
+			Debug_Action,
 			Validate_Mantle_Hit_Result,
 			false
 		);
@@ -3668,7 +3667,7 @@ void UCustom_Movement_Component::Hop_Grid_Scan_For_Hop_Hit_Result(const FVector&
 				Parkour_Grid_Scan_For_Hit_Results_Trace_Types,
 				false,
 				TArray<AActor*>(),
-				EDrawDebugTrace::ForOneFrame,
+				Debug_Action,
 				Out_Hit,
 				true
 			);
@@ -3823,7 +3822,7 @@ void UCustom_Movement_Component::Get_Hop_Top_Result()
 		Parkour_Hop_Top_Result_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForDuration,
+		Debug_Action,
 		Out_Hit,
 		false
 		);
@@ -3837,7 +3836,7 @@ void UCustom_Movement_Component::Get_Hop_Top_Result()
 	else if(Out_Hit.bBlockingHit && !Out_Hit.bStartPenetrating)
 	{
 		Hop_Top_Hit_Result = Out_Hit;
-		Draw_Debug_Sphere(Hop_Top_Hit_Result.ImpactPoint, 15.f, FColor::Black, 7.f, false, 7.f);
+		//Draw_Debug_Sphere(Hop_Top_Hit_Result.ImpactPoint, 15.f, FColor::Black, 7.f, false, 7.f);
 	}
 }
 
@@ -3857,7 +3856,7 @@ bool UCustom_Movement_Component::Validate_Can_Fly_Hanging_Jump() const
 		Validate_Can_Fly_Hanging_Jump_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForDuration,
+		Debug_Action,
 		Out_Hit,
 		false
 	);
@@ -3891,7 +3890,7 @@ bool UCustom_Movement_Component::Validate_Can_Jump_From_Braced_Climb() const
 		Validate_Can_Jump_From_Braced_Climb_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForDuration,
+		Debug_Action,
 		Out_Hit,
 		false
 	);
@@ -3925,7 +3924,7 @@ bool UCustom_Movement_Component::Validate_Can_Jump_From_Free_Hang() const
 		Validate_Can_Jump_From_Free_Hang_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForDuration,
+		Debug_Action,
 		Out_Hit,
 		false
 	);
@@ -3966,7 +3965,7 @@ bool UCustom_Movement_Component::Validate_Drop_To_Shimmy(const int& Maximum_Dist
 			Validate_Accelerating_Drop_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForOneFrame,
+			Debug_Action,
 			Validate_Accelerating_Drop_Result,
 			false
 		);
@@ -4020,7 +4019,7 @@ bool UCustom_Movement_Component::Validate_Drop_To_Shimmy(const int& Maximum_Dist
 						Validate_Accelerating_Drop_Detect_Wall_Trace_Types,
 						false,
 						TArray<AActor*>(),
-						EDrawDebugTrace::ForOneFrame,
+						Debug_Action,
 						Accelerating_Drop_Detect_Wall_Result,
 						false
 					);
@@ -4068,7 +4067,7 @@ bool UCustom_Movement_Component::Validate_Drop_To_Shimmy(const int& Maximum_Dist
 									Validate_Accelerating_Drop_Wall_Top_Trace_Types,
 									false,
 									TArray<AActor*>(),
-									EDrawDebugTrace::ForOneFrame,
+									Debug_Action,
 									Accelerating_Drop_Wall_Top_Result,
 									false
 								);
@@ -4111,7 +4110,7 @@ bool UCustom_Movement_Component::Validate_Drop_To_Shimmy(const int& Maximum_Dist
 											Validate_Accelerating_Drop_Space_Check_Trace_Types,
 											false,
 											TArray<AActor*>(),
-											EDrawDebugTrace::ForDuration,
+											Debug_Action,
 											Accelerating_Drop_Space_Check,
 											false
 										);
@@ -4171,11 +4170,11 @@ void UCustom_Movement_Component::Realize_Wall_Run_Surfaces(const bool& bAnalyze_
 		this,
 		Start,
 		End,
-		5.f,
+		10.f,
 		Realize_Wall_Run_Surfaces_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForOneFrame,
+		Debug_Action,
 		Realize_Wall_Run_Surfaces_Hit_Result,
 		false
 	);
@@ -4296,14 +4295,14 @@ bool UCustom_Movement_Component::Analyze_And_Validate_Wall_Run_Surface()
 	if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
 	{
 		Direction_To_Wall_Run = FVector::CrossProduct(Wall_Run_Hit_Result.ImpactNormal, UpdatedComponent->GetUpVector());
-		Direction_To_Wall_Run.Normalize();
+		Direction_To_Wall_Run = Direction_To_Wall_Run.GetSafeNormal();
 		Debug::Print("Wall_Run_Left_Side_Direction_To_Wall_Run: " + Direction_To_Wall_Run.ToCompactString(), FColor::Green, 24);
 	}
 
 	else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
 	{
 		Direction_To_Wall_Run = FVector::CrossProduct(Wall_Run_Hit_Result.ImpactNormal, -UpdatedComponent->GetUpVector());
-		Direction_To_Wall_Run.Normalize();
+		Direction_To_Wall_Run = Direction_To_Wall_Run.GetSafeNormal();
 		Debug::Print("Wall_Run_Right_Side_Direction_To_Wall_Run: " + Direction_To_Wall_Run.ToCompactString(), FColor::Green, 24);
 	}
 
@@ -4410,7 +4409,7 @@ void UCustom_Movement_Component::Wall_Run_Detect_Wall(const bool& bAnalyze_Chara
 	FHitResult Wall_Run_Detect_Wall_Hit_Result{};
 
 	const FVector Start{Offset_Vector_1};
-	const FVector End{Move_Vector_Right(Start, Character_Direction_Arrow_Rotation, Side_Of_The_Character_To_Execute_The_Raycast * 200.f)};
+	const FVector End{Move_Vector_Right(Start, Character_Direction_Arrow_Rotation, Side_Of_The_Character_To_Execute_The_Raycast * 70.f)};
 
 	UKismetSystemLibrary::SphereTraceSingleForObjects(
 		this,
@@ -4420,7 +4419,7 @@ void UCustom_Movement_Component::Wall_Run_Detect_Wall(const bool& bAnalyze_Chara
 		Realize_Wall_Run_Surfaces_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForOneFrame,
+		Debug_Action,
 		Wall_Run_Detect_Wall_Hit_Result,
 		false
 	);
@@ -4460,7 +4459,7 @@ bool UCustom_Movement_Component::Validate_Can_Jump_From_Wall_Run() const
 		Validate_Can_Jump_From_Wall_Run_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForDuration,
+		Debug_Action,
 		Out_Hit,
 		false
 	);
@@ -5068,7 +5067,7 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 				if(Wall_Height >= 140 && Wall_Height <= 280 && Validate_Can_Start_Shimmying_While_Airborne())
 				{								
 												/*negative value in "Air_Speed" means character is falling*/  //Ground_Speed >= 700.f || Air_Speed <= -1000.f || Air_Speed <= 20.f
-					if((Ground_Speed >= 700.f && (Air_Speed <= -300.f || Air_Speed >= 300.f)) || (Air_Speed <= -100.f || Air_Speed >= 700.f))
+					if(Owning_Player_Character->Get_Is_Jogging() && (Air_Speed >= -200.f || Air_Speed <= 200.f))
 					{
 						Debug::Print("Parkour_Dynamic_Airorne_Climb", FColor::MakeRandomColor(), 7);
 
@@ -5080,13 +5079,21 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 						Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result;
 						
 						Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
-						
+
 						if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))))
 						{
-							Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb.Slipped"))));
-						}
+							if(Air_Speed <= -500.f)
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb.Slipped"))));
+							}
 
-						else if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.FreeHang"))))
+							else if(Air_Speed >= -499.f)
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb"))));
+							}
+						}
+						
+						if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.FreeHang"))))
 						{
 							if(Validate_Can_Fly_Hanging_Jump())
 							{
@@ -5097,25 +5104,6 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 							{
 								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Falling.Climb"))));
 							}
-						}
-						
-						else
-						{
-							Debug::Print("Parkour_Normal_Airorne_Climb", FColor::MakeRandomColor(), 7);
-							Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
-					
-							/*The FHitResult stored in the global FHitResult variable "Wall_Top_Result" is copied to the the global 
-							FHitResult variable New_Climb_Hit_Result so that when the function "Reset_Parkour_Variables()" is called within
-							"&UCustom_Movement_Component::Parkour_Call_In_Tick" and "&UCustom_Movement_Component::Set_Parkour_Action"
-							after each Parkour Action is complete within "&UCustom_Movement_Component::Play_Parkour_Montage" there will still be 
-							a location to begin the next sequence of ray casts.*/
-							Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result;
-
-							if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))))
-							Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb"))));
-
-							else if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.FreeHang"))))
-							Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Falling.Climb"))));
 						}
 					}
 
@@ -5197,6 +5185,8 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 
 	Ground_Speed = UKismetMathLibrary::VSizeXY(UpdatedComponent->GetComponentVelocity());
 	Air_Speed = UpdatedComponent->GetComponentVelocity().Z;
+
+	Stabilize_Movement_While_Free_Roaming();
 
 	Validate_bIs_On_Ground();
 
@@ -5454,7 +5444,7 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 			const FVector& Forward_Direction{UKismetMathLibrary::GetForwardVector(Controller_Rotation_Modified)};
 
 			//Add movement input to the character using the forward vector of the controller along with the "Forward_Backward_Movement_Value".
-			Owning_Player_Character->AddMovementInput(Forward_Direction, Forward_Backward_Movement_Value);
+			Owning_Player_Character->AddMovementInput(Forward_Direction, Interpolated_Forward_Backward_Movement_Value);
 			
 			Get_Controller_Direction();
 		}
@@ -5473,7 +5463,7 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 			const FVector& Right_Direction{UKismetMathLibrary::GetRightVector(Controller_Rotation_Modified)};
 
 			//Add movement input to the character using the right vector of the controller along with the "Right_Left_Movement_Value".
-			Owning_Player_Character->AddMovementInput(Right_Direction, Right_Left_Movement_Value);
+			Owning_Player_Character->AddMovementInput(Right_Direction, Interpolated_Right_Left_Movement_Value);
 
 			Get_Controller_Direction();
 		}
@@ -5494,6 +5484,72 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 			Parkour_Climb_Handle_Shimmying_Movement();
 		}
 	}
+}
+
+void UCustom_Movement_Component::Stabilize_Movement_While_Free_Roaming()
+{
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))) 
+    return;
+	
+	const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
+	
+	Current_Input_Vector = FVector(Right_Left_Movement_Value, Forward_Backward_Movement_Value, 0);
+
+	Current_Input_Rotation = UKismetMathLibrary::MakeRotFromX(Current_Input_Vector);
+	
+	FVector Interpolated_Direction{};
+	
+	if(UKismetMathLibrary::Abs(Forward_Backward_Movement_Value) > 0 || UKismetMathLibrary::Abs(Right_Left_Movement_Value) > 0)
+    {
+        if(Do_Once_1)
+        {
+            //Reset
+			Do_Once_2 = true;
+            	
+			//On_True
+            //Debug::Print("On_True", FColor::Green);
+			Target_Input_Rotation = Current_Input_Rotation;
+			Target_Input_Rotation = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation, Current_Input_Rotation, Delta_Time, 200.f);
+			Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation);
+			//UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Owning_Player_Character->GetActorLocation(), Target_Input_Rotation, 150.f, 0.f, 1.f);
+
+            Do_Once_1 = false;
+        }
+
+		else
+		{
+			//While_True
+			//Debug::Print("While_True", FColor::Yellow);
+			Target_Input_Rotation = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation, Current_Input_Rotation, Delta_Time, 200.f);
+			Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation);
+			//UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Owning_Player_Character->GetActorLocation(), Target_Input_Rotation, 150.f, 0.f, 1.f);
+		}
+    }
+
+    else
+    {
+        if(Do_Once_2)
+        {
+            //Reset
+			Do_Once_1 = true;
+            	
+            //On_False
+            //Debug::Print("On_False", FColor::Red);
+
+            Do_Once_2 = false;
+        }
+
+		else
+		{
+			//While_False
+			//Debug::Print("While_False", FColor::Red);
+		}
+    }
+
+	Interpolated_Forward_Backward_Movement_Value = Interpolated_Direction.Y;
+
+	Interpolated_Right_Left_Movement_Value = Interpolated_Direction.X;
 }
 
 void UCustom_Movement_Component::Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables()
@@ -6326,10 +6382,8 @@ void UCustom_Movement_Component::Execute_Random_Montage(TArray<UParkour_Action_D
 
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Climb.Up"))))
 		{
-			Array_To_Select_From.Emplace(Climb_Up_The_Ledge);
 			Array_To_Select_From.Emplace(Hanging_Climb_Up);
 			Array_To_Select_From.Emplace(Free_Hang_Climb_Up);
-			Array_To_Select_From.Emplace(Ledge_Climb_Up_Monkey);
 			
 			return;
 		}
@@ -6367,7 +6421,7 @@ void UCustom_Movement_Component::Execute_Random_Montage(TArray<UParkour_Action_D
 
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Hop.Left.Up"))))
 		{
-			Array_To_Select_From.Emplace(Braced_Hang_Hop_Left_Up);
+			//Array_To_Select_From.Emplace(Braced_Hang_Hop_Left_Up);
 			Array_To_Select_From.Emplace(Climb_Shimmy_Long_L_Up_Left);
 
 			return;
@@ -6375,7 +6429,7 @@ void UCustom_Movement_Component::Execute_Random_Montage(TArray<UParkour_Action_D
 
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Hop.Right.Up"))))
 		{
-			Array_To_Select_From.Emplace(Braced_Hang_Hop_Right_Up);
+			//Array_To_Select_From.Emplace(Braced_Hang_Hop_Right_Up);
 			Array_To_Select_From.Emplace(Climb_Shimmy_Long_R_Up_Right);
 
 			return;
@@ -6861,7 +6915,6 @@ void UCustom_Movement_Component::Execute_Drop_Into_Shimmy()
 
 				Debug::Print(TEXT("Executing_Accelerating_Drop_To_Shimmy"), FColor::MakeRandomColor(), 8);
 			}
-			
 		}
 	}
 
@@ -6890,10 +6943,8 @@ void UCustom_Movement_Component::Execute_Drop_Into_Shimmy()
 
 				Debug::Print(TEXT("Executing_Normal_Drop_To_Shimmy"), FColor::MakeRandomColor(), 8);
 			}
-			
 		}
 	}
-	
 }
 
 void UCustom_Movement_Component::Execute_Parkour_Action()

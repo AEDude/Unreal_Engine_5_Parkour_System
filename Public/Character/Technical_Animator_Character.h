@@ -12,11 +12,10 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
-struct FInputActionValue;
-
 class UCustom_Movement_Component;
 class UMotionWarpingComponent;
 
+struct FInputActionValue;
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -83,6 +82,9 @@ private:
 	UInputAction* MoveAction{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Jog_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Climbing_Move_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -104,6 +106,9 @@ private:
 	UInputAction* Wall_Run_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Debug_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Climb_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -120,14 +125,14 @@ private:
 	void Handle_Ground_Movement_Input_Triggered(const FInputActionValue& Value);
 
 	void Handle_Ground_Movement_Input_Completed(const FInputActionValue& Value);
-
+	
 	void Handle_Climb_Movement_Input(const FInputActionValue& Value);
 
 	void Handle_Take_Cover_Movement_Input(const FInputActionValue& Value);
-
 	
-	/** Called for looking input */
-	void Look(const FInputActionValue& Value);
+	void On_Jogging_Started(const FInputActionValue& Value);
+
+	void On_Jogging_Ended(const FInputActionValue& Value);
 
 	void On_Parkour_Started(const FInputActionValue& Value);
 
@@ -135,14 +140,31 @@ private:
 
 	void On_Wall_Run_Started(const FInputActionValue& Value);
 
+	void On_Debug_Action(const FInputActionValue& Value);
+
 	void On_Climb_Action_Started(const FInputActionValue& Value);
 
 	void On_Climb_Hop_Action_Started(const FInputActionValue& Value);
 
 	void On_Take_Cover_Action_Started(const FInputActionValue& Value);
 
+	
+	/** Called for looking input */
+	void Look(const FInputActionValue& Value);
+
 #pragma endregion
 
+#pragma region Variables
+
+double Up_Down_Look_Value{};
+
+double Left_Right_Look_Value{};
+
+bool bIs_Jogging{false};
+
+int Debug_Selector{};
+
+#pragma endregion
 			
 protected:
 	// APawn interface
@@ -164,5 +186,11 @@ public:
 	FORCEINLINE UCustom_Movement_Component* Get_Custom_Movement_Component() const {return Custom_Movement_Component;}
 
 	FORCEINLINE UMotionWarpingComponent* Get_Motion_Warping_Component() const {return Motion_Warping_Component;}
+
+	FORCEINLINE bool Get_Is_Jogging() const {return bIs_Jogging;}
+
+	FORCEINLINE double Get_Up_Down_Look_Value() const {return Up_Down_Look_Value;}
+
+	FORCEINLINE double Get_Left_Right_Look_Value() const {return Left_Right_Look_Value;}
 };
 

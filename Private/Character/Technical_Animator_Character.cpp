@@ -13,6 +13,7 @@
 #include "Debug/DebugHelper.h"
 #include "InputActionValue.h"
 #include "MotionWarpingComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -25,6 +26,7 @@ ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitia
 {
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 98.0f);
+	GetCapsuleComponent()->SetVisibility(true);
 		
 	// Don't rotate when the controller rotates. Let that just affect the camera.
 	bUseControllerRotationPitch = false;
@@ -34,17 +36,20 @@ ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitia
 	Custom_Movement_Component = Cast<UCustom_Movement_Component>(GetCharacterMovement());
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
+	GetCharacterMovement()->RotationRate = FRotator(0.0f, 270.0f, 0.0f); // ...at this rotation rate
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint.
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 700.f;
 	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 500.f;
+	GetCharacterMovement()->MaxWalkSpeed = 240.f;
+	GetCharacterMovement()->MaxAcceleration = 400.f;
+	GetCharacterMovement()->BrakingFrictionFactor = .5f;
+	GetCharacterMovement()->GroundFriction = 5.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 1000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
-
+	
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	Camera_Boom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera_Boom"));
 	Camera_Boom->SetupAttachment(RootComponent);
@@ -141,15 +146,21 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 		EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Climb_Movement_Input);
 		EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input);
 
-
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Look);
+
+		//Custom
+		EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Jogging_Started);
+
+		EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Jogging_Ended);
 
 		EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
 
 		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
 
 		EnhancedInputComponent->BindAction(Wall_Run_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Run_Started);
+
+		EnhancedInputComponent->BindAction(Debug_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Debug_Action);
 
 		EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Action_Started);
 
@@ -216,11 +227,21 @@ void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed(const
 			//When the call to "Handle_Ground_Movement_Input_Started" is completed this function will be called. It resets the values
 			//of the "Forward_Backward_Movement_Value" and the "Right_Left_Movement_Value" which are set within 
 			//"&Ucustom_Movement_Component::Add_Movement_Input". It also sets the FGameplaytag "Parkour_Direction" to
-			//"Parkour.Direction.None".
-			Custom_Movement_Component->Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			//"Parkour.Direction.None". The reason for the if check is because the custom ground locomotion within the Animation instance needs
+			//braking distance in order for some of the animations to work as intended. Therefore These variables will only be reset if the character is 
+			//not in Parkour_State "Parkour.State.Free.Roam".
+			if(Custom_Movement_Component->Get_Parkour_State() != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+			{
+				Custom_Movement_Component->Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+				Custom_Movement_Component->Forward_Backward_Movement_Value = 0.f;
+				Custom_Movement_Component->Right_Left_Movement_Value = 0.f;
+			}
 
-			Custom_Movement_Component->Forward_Backward_Movement_Value = 0.f;
-			Custom_Movement_Component->Right_Left_Movement_Value = 0.f;
+			else
+			{
+				Custom_Movement_Component->Forward_Backward_Movement_Value = 0.f;
+				Custom_Movement_Component->Right_Left_Movement_Value = 0.f;
+			}
 		}
 	}
 }
@@ -255,31 +276,57 @@ void ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input(const FInpu
 
 	if (Controller != nullptr)
 	{
-		const FVector Forward_Direction{FVector::CrossProduct(
-			-Custom_Movement_Component->Get_Take_Cover_Surface_Normal(),
-			GetActorRightVector()
-		)};
+		if(Custom_Movement_Component)
+		{
+			const FVector Forward_Direction{FVector::CrossProduct(
+				-Custom_Movement_Component->Get_Take_Cover_Surface_Normal(),
+				GetActorRightVector()
+			)};
 
-		const FVector Right_Direction{FVector::CrossProduct(
-			-Custom_Movement_Component->Get_Take_Cover_Surface_Normal(),
-			-GetActorUpVector()
-		)};
+			const FVector Right_Direction{FVector::CrossProduct(
+				-Custom_Movement_Component->Get_Take_Cover_Surface_Normal(),
+				-GetActorUpVector()
+			)};
 
-		// add movement 
-		AddMovementInput(Right_Direction, Movement_Vector.X); 
+			// add movement 
+			AddMovementInput(Right_Direction, Movement_Vector.X);
+		} 
 	}
 }
 
 void ATechnical_Animator_Character::Look(const FInputActionValue& Value)
 {
 	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
+	//FVector2D LookAxisVector = Value.Get<FVector2D>();
+	
+	Up_Down_Look_Value =  Value.Get<FVector2D>().Y;
+	Left_Right_Look_Value = Value.Get<FVector2D>().X;
 
 	if (Controller != nullptr)
 	{
 		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		AddControllerYawInput(Left_Right_Look_Value);
+		AddControllerPitchInput(Up_Down_Look_Value);
+	}
+}
+
+void ATechnical_Animator_Character::On_Jogging_Started(const FInputActionValue& Value)
+{
+	if(Custom_Movement_Component)
+	{
+		Custom_Movement_Component->MaxWalkSpeed = 500.f;
+		Custom_Movement_Component->MaxAcceleration = 1000.f;
+		bIs_Jogging = true;
+	}
+}
+
+void ATechnical_Animator_Character::On_Jogging_Ended(const FInputActionValue& Value)
+{
+	if(Custom_Movement_Component)
+	{
+		Custom_Movement_Component->MaxWalkSpeed = 240.f;
+		Custom_Movement_Component->MaxAcceleration = 270.f;
+		bIs_Jogging = false;
 	}
 }
 
@@ -314,6 +361,40 @@ void ATechnical_Animator_Character::On_Wall_Run_Started(const FInputActionValue&
 {
 	if(Custom_Movement_Component)
 	Custom_Movement_Component->Execute_Wall_Run();
+}
+
+void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Value)
+{
+	if(Custom_Movement_Component)
+	{
+		if(Debug_Selector == 2)
+		{
+			Debug_Selector = -1;
+		}
+		
+		Debug_Selector++;
+
+		switch(Debug_Selector)
+		{
+			case 0:
+			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::None;
+			GetCapsuleComponent()->SetVisibility(false);
+			Debug::Print("Debug_Mode_Changed: None", FColor::Emerald, 22);
+			break;
+			
+			case 1:
+			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::ForDuration;
+			GetCapsuleComponent()->SetVisibility(true);
+			Debug::Print("Debug_Mode_Changed: For_Duration", FColor::Emerald, 22);
+			break;
+
+			case 2:
+			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::ForOneFrame;
+			GetCapsuleComponent()->SetVisibility(true);
+			Debug::Print("Debug_Mode_Changed: For_One_Frame", FColor::Emerald, 22);
+			break;
+		}
+	}
 }
 
 void ATechnical_Animator_Character::On_Climb_Action_Started(const FInputActionValue& Value)
@@ -376,3 +457,4 @@ void ATechnical_Animator_Character::On_Take_Cover_Action_Started(const FInputAct
 		Custom_Movement_Component->Toggle_Take_Cover(false);
 	}
 }
+
