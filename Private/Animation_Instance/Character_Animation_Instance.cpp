@@ -8,6 +8,7 @@
 #include "Debug/DebugHelper.h"
 #include "Kismet/GameplayStatics.h"
 #include "KismetAnimationLibrary.h"
+#include "AnimCharacterMovementLibrary.h"
 
 
 void UCharacter_Animation_Instance::NativeInitializeAnimation()
@@ -33,11 +34,15 @@ void UCharacter_Animation_Instance::NativeThreadSafeUpdateAnimation(float DeltaS
 
 void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
 {
-    Super::NativeUpdateAnimation(DeltaSeconds);
-    
     if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
     Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
     return;
+    
+    Super::NativeUpdateAnimation(DeltaSeconds);
+
+    Get_Dynamic_Look_Offset_Values(DeltaSeconds);
+
+    Dynamic_Look_Offset_Weight(DeltaSeconds);
     
     Find_Ground_Locomotion_State();
    
@@ -53,8 +58,6 @@ void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
 
     Track_Ground_Locomotion_State_Jogging(EGround_Locomotion_State::EGLS_Jogging);
     Debug::Print("Jogging_Locomotion_Start_Angle: " + FString::FromInt(Locomotion_Start_Angle), FColor::Yellow, 7);
-
-    Dynamic_Look_Offset_Weight(DeltaSeconds);
 }
 
 void UCharacter_Animation_Instance::NativePostEvaluateAnimation()
@@ -77,15 +80,14 @@ void UCharacter_Animation_Instance::Update_Variables_On_Secondary_Thread(const f
     Get_Ground_Speed();
     Get_Air_Speed();
     Get_Velocity();
-    Get_Dynamic_Look_Offset_Values(DeltaSeconds);
+    Calculate_Direction();
+    Get_Predicted_Stop_Distance_Variables();
     Get_Should_Move();
     Get_Is_Falling();
     // Get_Is_Climbing();
     // Get_Climb_Velocity();
     // Get_Is_Taking_Cover();
     // Get_Take_Cover_Velocity();
-    Get_Predicted_Stop_Distance_Variables();
-    Calculate_Direction();
 
     if(Custom_Movement_Component)
     {
@@ -535,62 +537,80 @@ void UCharacter_Animation_Instance::Get_Predicted_Stop_Distance_Variables()
     Ground_Friction = Custom_Movement_Component->GroundFriction;
     Braking_Friction_Factor = Custom_Movement_Component->BrakingFrictionFactor;
     Braking_Deceleration_Walking = Custom_Movement_Component->BrakingDecelerationWalking;
+
+    if(Ground_Locomotion_State == EGround_Locomotion_State::EGLS_Idle)
+    {
+        Distance_To_Match = UAnimCharacterMovementLibrary::PredictGroundMovementStopLocation(Velocity, bUse_Seperate_Braking_Friction, Braking_Friction, 
+                                                                                             Ground_Friction, Braking_Friction_Factor, Braking_Deceleration_Walking).Length(); 
+    }
+
+    else
+    {
+        Distance_To_Match = 0.f;
+    }
 }
 
 void UCharacter_Animation_Instance::Get_Dynamic_Look_Offset_Values(const float& DeltaSeconds)
 {
-    if(Custom_Movement_Component == nullptr)
+    if(Custom_Movement_Component == nullptr || Technical_Animator_Character == nullptr)
     return;
-    
-    else if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
-    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))) || 
-    (UKismetMathLibrary::Abs(Forward_Backward_Movement_Value) == 0 && UKismetMathLibrary::Abs(Right_Left_Movement_Value) == 0))
-    {
-        Left_Right_Look_Value = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 7);
-    }
-
-    else if(UKismetMathLibrary::Abs(Forward_Backward_Movement_Value) == 0 && UKismetMathLibrary::Abs(Right_Left_Movement_Value) == 0)
-    {
-        Left_Right_Look_Value = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 7);
-    }
    
     else
     {
+        if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+        Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))) || 
+        (UKismetMathLibrary::Abs(Forward_Backward_Movement_Value) == 0 && UKismetMathLibrary::Abs(Right_Left_Movement_Value) == 0))
+        {
+            Left_Right_Look_Value = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 3);
+        }
+
+        if(Technical_Animator_Character->Get_Is_Jogging())
+        {
+            Left_Right_Look_Value = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 3);
+        }
+        
         Current_Input_Vector = FVector(Right_Left_Movement_Value, Forward_Backward_Movement_Value, 0);
 
 	    Current_Input_Rotation = UKismetMathLibrary::MakeRotFromX(Current_Input_Vector);
 
-	    //While_True
 	    Target_Input_Rotation = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation, Current_Input_Rotation, DeltaSeconds, 200.f);
 	    Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation);
+        if(bLook_Left_Right_Debug_Visibility)
 	    UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("pelvis"))), Target_Input_Rotation, 150.f, 0.f, 1.f);
 
         Target_Input_Rotation_1 = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation_1, Current_Input_Rotation, DeltaSeconds, 190.f);
 	    Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation_1);
+        if(bLook_Left_Right_Debug_Visibility)
 	    UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("spine_01"))), Target_Input_Rotation_1, 150.f, 0.f, 1.f);
 
         Target_Input_Rotation_2 = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation_2, Current_Input_Rotation, DeltaSeconds, 170.f);
 	    Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation_2);
+        if(bLook_Left_Right_Debug_Visibility)
 	    UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("spine_02"))), Target_Input_Rotation_2, 150.f, 0.f, 1.f);
 
         Target_Input_Rotation_3 = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation_3, Current_Input_Rotation, DeltaSeconds, 120.f);
 	    Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation_3);
+        if(bLook_Left_Right_Debug_Visibility)
 	    UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("spine_03"))), Target_Input_Rotation_3, 150.f, 0.f, 1.f);
 
-        // Target_Input_Rotation_4 = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation_4, Current_Input_Rotation, DeltaSeconds, 70.f);
-	    // Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation_4);
-	    // UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("spine_04"))), Target_Input_Rotation_4, 150.f, 0.f, 1.f);
+        Target_Input_Rotation_4 = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation_4, Current_Input_Rotation, DeltaSeconds, 70.f);
+	    Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation_4);
+        if(bLook_Left_Right_Debug_Visibility)
+	    UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("spine_04"))), Target_Input_Rotation_4, 150.f, 0.f, 1.f);
 
         // Target_Input_Rotation_5 = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation_5, Current_Input_Rotation, DeltaSeconds, 55.f);
 	    // Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation_5);
+        //if(bLook_Left_Right_Debug_Visibility)
 	    // UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("spine_05"))), Target_Input_Rotation_5, 150.f, 0.f, 1.f);
 
         // Target_Input_Rotation_5_5 = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation_5_5, Current_Input_Rotation, DeltaSeconds, 35.f);
 	    // Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation_5_5);
+        //if(bLook_Left_Right_Debug_Visibility)
 	    // UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("neck_01"))), Target_Input_Rotation_5_5, 150.f, 0.f, 1.f);
 
         // Target_Input_Rotation_7 = UKismetMathLibrary::RInterpTo_Constant(Target_Input_Rotation_7, Current_Input_Rotation, DeltaSeconds, 15.f);
 	    // Interpolated_Direction = UKismetMathLibrary::GetForwardVector(Target_Input_Rotation_7);
+        //if(bLook_Left_Right_Debug_Visibility)
 	    // UKismetSystemLibrary::DrawDebugCoordinateSystem(this, Mesh->GetSocketLocation(FName(TEXT("head"))), Target_Input_Rotation_7, 150.f, 0.f, 1.f);
     
         const double Initial_Left_Right_Look_Value_Raw{Interpolated_Direction.X * 
@@ -631,7 +651,7 @@ void UCharacter_Animation_Instance::Dynamic_Look_Offset_Weight(const float& Delt
     Dynamic_Look_Weight = 25.f;
 
     else
-    Dynamic_Look_Weight = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, .0001);;
+    Dynamic_Look_Weight = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 3.f);;
 }
 
 #pragma endregion

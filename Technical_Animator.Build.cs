@@ -17,6 +17,7 @@ public class Technical_Animator : ModuleRules
 		"MotionWarping",
 		"GameplayTags",
 		"Technical_Animator",
-		"AnimGraphRuntime"});
+		"AnimGraphRuntime",
+		"AnimationLocomotionLibraryRuntime"});
 	}
 }

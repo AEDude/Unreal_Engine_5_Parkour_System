@@ -10,10 +10,15 @@
 
 void APlayer_Camera_Manager::UpdateViewTargetInternal(FTViewTarget& OutVT, float DeltaTime)
 {
-    OutVT.SetNewTarget(Cast<ATechnical_Animator_Character>(GetOwningPlayerController()->GetPawn()));
+    Technical_Animator_Character = Cast<ATechnical_Animator_Character>(GetOwningPlayerController()->GetCharacter());
+    
+    if(!Technical_Animator_Character)
+    return;
+    
+    OutVT.SetNewTarget(Technical_Animator_Character);
 
     //Get the location of the owner.
-    const FVector Owner_Location{OutVT.Target->GetActorLocation()};
+    const FVector Owner_Location{Technical_Animator_Character->GetMesh()->GetSocketLocation(FName(TEXT("VB Camera")))};
 
     //Assign the controller rotation to the global FRotator "New_Camera_Rotation".
     New_Camera_Rotation = GetOwningPlayerController()->GetControlRotation();
@@ -25,7 +30,7 @@ void APlayer_Camera_Manager::UpdateViewTargetInternal(FTViewTarget& OutVT, float
     const FVector ControllerRight_Vector{UKismetMathLibrary::GetRightVector(New_Camera_Rotation)};
             
     //Offset the location of the camera upwards
-    const FVector Offset_1{Owner_Location + FVector(0, 0, 30.f)};
+    const FVector Offset_1{Owner_Location + FVector(0, 0, 140.f)};
 
     //Offset the location of the camera backwards so that it is behind the character.
     const FVector Offset_2{Offset_1 + (Controller_Forward_Vector * -220)};

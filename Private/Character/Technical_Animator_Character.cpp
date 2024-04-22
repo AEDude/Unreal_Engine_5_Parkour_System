@@ -14,6 +14,10 @@
 #include "InputActionValue.h"
 #include "MotionWarpingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Character_Direction/Character_Direction_Arrow.h"
+#include "Components/ArrowComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Animation_Instance/Character_Animation_Instance.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -92,6 +96,33 @@ void ATechnical_Animator_Character::BeginPlay()
 
 	else
 	UE_LOG(LogTemp, Warning, TEXT("Custom_Movement_Component && Character_Reference && Motion_Warping_Component && Follow_Camera INITIALIZATION FAILED"));
+
+	Character_Animation_Instance = Cast<UCharacter_Animation_Instance>(GetMesh()->GetAnimInstance());
+
+	if(Character_Animation_Instance)
+	{
+		Debug::Print("Character_Animation_Instance_Reference_Obtained_In_Character_Class");
+	}
+	
+	else
+	{
+		Debug::Print("Character_Animation_Instance_Reference_Not_Obtained_In_Character_Class");
+	}
+
+	TArray<AActor*> Actors{};
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), ACharacter_Direction_Arrow::StaticClass(), Actors);
+
+	if(Actors.IsValidIndex(0))
+	{
+		Character_Direction_Arrow = Cast<ACharacter_Direction_Arrow>(Actors[0]);
+		Debug::Print("Character_Direction_Arrow_Reference_Obtained_In_Character_Class");
+	}
+
+	else
+	{
+		Debug::Print("Character_Direction_Arrow_Reference_Not_Obtained_In_Character_Class");
+	}
+	
 }
 
 void ATechnical_Animator_Character::Tick(float Deltatime)
@@ -365,7 +396,7 @@ void ATechnical_Animator_Character::On_Wall_Run_Started(const FInputActionValue&
 
 void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Value)
 {
-	if(Custom_Movement_Component)
+	if(Custom_Movement_Component && Character_Direction_Arrow && Character_Animation_Instance)
 	{
 		if(Debug_Selector == 2)
 		{
@@ -379,18 +410,24 @@ void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Val
 			case 0:
 			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::None;
 			GetCapsuleComponent()->SetVisibility(false);
+			Character_Direction_Arrow->SetHidden(true);
+			Character_Animation_Instance->Set_bLook_Left_Right_Debug_Visibility(false);
 			Debug::Print("Debug_Mode_Changed: None", FColor::Emerald, 22);
 			break;
 			
 			case 1:
 			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::ForDuration;
 			GetCapsuleComponent()->SetVisibility(true);
+			Character_Direction_Arrow->SetHidden(false);
+			Character_Animation_Instance->Set_bLook_Left_Right_Debug_Visibility(true);
 			Debug::Print("Debug_Mode_Changed: For_Duration", FColor::Emerald, 22);
 			break;
 
 			case 2:
 			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::ForOneFrame;
 			GetCapsuleComponent()->SetVisibility(true);
+			Character_Direction_Arrow->SetHidden(false);
+			Character_Animation_Instance->Set_bLook_Left_Right_Debug_Visibility(true);
 			Debug::Print("Debug_Mode_Changed: For_One_Frame", FColor::Emerald, 22);
 			break;
 		}

@@ -9,12 +9,17 @@
 /**
  * 
  */
+
+class ATechnical_Animator_Character;
+
 UCLASS()
 class TECHNICAL_ANIMATOR_API APlayer_Camera_Manager : public APlayerCameraManager
 {
 	GENERATED_BODY()
 
 	protected:
+
+		ATechnical_Animator_Character* Technical_Animator_Character;
 
 		virtual void UpdateViewTargetInternal(FTViewTarget& OutVT, float DeltaTime) override;
 

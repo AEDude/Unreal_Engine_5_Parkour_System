@@ -168,6 +168,9 @@ private:
 	float Direction_For_Orientation_Warping{};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
+	float Distance_To_Match{};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	double Left_Right_Look_Value{0.f};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
@@ -234,6 +237,8 @@ private:
 	FVector Interpolated_Direction_7{};
 
 	double Look_At_Value_Final_Interpolation{};
+
+	bool bLook_Left_Right_Debug_Visibility{true};
 
 #pragma endregion
 	
@@ -467,8 +472,11 @@ protected:
 
 
 public:
+	
 	FORCEINLINE float Anim_Get_Air_Speed() const {return Air_Speed;}
 	FORCEINLINE float Anim_Get_Ground_Speed() const {return Ground_Speed;}
+	FORCEINLINE void Set_bLook_Left_Right_Debug_Visibility(const bool& bVisible) {bLook_Left_Right_Debug_Visibility = bVisible;}
+
 
 
 };	

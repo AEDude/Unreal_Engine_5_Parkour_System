@@ -14,6 +14,8 @@ class UInputMappingContext;
 class UInputAction;
 class UCustom_Movement_Component;
 class UMotionWarpingComponent;
+class UCharacter_Animation_Instance;
+class ACharacter_Direction_Arrow;
 
 struct FInputActionValue;
 
@@ -48,6 +50,12 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
 	UMotionWarpingComponent* Motion_Warping_Component;
+
+	UPROPERTY()
+	UCharacter_Animation_Instance* Character_Animation_Instance;
+	
+	UPROPERTY()
+	ACharacter_Direction_Arrow* Character_Direction_Arrow;
 
 
 #pragma endregion
