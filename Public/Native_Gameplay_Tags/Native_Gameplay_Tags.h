@@ -8,15 +8,21 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Ready_To_Climb);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Climb);
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Wall_Run_Initialize);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Initialize_Wall_Run);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Wall_Run);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Initialize_Wall_Pipe_Climb);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Wall_Pipe_Climb);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Mantle);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Vault);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_No_Action);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Free_Roam_Accelerating_Drop);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Braced_Climb);
 
@@ -91,6 +97,12 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Run_Right_Jump_90_L);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Run_L_Finish);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Run_R_Finish);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Attach_Grounded);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Attach_Airborne);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Fall_Down);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Mantle);
 

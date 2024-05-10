@@ -114,6 +114,9 @@ private:
 	UInputAction* Wall_Run_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Wall_Pipe_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Debug_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -146,7 +149,11 @@ private:
 
 	void On_Parkour_Ended(const FInputActionValue& Value);
 
+	void On_Parkour_Ended_Completed(const FInputActionValue& Value);
+
 	void On_Wall_Run_Started(const FInputActionValue& Value);
+
+	void On_Wall_Pipe_Climb_Started(const FInputActionValue& Value);
 
 	void On_Debug_Action(const FInputActionValue& Value);
 
@@ -172,9 +179,12 @@ bool bIs_Jogging{false};
 
 int Debug_Selector{};
 
+bool bDrop_To_Shimmy{false};
+
 #pragma endregion
 			
 protected:
+	
 	// APawn interface
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 	
@@ -186,6 +196,7 @@ protected:
 	virtual void Jump() override;
 
 public:
+	
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE USpringArmComponent* Get_Camera_Boom() const {return Camera_Boom;}
 	/** Returns FollowCamera subobject **/
@@ -200,5 +211,7 @@ public:
 	FORCEINLINE double Get_Up_Down_Look_Value() const {return Up_Down_Look_Value;}
 
 	FORCEINLINE double Get_Left_Right_Look_Value() const {return Left_Right_Look_Value;}
+
+	FORCEINLINE bool Get_bDrop_To_Shimmy() const {return bDrop_To_Shimmy;}
 };
 

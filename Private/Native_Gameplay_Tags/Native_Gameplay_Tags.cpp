@@ -7,15 +7,21 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Ready_To_Climb, "Parkour.State.Ready.To
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Climb,"Parkour.State.Climb");
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Wall_Run_Initialize, "Parkour.State.Wall.Run.Initialize");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Wall_Run_Initialize, "Parkour.State.Initialize.Wall.Run");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Wall_Run, "Parkour.State.Wall.Run");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Initialize_Wall_Pipe_Climb, "Parkour.State.Initialize.Wall.Pipe.Climb");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Wall_Pipe_Climb, "Parkour.State.Wall.Pipe.Climb");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Mantle, "Parkour.State.Mantle");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Vault, "Parkour.State.Vault");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_No_Action, "Parkour.Action.No.Action");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Free_Roam_Accelerating_Drop, "Parkour.Action.Free.Roam.Accelerating.Drop");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Braced_Climb, "Parkour.Action.Braced.Climb");
 
@@ -90,6 +96,12 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_Right_Jump_90_L, "Parkour.Act
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_L_Finish, "Parkour.Action.Wall.Run.L.Finish");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Run_R_Finish, "Parkour.Action.Wall.Run.R.Finish");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Attach_Grounded, "Parkour.Action.Wall.Pipe.Attach.Grounded");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Attach_Airborne, "Parkour.Action.Wall.Pipe.Attach.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Fall_Down, "Parkour.Action.Wall.Pipe.Fall.Down");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Mantle, "Parkour.Action.Mantle");
 

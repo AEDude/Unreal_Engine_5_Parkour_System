@@ -731,7 +731,8 @@ void UCharacter_Animation_Instance::Set_Left_Hand_Shimmy_Location_Implementation
 
     double Left_Hand_Shimmy_Location_Interpolation_Speed{};
     
-    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+       Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
     Left_Hand_Shimmy_Location_Interpolation_Speed = 15.f;
 
     else
@@ -752,7 +753,8 @@ void UCharacter_Animation_Instance::Set_Left_Hand_Shimmy_Rotation_Implementation
 
     double Left_Hand_Shimmy_Rotation_Interpolation_Speed{};
 
-    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+       Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
     Left_Hand_Shimmy_Rotation_Interpolation_Speed = 15.f;
     
     else
@@ -773,7 +775,8 @@ void UCharacter_Animation_Instance::Set_Left_Foot_Shimmy_Location_Implementation
 
     double Left_Foot_Shimmy_Location_Interpolation_Speed{};
     
-    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+       Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
     Left_Foot_Shimmy_Location_Interpolation_Speed = 35.f;
 
     else
@@ -794,7 +797,8 @@ void UCharacter_Animation_Instance::Set_Left_Foot_Shimmy_Rotation_Implementation
 
     double Left_Foot_Shimmy_Rotation_Interpolation_Speed{};
 
-    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+       Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
     Left_Foot_Shimmy_Rotation_Interpolation_Speed = 30.f;
     
     else
@@ -819,7 +823,8 @@ void UCharacter_Animation_Instance::Set_Right_Hand_Shimmy_Location_Implementatio
 
     double Right_Hand_Shimmy_Location_Interpolation_Speed{};
     
-    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+       Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
     Right_Hand_Shimmy_Location_Interpolation_Speed = 15.f;
 
     else
@@ -840,7 +845,8 @@ void UCharacter_Animation_Instance::Set_Right_Hand_Shimmy_Rotation_Implementatio
 
     double Right_Hand_Shimmy_Rotation_Interpolation_Speed{};
 
-    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+   if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+       Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
     Right_Hand_Shimmy_Rotation_Interpolation_Speed = 15.f;
     
     else
@@ -860,7 +866,8 @@ void UCharacter_Animation_Instance::Set_Right_Foot_Shimmy_Location_Implementatio
 
     double Right_Foot_Shimmy_Location_Interpolation_Speed{};
     
-    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+       Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
     Right_Foot_Shimmy_Location_Interpolation_Speed = 35.f;
 
     else
@@ -881,7 +888,8 @@ void UCharacter_Animation_Instance::Set_Right_Foot_Shimmy_Rotation_Implementatio
 
     double Right_Foot_Shimmy_Rotation_Interpolation_Speed{};
 
-    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
+    if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+       Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
     Right_Foot_Shimmy_Rotation_Interpolation_Speed = 15.f;
     
     else

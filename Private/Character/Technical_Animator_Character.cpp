@@ -165,44 +165,50 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 {
 	// Set up action bindings
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
-		{
+	{
 		
-		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATechnical_Animator_Character::Jump);
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+	// Jumping
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATechnical_Animator_Character::Jump);
+	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered);
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed);
-		EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Climb_Movement_Input);
-		EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input);
+	// Moving
+	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered);
+	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed);
+	EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Climb_Movement_Input);
+	EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input);
 
-		// Looking
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Look);
+	// Looking
+	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Look);
 
-		//Custom
-		EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Jogging_Started);
+	//Custom
+	EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Jogging_Started);
 
-		EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Jogging_Ended);
+	EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Jogging_Ended);
 
-		EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
+	EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
 
-		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
+	EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
 
-		EnhancedInputComponent->BindAction(Wall_Run_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Run_Started);
+	EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::None, this, &ATechnical_Animator_Character::On_Parkour_Ended_Completed);
 
-		EnhancedInputComponent->BindAction(Debug_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Debug_Action);
+	EnhancedInputComponent->BindAction(Wall_Run_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Run_Started);
 
-		EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Action_Started);
+	EnhancedInputComponent->BindAction(Wall_Pipe_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Pipe_Climb_Started);
 
-		EnhancedInputComponent->BindAction(Climb_Hop_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Hop_Action_Started);
+	EnhancedInputComponent->BindAction(Debug_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Debug_Action);
 
-		EnhancedInputComponent->BindAction(Take_Cover_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Take_Cover_Action_Started);
-		}
-		else
-		{
-			UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
-		}
+	EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Action_Started);
+
+	EnhancedInputComponent->BindAction(Climb_Hop_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Hop_Action_Started);
+
+	EnhancedInputComponent->BindAction(Take_Cover_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Take_Cover_Action_Started);
+
+	}
+
+	else
+	{
+		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
+	}
 }
 
 void ATechnical_Animator_Character::Jump()
@@ -323,6 +329,7 @@ void ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input(const FInpu
 			AddMovementInput(Right_Direction, Movement_Vector.X);
 		} 
 	}
+
 }
 
 void ATechnical_Animator_Character::Look(const FInputActionValue& Value)
@@ -385,13 +392,28 @@ void ATechnical_Animator_Character::On_Parkour_Ended(const FInputActionValue& Va
 	{
 		Custom_Movement_Component->Release_From_Shimmying();
 		Custom_Movement_Component->Execute_Drop_Into_Shimmy();
+		bDrop_To_Shimmy = true;
+		Custom_Movement_Component->Release_From_Parkour_Wall_Pipe_Climb();
 	}
+}
+
+void ATechnical_Animator_Character::On_Parkour_Ended_Completed(const FInputActionValue& Value)
+{
+	bDrop_To_Shimmy = false;
 }
 
 void ATechnical_Animator_Character::On_Wall_Run_Started(const FInputActionValue& Value)
 {
 	if(Custom_Movement_Component)
 	Custom_Movement_Component->Execute_Wall_Run();
+}
+
+void ATechnical_Animator_Character::On_Wall_Pipe_Climb_Started(const FInputActionValue& Value)
+{
+	if(Custom_Movement_Component)
+	{
+		Custom_Movement_Component->Execute_Parkour_Wall_Pipe_Climb();
+	}
 }
 
 void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Value)
@@ -489,6 +511,7 @@ void ATechnical_Animator_Character::On_Take_Cover_Action_Started(const FInputAct
 	{
 		Custom_Movement_Component->Toggle_Take_Cover(true);
 	}
+	
 	else
 	{
 		Custom_Movement_Component->Toggle_Take_Cover(false);

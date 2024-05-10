@@ -26,6 +26,7 @@ class ACharacter_Direction_Arrow;
 class IParkour_Locomotion_Interface;
 class APlayerController;
 class UParkour_Action_Data;
+class AWall_Pipe_Actor;
 
 UENUM(BlueprintType)
 namespace E_Custom_Movement_Mode
@@ -349,33 +350,36 @@ private:
 #pragma region Parkour_Pointers
 
 	UPROPERTY()
-	ACharacter_Direction_Arrow* Character_Direction_Arrow;
+	ACharacter_Direction_Arrow* Character_Direction_Arrow{};
 
 	UPROPERTY()
-	UCharacterMovementComponent* Character_Movement;
+	UCharacterMovementComponent* Character_Movement{};
 
 	UPROPERTY()
-	USkeletalMeshComponent* Mesh;
+	USkeletalMeshComponent* Mesh{};
 
 	UPROPERTY()
-	UCapsuleComponent* Capsule_Component;
+	UCapsuleComponent* Capsule_Component{};
 
 	UPROPERTY()
-	UAnimInstance* Anim_Instance;
+	UAnimInstance* Anim_Instance{};
 
 	UPROPERTY()
-	UMotionWarpingComponent* Motion_Warping_Component;
+	UMotionWarpingComponent* Motion_Warping_Component{};
 
 	UPROPERTY()
-	UCameraComponent* Camera_Component;
+	UCameraComponent* Camera_Component{};
 
 	UPROPERTY()
-	APlayerController* Player_Controller;
+	APlayerController* Player_Controller{};
 	
-	IParkour_Locomotion_Interface* Parkour_Interface;
+	IParkour_Locomotion_Interface* Parkour_Interface{};
 
 	UPROPERTY()
-	UParkour_Action_Data* Parkour_Data_Asset;
+	UParkour_Action_Data* Parkour_Data_Asset{};
+
+	UPROPERTY()
+	AWall_Pipe_Actor* Wall_Pipe_Actor{};
 
 #pragma endregion
 
@@ -453,6 +457,15 @@ private:
 	
 	bool Validate_Can_Jump_From_Wall_Run() const;
 
+	bool Validate_Drop_Off_Ledge_While_Sprinting();
+
+	bool Realize_Wall_Pipe_Surfaces();
+
+	void Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand);
+
+	void Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot);
+
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -523,6 +536,10 @@ private:
 
 	void Decide_Shimmy_180_Shimmy_Mantle_Or_Hop();
 
+	void Select_Random_Montage_To_Execute(TArray<UParkour_Action_Data*>& Array_To_Select_From);
+
+	void Initialize_Parkour_Data_Assets_Arrays();
+
 	void Execute_Random_Montage(TArray<UParkour_Action_Data*>& Array_To_Select_From);
 
 	FGameplayTag Get_Hop_Action_Based_On_Parkour_Direction(const FGameplayTag& Current_Parkour_Direction) const;
@@ -556,6 +573,10 @@ private:
 	void Stabilize_Movement_While_Free_Roaming();
 
 	void On_Landing_Impact();
+
+	void Move_Character_To_Front_Of_Pipe();
+
+	void Execute_Accelerating_Drop_Free_Roam();
 
 
 #pragma endregion
@@ -617,6 +638,8 @@ private:
 	FHitResult Realize_Wall_Run_Right_Side_Hit_Result{};
 
 	FHitResult Wall_Run_Hit_Result{};
+
+	FHitResult Realize_Wall_Pipe_Hit_Result{};
 	
 	#pragma endregion
 
@@ -691,6 +714,10 @@ private:
 	bool Do_Once_1{true};
 
 	bool Do_Once_2{true};
+
+	bool bReady_To_Initialize_Parkour_Wall_Pipe{false};
+
+	FVector Wall_Pipe_Forward_Vector{};
 	
 	#pragma endregion
 
@@ -704,52 +731,53 @@ private:
 
 	#pragma endregion
 	
-	#pragma region Data_Assets_TArrays
+	#pragma region Data_Assets_Arrays
 
 
-	TArray<UParkour_Action_Data*> Braced_And_Ledge_Shimmy_180_Shimmy_Array{Climb_Shimmy_To_Shimmy_180_Vault,
+	TArray<UParkour_Action_Data*> Braced_And_Ledge_Shimmy_180_Shimmy_Array{/* Climb_Shimmy_To_Shimmy_180_Vault,
 																		   Ledge_Turn_L_Vault,
-																		   Ledge_Turn_R_Vault};
+																		   Ledge_Turn_R_Vault */};
 
-	TArray<UParkour_Action_Data*> Hanging_Shimmy_180_Shimmy_Array{Hanging_180_L,
-																  Hanging_180_R};
+	TArray<UParkour_Action_Data*> Hanging_Shimmy_180_Shimmy_Array{/* Hanging_180_L,
+																  Hanging_180_R */};
 
-	TArray<UParkour_Action_Data*> Ledge_Climb_Up_Array{Ledge_Climb_Up_Reverse, 
+	TArray<UParkour_Action_Data*> Ledge_Climb_Up_Array{/* Ledge_Climb_Up_Reverse, 
 													   Ledge_Climb_Up_TwoHand_L,
 													   Ledge_Climb_Up_TwoHand_R,
 													   Ledge_Climb_Up_Monkey, 
-													   Climb_Up_The_Ledge};
+													   Climb_Up_The_Ledge */};
 
-	TArray<UParkour_Action_Data*> Hanging_Climb_Up_Array{Hanging_Climb_Up,
-														 Free_Hang_Climb_Up};
+	TArray<UParkour_Action_Data*> Hanging_Climb_Up_Array{/* Hanging_Climb_Up,
+														 Free_Hang_Climb_Up */};
 
-	TArray<UParkour_Action_Data*> Hop_Up_Array{Braced_Hang_Hop_Up,
+	TArray<UParkour_Action_Data*> Hop_Up_Array{/* Braced_Hang_Hop_Up,
 											   Ledge_Jump_Up_Power,
 											   Ledge_Jump_Up,
 											   Climb_Shimmy_Long_L_Up,
-											   Climb_Shimmy_Long_R_Up};
+											   Climb_Shimmy_Long_R_Up */};
 
-	TArray<UParkour_Action_Data*> Braced_And_Ledge_Hop_Left_Array{Braced_Hang_Hop_Left,
+	TArray<UParkour_Action_Data*> Braced_And_Ledge_Hop_Left_Array{/* Braced_Hang_Hop_Left,
 																  Ledge_Jump_L_Short,
 																  Ledge_Jump_L,
-																  Climb_Shimmy_Long_L_Left};
+																  Climb_Shimmy_Long_L_Left */};
 
-	TArray<UParkour_Action_Data*> Braced_And_Ledge_Hop_Right_Array{Braced_Hang_Hop_Right,
+	TArray<UParkour_Action_Data*> Braced_And_Ledge_Hop_Right_Array{/* Braced_Hang_Hop_Right,
 																   Ledge_Jump_R_Short,
 																   Ledge_Jump_R,
-																   Climb_Shimmy_Long_R_Right};
+																   Climb_Shimmy_Long_R_Right */};
 
-	TArray<UParkour_Action_Data*> Braced_And_Ledge_Hop_Down_Array{Braced_Hang_Hop_Down,
-															Ledge_Jump_Down,
-															Climb_Leap_Down_To_Ledge};
 
-	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Left_Array{/*Braced_Hang_Hop_Left_Up,*/
-																   Climb_Shimmy_Long_L_Up_Left};
+	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Left_Array{/*Braced_Hang_Hop_Left_Up,
+																   Climb_Shimmy_Long_L_Up_Left */};
 
-	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Right_Array{/*Braced_Hang_Hop_Right_Up,*/
-																   Climb_Shimmy_Long_R_Up_Right};
+	TArray<UParkour_Action_Data*> Braced_And_Adventure_Hop_Up_Right_Array{/* Braced_Hang_Hop_Right_Up,
+																   Climb_Shimmy_Long_R_Up_Right */};
 
-	TArray<UParkour_Action_Data*> Exit_Ledge_Jump_Forward_Array{Ledge_Climb_Up_Monkey_Vault,
+	TArray<UParkour_Action_Data*> Braced_And_Ledge_Hop_Down_Array{/* Braced_Hang_Hop_Down,
+																  Ledge_Jump_Down,
+															      Climb_Leap_Down_To_Ledge */};
+
+	TArray<UParkour_Action_Data*> Exit_Ledge_Jump_Forward_Array{/* Ledge_Climb_Up_Monkey_Vault,
 												        		Ledge_Climb_Up_Reverse_L_Vault,
 																Ledge_Climb_Up_Reverse_R_Vault,
 																Ledge_Climb_Up_Safety_L_Vault,
@@ -757,26 +785,36 @@ private:
 																Ledge_Climb_Up_Thief_L_Vault,
 																Ledge_Climb_Up_Thief_R_Vault,
 																Ledge_Climb_Up_TwoHand_L_Vault,
-																Ledge_Climb_Up_TwoHand_R_Vault};
+																Ledge_Climb_Up_TwoHand_R_Vault */};
 	
-	TArray<UParkour_Action_Data*> Exit_Ledge_Jump_Backward_Array{Exit_Ledge_Jump_Backward_L,
-												        Exit_Ledge_Jump_Backward_R};
+	TArray<UParkour_Action_Data*> Exit_Ledge_Jump_Backward_Array{/* Exit_Ledge_Jump_Backward_L,
+												        		 Exit_Ledge_Jump_Backward_R */};
 
-	TArray <UParkour_Action_Data*> Drop_Ledge_Array{Accelerating_Drop_Ledge_L,
+	TArray<UParkour_Action_Data*> Drop_Ledge_Array{/* Accelerating_Drop_Ledge_L,
 													Accelerating_Drop_Ledge_R,
 													Accelerating_Drop_Slide_Ledge_L,
-													Accelerating_Drop_Slide_Ledge_R};
+													Accelerating_Drop_Slide_Ledge_R */};
 	
-	TArray <UParkour_Action_Data*> Drop_Hanging_Array{Accelerating_Drop_Hanging_L,
-													  Accelerating_Drop_Hanging_R};
+	TArray<UParkour_Action_Data*> Drop_Hanging_Array{/* Accelerating_Drop_Hanging_L,
+													  Accelerating_Drop_Hanging_R */};
 
-	TArray <UParkour_Action_Data*> Landing_Down_Front_Array{Landing_Front_L,
-														    Landing_Front_R};
+	TArray<UParkour_Action_Data*> Landing_Down_Front_Array{/* Landing_Front_L,
+														    Landing_Front_R */};
 
-	TArray <UParkour_Action_Data*> Landing_Down_Roll_Array{Landing_Roll_A_L,
+	TArray<UParkour_Action_Data*> Landing_Down_Roll_Array{/* Landing_Roll_A_L,
 														   Landing_Roll_A_R,
 														   Landing_Roll_B_L,
-														   Landing_Roll_B_R};
+														   Landing_Roll_B_R */};
+
+	TArray<UParkour_Action_Data*> Free_Roam_Accelerating_Drop_Array{/* Dash_Drop,
+																    Jump_Drop,
+																    Monkey_Drop,
+																    Reverse_L_Drop,
+																    Reverse_R_Drop,
+																    Speed_L_Drop,
+																    Speed_R_Drop,
+																    Two_Hand_L_Drop,
+																    Two_Hand_R_Drop */};
 																   
 	#pragma endregion
 
@@ -903,8 +941,13 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Can_Jump_From_Wall_Run_Trace_Types{};
 
-	#pragma endregion
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Drop_Off_Ledge_While_Sprinting_Trace_Types{};
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Detect_Wall_Pipe_Trace_Types{};
+
+	#pragma endregion
 
 	#pragma region Parkour_Data_Assets
 
@@ -1216,6 +1259,45 @@ private:
 	UParkour_Action_Data* Landing_Roll_B_R;
 
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dash_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Jump_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Monkey_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Reverse_L_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Reverse_R_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Speed_L_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Speed_R_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Two_Hand_L_Drop;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Two_Hand_R_Drop;
+
+	
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_To_Wall_Pipe_Attach;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Jumping_To_Wall_Pipe_Attach;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Pipe_Fall_Down;
+
+
 	#pragma endregion
 
 
@@ -1275,6 +1357,14 @@ public:
 
 	void Execute_Exit_Wall_Run_With_Jump_Forward();
 
+	void Execute_Parkour_Wall_Pipe_Climb();
+
+	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
+
+	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot) {Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(bIs_Left_Foot);}
+
+	void Release_From_Parkour_Wall_Pipe_Climb();
+
 	FORCEINLINE bool Get_bIs_Falling() const {return bIs_Falling;}
 
 	double Forward_Backward_Movement_Value{};
@@ -1294,6 +1384,7 @@ public:
 	FORCEINLINE FGameplayTag Get_Parkour_State() const {return Parkour_State;}
 
 	EDrawDebugTrace::Type Debug_Action{EDrawDebugTrace::None};
+
 
 #pragma endregion
 
