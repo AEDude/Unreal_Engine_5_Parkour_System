@@ -18,6 +18,7 @@
 #include "Components/ArrowComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Animation_Instance/Character_Animation_Instance.h"
+#include "Net/UnrealNetwork.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -28,6 +29,9 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitializer& ObjectInitializer)
 	:	Super(ObjectInitializer.SetDefaultSubobjectClass<UCustom_Movement_Component>(ACharacter::CharacterMovementComponentName))
 {
+	//Set this actor to replicate for network compatibility.
+	bReplicates = true;
+
 	// Set size for collision capsule
 	GetCapsuleComponent()->InitCapsuleSize(42.f, 98.0f);
 	GetCapsuleComponent()->SetVisibility(true);
@@ -38,6 +42,9 @@ ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitia
 	bUseControllerRotationRoll = false;
 
 	Custom_Movement_Component = Cast<UCustom_Movement_Component>(GetCharacterMovement());
+	//Set this component to replicate for network compatibility.
+	Custom_Movement_Component->SetIsReplicated(true);
+
 	// Configure character movement
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 270.0f, 0.0f); // ...at this rotation rate
@@ -130,6 +137,15 @@ void ATechnical_Animator_Character::Tick(float Deltatime)
 	// Call the base class  
 	Super::Tick(Deltatime);
 
+}
+
+void ATechnical_Animator_Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATechnical_Animator_Character, bIs_Jogging);
+
+	DOREPLIFETIME(ATechnical_Animator_Character, bDrop_To_Shimmy);
 }
 
 void ATechnical_Animator_Character::Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority)
@@ -352,9 +368,7 @@ void ATechnical_Animator_Character::On_Jogging_Started(const FInputActionValue& 
 {
 	if(Custom_Movement_Component)
 	{
-		Custom_Movement_Component->MaxWalkSpeed = 500.f;
-		Custom_Movement_Component->MaxAcceleration = 1000.f;
-		bIs_Jogging = true;
+		Custom_Movement_Component->Execute_Start_Running();
 	}
 }
 
@@ -362,9 +376,7 @@ void ATechnical_Animator_Character::On_Jogging_Ended(const FInputActionValue& Va
 {
 	if(Custom_Movement_Component)
 	{
-		Custom_Movement_Component->MaxWalkSpeed = 240.f;
-		Custom_Movement_Component->MaxAcceleration = 270.f;
-		bIs_Jogging = false;
+		Custom_Movement_Component->Execute_Stop_Running();
 	}
 }
 
@@ -399,13 +411,29 @@ void ATechnical_Animator_Character::On_Parkour_Ended(const FInputActionValue& Va
 
 void ATechnical_Animator_Character::On_Parkour_Ended_Completed(const FInputActionValue& Value)
 {
+	if(HasAuthority())
+	bDrop_To_Shimmy = false;
+
+	else
+	Server_On_Parkour_Ended_Completed(Value);
+}
+
+void ATechnical_Animator_Character::Server_On_Parkour_Ended_Completed_Implementation(const FInputActionValue& Value)
+{
+	Multicast_On_Parkour_Ended_Completed(Value);
+}
+
+void ATechnical_Animator_Character::Multicast_On_Parkour_Ended_Completed_Implementation(const FInputActionValue& Value)
+{
 	bDrop_To_Shimmy = false;
 }
 
 void ATechnical_Animator_Character::On_Wall_Run_Started(const FInputActionValue& Value)
 {
 	if(Custom_Movement_Component)
-	Custom_Movement_Component->Execute_Wall_Run();
+	{
+		Custom_Movement_Component->Execute_Wall_Run();
+	}
 }
 
 void ATechnical_Animator_Character::On_Wall_Pipe_Climb_Started(const FInputActionValue& Value)

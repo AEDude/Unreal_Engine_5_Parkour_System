@@ -24,7 +24,7 @@ class UAnimMontage;
 class UCameraComponent;
 class ACharacter_Direction_Arrow;
 class IParkour_Locomotion_Interface;
-class APlayerController;
+class APlayer_Controller;
 class UParkour_Action_Data;
 class AWall_Pipe_Actor;
 
@@ -47,6 +47,8 @@ class TECHNICAL_ANIMATOR_API UCustom_Movement_Component : public UCharacterMovem
 	GENERATED_BODY()
 
 public:
+
+	UCustom_Movement_Component();
 
 	F_On_Enter_Climb_State On_Enter_Climb_State_Delegate;
 
@@ -371,14 +373,14 @@ private:
 	UCameraComponent* Camera_Component{};
 
 	UPROPERTY()
-	APlayerController* Player_Controller{};
+	APlayer_Controller* Player_Controller{};
 	
 	IParkour_Locomotion_Interface* Parkour_Interface{};
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	UParkour_Action_Data* Parkour_Data_Asset{};
 
-	UPROPERTY()
+	UPROPERTY(Replicated)
 	AWall_Pipe_Actor* Wall_Pipe_Actor{};
 
 #pragma endregion
@@ -399,11 +401,11 @@ private:
 
 	void Calculate_Wall_Vault_Location();
 
-	void Calculate_Wall_Height();
+	double Calculate_Wall_Height();
 	
-	void Calculate_Wall_Depth();
+	double Calculate_Wall_Depth();
 	
-	void Calculate_Vault_Height();
+	double Calculate_Vault_Height();
 
 	void Validate_bIs_On_Ground();
 
@@ -463,7 +465,15 @@ private:
 
 	void Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand);
 
+	void Parkour_Wall_Pipe_Climb_Dynamic_IK_Hands(const bool& bIs_Left_Hand);
+
 	void Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot);
+
+	void Parkour_Wall_Pipe_Climb_Dynamic_IK_Feet(const bool& bIs_Left_Foot);
+
+	bool Parkour_Wall_Pipe_Climb_State_Detect_Wall_Pipe(FHitResult& Parkour_Pipe_Climbing_Wall_Top_Result);
+
+	bool Parkour_Wall_Pipe_Climb_State_Are_There_Obstacles_Ontop_Or_Below_Body(const FVector& Movemement_Impact_Location) const;
 
 
 #pragma endregion
@@ -506,13 +516,13 @@ private:
 
 	void Calculate_And_Move_Character_To_New_Climb_Position(const FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, const FHitResult& Parkour_Climbing_Wall_Top_Result);
 
-	void Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Input_Location_To_Move_Character, const FRotator& Input_Rotation_For_Character_To_Face);
+	void Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Input_Location_To_Move_Character, const FRotator& Input_Rotation_For_Character_To_Face, const double& Interpolation_Speed_X, const double& Interpolation_Speed_Y, const double& Interpolation_Speed_Z);
 
 	void Dynamic_IK_Limbs();
 
 	void Reset_Parkour_IK_Hands(bool bIs_Left_Hand);
 
-	void Reset_Parkour_IK_Feet(bool bIs_Left_Hand);
+	void Reset_Parkour_IK_Feet(bool bIs_Left_Foot);
 
 	void Handle_Release_From_Shimmying();
 
@@ -578,6 +588,18 @@ private:
 
 	void Execute_Accelerating_Drop_Free_Roam();
 
+	void Parkour_Wall_Pipe_Climb_Handle_Pipe_Climbing_Movement();
+
+	void Calculate_And_Move_Character_To_New_Wall_Pipe_Climb_Position(const FHitResult& Parkour_Wall_Pipe_Climbing_Wall_Top_Result);
+
+
+	#pragma region Set_Network_Variables
+
+	void Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
+
+	void Set_Network_Variables(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector);
+	
+	#pragma endregion
 
 #pragma endregion
 
@@ -585,14 +607,19 @@ private:
 
 	#pragma region Gameplay_Tags
 	
+	UPROPERTY(Replicated)
 	FGameplayTag Parkour_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam")))};
 
+	UPROPERTY(Replicated)
 	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.None")))};
 
+	UPROPERTY(Replicated)
 	FGameplayTag Parkour_Wall_Run_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.None")))};
 
+	UPROPERTY(Replicated)
 	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
 
+	UPROPERTY(Replicated)
 	FGameplayTag Parkour_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))};
 
 	#pragma endregion
@@ -607,8 +634,10 @@ private:
 
 	FHitResult Front_Wall_Top_Edge_Best_Hit{};
 
+	UPROPERTY(Replicated)
 	FRotator Reversed_Front_Wall_Normal_Z{};
 
+	UPROPERTY(Replicated)
 	FHitResult Wall_Top_Result{};
 
 	FHitResult Wall_Depth_Result{};
@@ -640,6 +669,8 @@ private:
 	FHitResult Wall_Run_Hit_Result{};
 
 	FHitResult Realize_Wall_Pipe_Hit_Result{};
+
+	FHitResult Custom_Wall_Pipe_Actor_Forward_Vector_Hit_Result{};
 	
 	#pragma endregion
 
@@ -653,8 +684,10 @@ private:
 
 	double Distance_In_Grid_Scan_For_Hit_Results_Previous_Iteration{};
 
+	UPROPERTY(Replicated)
 	bool bIs_On_Ground{false};
 
+	UPROPERTY(Replicated)
 	bool bIs_Falling{false};
 
 	FTimerHandle Set_bIs_Falling_To_False_Timer_Handle{};
@@ -715,6 +748,7 @@ private:
 
 	bool Do_Once_2{true};
 
+	UPROPERTY(Replicated)
 	bool bReady_To_Initialize_Parkour_Wall_Pipe{false};
 
 	FVector Wall_Pipe_Forward_Vector{};
@@ -723,10 +757,13 @@ private:
 
 	#pragma region Measure_Wall
 
+	UPROPERTY(Replicated)
 	double Wall_Height{};
 
+	UPROPERTY(Replicated)
 	double Wall_Depth{};
 
+	UPROPERTY(Replicated)
 	double Vault_Height{};
 
 	#pragma endregion
@@ -946,6 +983,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Detect_Wall_Pipe_Trace_Types{};
+	
 
 	#pragma endregion
 
@@ -1303,6 +1341,108 @@ private:
 
 #pragma endregion
 
+#pragma region Network
+
+#pragma region Network_Core
+
+virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+UFUNCTION(Server, Reliable)
+void Server_Execute_Start_Running();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Execute_Start_Running();
+
+UFUNCTION(Server, Reliable)
+void Server_Execute_Stop_Running();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Execute_Stop_Running();
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_State);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_State);
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_State(const FGameplayTag& New_Parkour_State);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_State(const FGameplayTag& New_Parkour_State);
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_Climb_Style(const FGameplayTag& New_Climb_Style);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_Climb_Style(const FGameplayTag& New_Climb_Style);
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_Direction(const FGameplayTag& New_Direction);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_Direction(const FGameplayTag& New_Direction);
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
+
+UFUNCTION(Server, Reliable)
+void Server_Decide_Parkour_Action();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Decide_Parkour_Action();
+
+UFUNCTION(Server, Reliable)
+void Server_Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face, const double& Interpolation_Speed_X, const double& Interpolation_Speed_Y, const double& Interpolation_Speed_Z);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face, const double& Interpolation_Speed_X, const double& Interpolation_Speed_Y, const double& Interpolation_Speed_Z);
+
+UFUNCTION(Server, Reliable)
+void Server_Move_Character_To_Front_Of_Pipe();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Move_Character_To_Front_Of_Pipe();
+
+#pragma endregion
+
+#pragma region Set_Network_Variables
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Network_Variables(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Network_Variables(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector);
+
+#pragma endregion
+
+#pragma region Network_Traces
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
+
+UFUNCTION(Server, Reliable)
+void Server_Decide_Climb_Style(const FVector& Impact_Point, const FRotator& Direction_For_Character_To_Face);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Decide_Climb_Style(const FVector& Impact_Point, const FRotator& Direction_For_Character_To_Face);
+
+#pragma endregion
+
+#pragma endregion
+
 #pragma endregion
 
 
@@ -1359,6 +1499,10 @@ public:
 
 	void Execute_Parkour_Wall_Pipe_Climb();
 
+	void Execute_Start_Running();
+
+	void Execute_Stop_Running();
+
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot) {Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(bIs_Left_Foot);}
@@ -1367,8 +1511,10 @@ public:
 
 	FORCEINLINE bool Get_bIs_Falling() const {return bIs_Falling;}
 
+	UPROPERTY(Replicated)
 	double Forward_Backward_Movement_Value{};
 
+	UPROPERTY(Replicated)
 	double Right_Left_Movement_Value{};
 
 	FVector Current_Input_Vector{};

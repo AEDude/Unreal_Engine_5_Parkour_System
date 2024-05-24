@@ -58,6 +58,8 @@ void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
 
     Track_Ground_Locomotion_State_Jogging(EGround_Locomotion_State::EGLS_Jogging);
     Debug::Print("Jogging_Locomotion_Start_Angle: " + FString::FromInt(Locomotion_Start_Angle), FColor::Yellow, 7);
+
+    Calculate_Dynamic_Lean_Angle();
 }
 
 void UCharacter_Animation_Instance::NativePostEvaluateAnimation()
@@ -652,6 +654,35 @@ void UCharacter_Animation_Instance::Dynamic_Look_Offset_Weight(const float& Delt
 
     else
     Dynamic_Look_Weight = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 3.f);;
+}
+
+void UCharacter_Animation_Instance::Calculate_Dynamic_Lean_Angle()
+{
+    if(!Technical_Animator_Character)
+    return;
+
+    //Set the value for the character yaw during the previous frame with the value that is set within the global float variable "Character_Yaw". 
+    //This will be subtracted from the yaw of the current frame to get the delta between the two variables which will then be used to get the rate of change.. 
+    const float Character_Yaw_During_Last_Tick{Character_Yaw};
+
+    //Set the value for the character yaw during the current frame into the global variable Character_Yaw.
+    Character_Yaw = Technical_Animator_Character->GetActorRotation().Yaw;
+
+    //Get the delta between the value set within the local float variable "Character_Yaw_During_Last_Tick" and the value set within the global float variable 
+    //"Character_Yaw".
+    const float Yaw_Delta_Between_Current_Tick_And_Previous_Tick{Character_Yaw - Character_Yaw_During_Last_Tick};
+
+    /*Calculate the "Dynamic_Lean_Angle" (rate of change in the yaw of the character) by safe dividing the value within the local float variable 
+    "Yaw_Delta_Between_Current_Tick_And_Previous_Tick" by "DeltaTime". SafeDivide will make sure that if the value is set to "0" no exceptions will be launched.
+    Once the value is calculated clamp said value between -1 and 1 w/ -1 reprenting the character rotating/turning (yaw) to the left while running or walking
+    and 1 representing the character rotating/turning (yaw) to the right while running or walking. */
+
+    const double DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+    Dynamic_Lean_Angle = UKismetMathLibrary::Clamp(UKismetMathLibrary::SafeDivide(Yaw_Delta_Between_Current_Tick_And_Previous_Tick, DeltaTime), -1, 1);
+
+    Debug::Print("Dynamic_Lean_Angle: " + FString::SanitizeFloat(Dynamic_Lean_Angle), FColor::Green, 70);
+
 }
 
 #pragma endregion

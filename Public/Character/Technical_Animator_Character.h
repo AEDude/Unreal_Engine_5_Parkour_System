@@ -175,14 +175,29 @@ double Up_Down_Look_Value{};
 
 double Left_Right_Look_Value{};
 
+UPROPERTY(Replicated)
 bool bIs_Jogging{false};
 
 int Debug_Selector{};
 
+UPROPERTY(Replicated)
 bool bDrop_To_Shimmy{false};
 
 #pragma endregion
-			
+
+#pragma region Network
+
+virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+UFUNCTION(Server, Reliable)
+void Server_On_Parkour_Ended_Completed(const FInputActionValue& Value);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_On_Parkour_Ended_Completed(const FInputActionValue& Value);
+
+#pragma endregion
+
+
 protected:
 	
 	// APawn interface
@@ -205,6 +220,8 @@ public:
 	FORCEINLINE UCustom_Movement_Component* Get_Custom_Movement_Component() const {return Custom_Movement_Component;}
 
 	FORCEINLINE UMotionWarpingComponent* Get_Motion_Warping_Component() const {return Motion_Warping_Component;}
+
+	FORCEINLINE bool Set_Is_Jogging(const bool& Is_Character_Jogging) {return bIs_Jogging = Is_Character_Jogging;}
 
 	FORCEINLINE bool Get_Is_Jogging() const {return bIs_Jogging;}
 

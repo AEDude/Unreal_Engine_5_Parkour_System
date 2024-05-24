@@ -3,6 +3,7 @@
 
 #include "Data_Asset/Parkour_Action_Data.h"
 #include "Components/Custom_Movement_Component.h"
+/* #include "Net/UnrealNetwork.h" */
 
 /*UParkour_Action_Data::UParkour_Action_Data()
 {
@@ -39,3 +40,11 @@
         UE_LOG(LogTemp, Warning, TEXT("Succeeded in using Parkour Data Asset"));
     }
 }*/
+
+/* void UParkour_Action_Data::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(UParkour_Action_Data, In_State);
+    DOREPLIFETIME(UParkour_Action_Data, Out_State);
+} */

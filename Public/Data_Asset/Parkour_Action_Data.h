@@ -90,11 +90,11 @@ private:
 
 
 	//Will store the gameplay tag which is needed to activate the parkour complete.
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(/* Replicated, */ EditAnywhere)
 	FGameplayTag In_State{}; // Element 2 in "TArray<FParkour_Action_Settings> Parkour_Settings" 
 
 	//Will store the gameplay tag that will be set when the parkour montage is complete.
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(/* Replicated, */ EditAnywhere)
 	FGameplayTag Out_State{};
 
 
@@ -139,6 +139,8 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float Warp_3_Z_Offset{};
+
+	/* virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; */
 
 public:
 
