@@ -102,7 +102,17 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Attach_Grounded);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Attach_Airborne);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Jump_Up);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Jump_Down);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Jump_Left);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Jump_Right);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Fall_Down);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Wall_Pipe_Climb_Up_2_Hand);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Mantle);
 

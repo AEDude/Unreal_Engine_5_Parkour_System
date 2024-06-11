@@ -101,7 +101,17 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Attach_Grounded, "Parkour.Ac
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Attach_Airborne, "Parkour.Action.Wall.Pipe.Attach.Airborne");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Jump_Up, "Parkour.Action.Wall.Pipe.Jump.Up");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Jump_Down, "Parkour.Action.Wall.Pipe.Jump.Down");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Jump_Left, "Parkour.Action.Wall.Pipe.Jump.Left");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Jump_Right, "Parkour.Action.Wall.Pipe.Jump.Right");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Fall_Down, "Parkour.Action.Wall.Pipe.Fall.Down");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Climb_Up_2_Hand, "Parkour.Action.Wall.Pipe.Climb.Up.2.Hand");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Mantle, "Parkour.Action.Mantle");
 

@@ -46,6 +46,7 @@ ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitia
 	Custom_Movement_Component->SetIsReplicated(true);
 
 	// Configure character movement
+	GetCharacterMovement()->SetIsReplicated(true);
 	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 270.0f, 0.0f); // ...at this rotation rate
 
@@ -73,6 +74,7 @@ ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitia
 	Follow_Camera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm.
 
 	Motion_Warping_Component = CreateDefaultSubobject<UMotionWarpingComponent>(TEXT("C++ Motion Warping Component"));
+	Motion_Warping_Component->SetIsReplicated(true);
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
@@ -394,6 +396,7 @@ void ATechnical_Animator_Character::On_Parkour_Started(const FInputActionValue& 
 		{
 			Debug::Print(TEXT("Parkour_Is_Working"), FColor::MakeRandomColor(), 8);
 			Custom_Movement_Component->Execute_Parkour_Action();
+			Custom_Movement_Component->Execute_Parkour_Wall_Pipe_Climb_Action();
 		}
 	}
 }
