@@ -1,7 +1,18 @@
 
 #include "Native_Gameplay_Tags/Native_Gameplay_Tags.h"
 
+#pragma region Parkour_Region
+
+
+#pragma region Parkour_State
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Free_Roam, "Parkour.State.Free.Roam");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Jump, "Parkour.State.Jump");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Mantle, "Parkour.State.Mantle");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Vault, "Parkour.State.Vault");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Ready_To_Climb, "Parkour.State.Ready.To.Climb");
 
@@ -15,9 +26,14 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Initialize_Wall_Pipe_Climb, "Parkour.St
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Wall_Pipe_Climb, "Parkour.State.Wall.Pipe.Climb");
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Mantle, "Parkour.State.Mantle");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Initialize_Balance_Walk, "Parkour.State.Initialize.Balance.Walk");
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Vault, "Parkour.State.Vault");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Balance_Walk, "Parkour.State.Balance.Walk");
+
+#pragma endregion
+
+
+#pragma region Parkour_Action
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_No_Action, "Parkour.Action.No.Action");
 
@@ -119,6 +135,37 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Low_Vault, "Parkour.Action.Low.Vault")
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_High_Vault, "Parkour.Action.High.Vault");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_Up, "Parkour.Action.Jump.Up");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Accurate_Jump_Start_L, "Parkour.Action.Accurate.Jump.Start.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Accurate_Jump_Start_R, "Parkour.Action.Accurate.Jump.Start.R");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Accurate_Jump_Start_L_Warp, "Parkour.Action.Accurate.Jump.Start.L.Warp");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Accurate_Jump_Start_R_Warp, "Parkour.Action.Accurate.Jump.Start.R.Warp");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Accurate_Jump_Finish, "Parkour.Action.Accurate.Jump.Finish");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_Front_L_Start, "Parkour.Action.Jump.Front.L.Start");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_Front_R_Start, "Parkour.Action.Jump.Front.R.Start");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_Front_L_Start_Warp, "Parkour.Action.Jump.Front.L.Start.Warp");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_Front_R_Start_Warp, "Parkour.Action.Jump.Front.R.Start.Warp");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_Finish, "Parkour.Action.Jump.Finish");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_One_L, "Parkour.Action.Jump.One.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_One_R, "Parkour.Action.Jump.One.R");
+
+#pragma endregion
+
+
+#pragma region Parkour_Direction
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_No_Direction, "Parkour.Direction.None");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_Left, "Parkour.Direction.Left");
@@ -137,17 +184,33 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_Backward_Left, "Parkour.Direction.B
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_Backward_Right, "Parkour.Direction.Backward.Right");
 
+
+#pragma endregion
+
+
+#pragma region Parkour_Climb_Style
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Climb_Style_None, "Parkour.Climb.Style.None");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Climb_Style_Braced_Climb, "Parkour.Climb.Style.Braced.Climb");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Climb_Style_FreeHang, "Parkour.Climb.Style.FreeHang");
 
+#pragma endregion
+
+
+#pragma region Parkour_Wall_Run
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Wall_Run_Side_None, "Parkour.Wall.Run.Side.None");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Wall_Run_Side_Left, "Parkour.Wall.Run.Side.Left");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Wall_Run_Side_Right, "Parkour.Wall.Run.Side.Right");
+
+#pragma endregion
+
+
+#pragma region Parkour_Landing
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Landing_Down_Light, "Parkour.Landing.Down.Light");
 
@@ -156,3 +219,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Landing_Down_Impact, "Parkour.Landing.Down.Im
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Landing_Down_Front_L, "Parkour.Landing.Down.Front");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Landing_Down_Roll, "Parkour.Landing.Down.Roll");
+
+#pragma endregion
+
+
+#pragma endregion

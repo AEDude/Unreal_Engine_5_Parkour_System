@@ -16,6 +16,8 @@ class UCustom_Movement_Component;
 class UMotionWarpingComponent;
 class UCharacter_Animation_Instance;
 class ACharacter_Direction_Arrow;
+class AWall_Pipe_Actor;
+class ABalance_Traversal_Actor;
 
 struct FInputActionValue;
 
@@ -189,11 +191,32 @@ bool bDrop_To_Shimmy{false};
 
 virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+
+#pragma region Character_Network
+
 UFUNCTION(Server, Reliable)
 void Server_On_Parkour_Ended_Completed(const FInputActionValue& Value);
 
-UFUNCTION(NetMulticast, Reliable)
-void Multicast_On_Parkour_Ended_Completed(const FInputActionValue& Value);
+#pragma endregion
+
+
+#pragma region World_Actors_Network
+
+UPROPERTY(ReplicatedUsing = On_Replication_Wall_Pipe_Actor)
+AWall_Pipe_Actor* Wall_Pipe_Actor{};
+
+UFUNCTION()
+void On_Replication_Wall_Pipe_Actor(AWall_Pipe_Actor* Previous_Wall_Pipe_Actor);
+
+UPROPERTY(ReplicatedUsing = On_Replication_Balance_Traversal_Actor)
+ABalance_Traversal_Actor* Balance_Traversal_Actor{};
+
+UFUNCTION()
+void On_Replication_Balance_Traversal_Actor(ABalance_Traversal_Actor* Previous_Balance_Traversal_Actor);
+
+
+#pragma endregion
+
 
 #pragma endregion
 
@@ -230,5 +253,10 @@ public:
 	FORCEINLINE double Get_Left_Right_Look_Value() const {return Left_Right_Look_Value;}
 
 	FORCEINLINE bool Get_bDrop_To_Shimmy() const {return bDrop_To_Shimmy;}
+
+	void Set_Overlapping_Wall_Pipe_Actor(AWall_Pipe_Actor* Overlapping_Wall_Pipe_Actor);
+
+	void Set_Overlapping_Balance_Traversal_Actor(ABalance_Traversal_Actor* Overlapping_Balance_Traversal_Actor);
+
 };
 

@@ -19,6 +19,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "Animation_Instance/Character_Animation_Instance.h"
 #include "Net/UnrealNetwork.h"
+#include "World_Actors/Wall_Pipe_Actor.h"
+#include "World_Actors/Balance_Traversal_Actor.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -92,7 +94,7 @@ void ATechnical_Animator_Character::BeginPlay()
 	
 	if(Custom_Movement_Component && Character_Reference && Motion_Warping_Component && Follow_Camera)
 	{
-		Custom_Movement_Component->Initialize_Parkour_Pointers(Character_Reference, Motion_Warping_Component, Follow_Camera);
+		Custom_Movement_Component->Initialize_Parkour(Character_Reference, Motion_Warping_Component, Follow_Camera);
 
 		Custom_Movement_Component->On_Enter_Climb_State_Delegate.BindUObject(this, &ThisClass::On_Player_Enter_Climb_State);
 		Custom_Movement_Component->On_Exit_Climb_State_Delegate.BindUObject(this, &ThisClass::On_Player_Exit_Climb_State);
@@ -145,9 +147,13 @@ void ATechnical_Animator_Character::GetLifetimeReplicatedProps(TArray<FLifetimeP
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(ATechnical_Animator_Character, bIs_Jogging);
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, bIs_Jogging, COND_OwnerOnly);
 
-	DOREPLIFETIME(ATechnical_Animator_Character, bDrop_To_Shimmy);
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, bDrop_To_Shimmy, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Wall_Pipe_Actor, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Balance_Traversal_Actor, COND_OwnerOnly);
 }
 
 void ATechnical_Animator_Character::Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority)
@@ -174,7 +180,6 @@ void ATechnical_Animator_Character::Remove_Input_Mapping_Context(UInputMappingCo
 			Subsystem->RemoveMappingContext(Context_To_Remove);
 		}
 }
-
 
 //////////////////////////////////////////////////////////////////////////
 // Input
@@ -237,6 +242,7 @@ void ATechnical_Animator_Character::Jump()
 	{
 		Custom_Movement_Component->Execute_Jump_Out_Of_Shimmy();
 		Custom_Movement_Component->Execute_Exit_Wall_Run_With_Jump_Forward();
+		Custom_Movement_Component->Execute_Parkour_Jump();
 	}
 }
 
@@ -414,19 +420,11 @@ void ATechnical_Animator_Character::On_Parkour_Ended(const FInputActionValue& Va
 
 void ATechnical_Animator_Character::On_Parkour_Ended_Completed(const FInputActionValue& Value)
 {
-	if(HasAuthority())
 	bDrop_To_Shimmy = false;
-
-	else
 	Server_On_Parkour_Ended_Completed(Value);
 }
 
 void ATechnical_Animator_Character::Server_On_Parkour_Ended_Completed_Implementation(const FInputActionValue& Value)
-{
-	Multicast_On_Parkour_Ended_Completed(Value);
-}
-
-void ATechnical_Animator_Character::Multicast_On_Parkour_Ended_Completed_Implementation(const FInputActionValue& Value)
 {
 	bDrop_To_Shimmy = false;
 }
@@ -549,3 +547,81 @@ void ATechnical_Animator_Character::On_Take_Cover_Action_Started(const FInputAct
 	}
 }
 
+#pragma region Network
+
+void ATechnical_Animator_Character::On_Replication_Wall_Pipe_Actor(AWall_Pipe_Actor* Previous_Wall_Pipe_Actor)
+{
+	/* This fucntion (a rep notify) will only be called on the owning player of the variable which is being replicated "Wall_Pipe_Actor" -  
+	See &ATechnical_Animator_Character::GetLifetimeReplicatedProps. The input parameter holds the previous value of the variable which is being replicated. Therefore, when 
+	"Wall_Pipe_Actor" initially replicates to a valid pointer from being null the input parameter "Previous_Wall_Pipe_Actor" will be a nullptr and when "Wall_Pipe_Actor" replicates to a null pointer 
+	from being vaild then the input argument will be hold the valid data that "Wall_Pipe_Actor" was storing before it became a nullptr.*/
+	
+	if(Wall_Pipe_Actor)
+	Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(true);
+
+	else if(Previous_Wall_Pipe_Actor)
+	Previous_Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(false);
+}
+
+void ATechnical_Animator_Character::Set_Overlapping_Wall_Pipe_Actor(AWall_Pipe_Actor* Overlapping_Wall_Pipe_Actor)
+{
+	/*This function is only called from the server. Therefore when the first "if" check successfully passes this means the Server is calling this function locally 
+	(a client isn't calling this funtion from from the server).*/
+	
+	if(Wall_Pipe_Actor)
+	Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(false);
+	
+	Wall_Pipe_Actor = Overlapping_Wall_Pipe_Actor;
+
+	if(IsLocallyControlled())
+	{
+		if(Wall_Pipe_Actor)
+		Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(true);
+	}
+}
+
+void ATechnical_Animator_Character::On_Replication_Balance_Traversal_Actor(ABalance_Traversal_Actor* Previous_Balance_Traversal_Actor)
+{
+	/* This fucntion (a rep notify) will only be called on the owning player of the variable which is being replicated "Balance_Traversal_Actor" -  
+	See &ATechnical_Animator_Character::GetLifetimeReplicatedProps. The input parameter holds the previous value of the variable which is being replicated. Therefore, when 
+	"Balance_Traversal_Actor" initially replicates to a valid pointer from being null the input parameter "Previous_Balance_Traversal_Actor" will be a nullptr and when "Balance_Traversal_Actor" 
+	replicates to a null pointer from being vaild then the input argument will be hold the valid data that "Balance_Traversal_Actor" was storing before it became a nullptr.*/
+	
+	if(Balance_Traversal_Actor && Custom_Movement_Component)
+	{
+		Balance_Traversal_Actor->Show_Display_Widget(true);
+		Custom_Movement_Component->Execute_Balance_Traversal(Balance_Traversal_Actor);
+
+	}
+	
+	else if(Previous_Balance_Traversal_Actor && Custom_Movement_Component)
+	{
+		Previous_Balance_Traversal_Actor->Show_Display_Widget(false);
+		Custom_Movement_Component->Execute_Balance_Traversal(nullptr);
+	}
+}
+
+void ATechnical_Animator_Character::Set_Overlapping_Balance_Traversal_Actor(ABalance_Traversal_Actor* Overlapping_Balance_Traversal_Actor)
+{
+	/*This function is only called from the server. Therefore when the first "if" check successfully passes this means the Server is calling this function locally 
+	(a client isn't calling this funtion from from the server).*/
+	
+	if(Balance_Traversal_Actor && Custom_Movement_Component)
+	{
+		Balance_Traversal_Actor->Show_Display_Widget(false);
+		Custom_Movement_Component->Execute_Balance_Traversal(nullptr);
+	}
+	
+	Balance_Traversal_Actor = Overlapping_Balance_Traversal_Actor;
+
+	if(IsLocallyControlled())
+	{
+		if(Balance_Traversal_Actor && Custom_Movement_Component)
+		{
+			Balance_Traversal_Actor->Show_Display_Widget(true);
+			Custom_Movement_Component->Execute_Balance_Traversal(Balance_Traversal_Actor);
+		}
+	}
+}
+
+#pragma endregion

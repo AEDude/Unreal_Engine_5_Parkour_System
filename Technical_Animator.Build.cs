@@ -18,6 +18,7 @@ public class Technical_Animator : ModuleRules
 		"GameplayTags",
 		"Technical_Animator",
 		"AnimGraphRuntime",
-		"AnimationLocomotionLibraryRuntime"});
+		"AnimationLocomotionLibraryRuntime",
+		"UMG"});
 	}
 }

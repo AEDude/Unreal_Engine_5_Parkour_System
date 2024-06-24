@@ -2,7 +2,18 @@
 
 #include "NativeGameplayTags.h"
 
+#pragma region Parkour_Region
+
+
+#pragma region Parkour_State
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Free_Roam);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Jump);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Mantle);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Vault);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Ready_To_Climb);
 
@@ -16,9 +27,15 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Initialize_Wall_Pipe_Climb);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Wall_Pipe_Climb);
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Mantle);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Initialize_Balance_Walk);
 
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Vault);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Balance_Walk);
+
+
+#pragma endregion
+
+
+#pragma region Parkour_Action
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_No_Action);
 
@@ -120,6 +137,37 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Low_Vault);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_High_Vault);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_Up);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Accurate_Jump_Start_L);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Accurate_Jump_Start_R);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Accurate_Jump_Start_L_Warp);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Accurate_Jump_Start_R_Warp);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Accurate_Jump_Finish);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_Front_L_Start);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_Front_R_Start);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_Front_L_Start_Warp);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_Front_R_Start_Warp);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_Finish);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_One_L);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_One_R);
+
+#pragma endregion
+
+
+#pragma region Parkour_Direction
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_No_Direction);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_Left);
@@ -138,17 +186,33 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_Backward_Left);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_Backward_Right);
 
+
+#pragma endregion
+
+
+#pragma region Parkour_Climb_Style
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Climb_Style_None);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Climb_Style_Braced_Climb);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Climb_Style_FreeHang);
 
+#pragma endregion
+
+
+#pragma region Parkour_Wall_Run
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Wall_Run_Side_None);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Wall_Run_Side_Left);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Wall_Run_Side_Right);
+
+#pragma endregion
+
+
+#pragma region Parkour_Landing
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Landing_Down_Light);
 
@@ -157,4 +221,11 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Landing_Down_Impact);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Landing_Down_Front);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Landing_Down_Roll);
+
+
+#pragma endregion
+
+
+#pragma endregion
+
 
