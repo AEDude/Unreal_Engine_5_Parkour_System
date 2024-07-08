@@ -210,6 +210,8 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 
 	EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
 
+	EnhancedInputComponent->BindAction(Parkour_Action_Double_Tap, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Started_Double_Tap);
+
 	EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
 
 	EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::None, this, &ATechnical_Animator_Character::On_Parkour_Ended_Completed);
@@ -293,7 +295,7 @@ void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed(const
 			//not in Parkour_State "Parkour.State.Free.Roam".
 			if(Custom_Movement_Component->Get_Parkour_State() != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
 			{
-				Custom_Movement_Component->Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+				Custom_Movement_Component->Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 				Custom_Movement_Component->Forward_Backward_Movement_Value = 0.f;
 				Custom_Movement_Component->Right_Left_Movement_Value = 0.f;
 			}
@@ -407,6 +409,15 @@ void ATechnical_Animator_Character::On_Parkour_Started(const FInputActionValue& 
 	}
 }
 
+void ATechnical_Animator_Character::On_Parkour_Started_Double_Tap(const FInputActionValue& Value)
+{
+	if(Custom_Movement_Component)
+	{
+		Debug::Print(TEXT("Parkour_Double_Tap_Is_Working"), FColor::MakeRandomColor(), 8);
+		Custom_Movement_Component->Execute_Free_Hang_To_Balanced_Walk();
+	}
+}
+
 void ATechnical_Animator_Character::On_Parkour_Ended(const FInputActionValue& Value)
 {
 	if(Custom_Movement_Component)
@@ -415,6 +426,7 @@ void ATechnical_Animator_Character::On_Parkour_Ended(const FInputActionValue& Va
 		Custom_Movement_Component->Execute_Drop_Into_Shimmy();
 		bDrop_To_Shimmy = true;
 		Custom_Movement_Component->Release_From_Parkour_Wall_Pipe_Climb();
+		Custom_Movement_Component->Execute_Balance_Drop_Hanging();
 	}
 }
 
@@ -591,7 +603,7 @@ void ATechnical_Animator_Character::On_Replication_Balance_Traversal_Actor(ABala
 	{
 		Balance_Traversal_Actor->Show_Display_Widget(true);
 		Custom_Movement_Component->Execute_Balance_Traversal(Balance_Traversal_Actor);
-
+		Custom_Movement_Component->Execute_Exit_Balance_Traversal();
 	}
 	
 	else if(Previous_Balance_Traversal_Actor && Custom_Movement_Component)
@@ -620,8 +632,11 @@ void ATechnical_Animator_Character::Set_Overlapping_Balance_Traversal_Actor(ABal
 		{
 			Balance_Traversal_Actor->Show_Display_Widget(true);
 			Custom_Movement_Component->Execute_Balance_Traversal(Balance_Traversal_Actor);
+			Custom_Movement_Component->Execute_Exit_Balance_Traversal();
 		}
 	}
 }
 
 #pragma endregion
+
+

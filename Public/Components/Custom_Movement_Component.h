@@ -522,6 +522,24 @@ private:
 
 	bool Validate_Balance_Traversal_Location();
 
+	bool Parkour_Balance_Walk_Detect_Balance_Surface(FHitResult& Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result_Reference, FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference);
+
+	bool Parkour_Balance_Walk_Are_There_Obstacles_In_Front_Of_Feet(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference);
+
+	bool Parkour_Balance_Walk_Are_There_Obstacles_In_Front_Of_Body(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference);
+
+	bool Validate_Can_Execute_Balance_Walk_Automatic_Hop();
+
+	void Balance_Walk_Automatic_Hop_Detect_Wall();
+
+	bool Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface();
+
+	bool Validate_Balance_Walk_Automatic_Hop_Location();
+
+	bool Validate_Balance_Drop_Hanging(const bool& bDrop_To_Left_Side);
+
+	bool Validate_Free_Hang_To_Balanced_Walk(const bool& bClimb_To_Left_Side);
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -640,6 +658,12 @@ private:
 
 	bool Validate_Wall_Pipe_Climb_Hop_Destnation_And_Action();
 
+	void Parkour_Balance_Walk_Handle_Balance_Walking_Movement();
+
+	void Calculate_And_Move_Character_To_New_Balance_Walk_Position(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference);
+
+	void Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+
 	#pragma region Set_Network_Variables
 
 	void Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
@@ -728,6 +752,8 @@ private:
 	TArray<FHitResult> Detect_Balance_Traversal_Actors_Hit_Traces{};
 
 	FHitResult Balance_Traversal_Actors_Best_Hit{};
+
+	FHitResult Balance_Walk_Automatic_Hop_Top_Result{};
 	
 	#pragma endregion
 
@@ -918,6 +944,10 @@ private:
 																    Speed_R_Drop,
 																    Two_Hand_L_Drop,
 																    Two_Hand_R_Drop */};
+
+	TArray<UParkour_Action_Data*> Balance_Walk_Automatic_Hop_Array{/* Balance_Walk_Jump_Front,
+																	Jump_One_L,
+																	Jump_One_R */};
 																   
 	#pragma endregion
 
@@ -1074,6 +1104,7 @@ private:
 	UParkour_Action_Data* Free_Hang_Jump_To_Climb{};
 
 
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Ledge_Fall_Down{};
 
@@ -1083,9 +1114,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Ledge_Fall_Down_180_L{};
 
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Hanging_Drop{};
+
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -1097,9 +1128,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Fly_Hanging_Jump{};
 
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Free_Hang_Jump_To_Climb_Airborne{};
+
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -1116,18 +1147,19 @@ private:
 	UParkour_Action_Data* Hanging_Corner_Outer_R{};
 
 
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Ledge_Corner_Inner_L{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Ledge_Corner_Inner_R{};
 
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Hanging_Corner_Inner_L{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Hanging_Corner_Inner_R{};
+
 
 
 	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -1149,6 +1181,7 @@ private:
 	UParkour_Action_Data* Climb_Up_The_Ledge{};
 
 
+
 	// UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	// TArray<UParkour_Action_Data*> Hanging_Climb_Up_Array{};
 
@@ -1159,6 +1192,7 @@ private:
 	UParkour_Action_Data* Free_Hang_Climb_Up{};
 
 	
+
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Braced_Hang_Hop_Up{};
@@ -1200,11 +1234,13 @@ private:
 	UParkour_Action_Data* Ledge_Jump_Down{};
 
 	
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Free_Hang_Hop_Left{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Free_Hang_Hop_Right{};
+
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -1236,6 +1272,7 @@ private:
 
 
 
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Climb_Shimmy_To_Shimmy_180_Vault{};
 	
@@ -1252,6 +1289,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Hanging_180_R{};
+
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -1281,6 +1319,7 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Ledge_Climb_Up_TwoHand_R_Vault{};
 	
+
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Exit_Ledge_Jump_Backward_L{};
@@ -1288,9 +1327,9 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Exit_Ledge_Jump_Backward_R{};
 
-	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Exit_Hanging_Jump{};
+
 
 
 
@@ -1306,7 +1345,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Accelerating_Drop_Slide_Ledge_R{};
 
-	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Accelerating_Drop_Hanging_L{};
 
@@ -1320,12 +1358,12 @@ private:
 	UParkour_Action_Data* FreeHang_Drop_Down{};
 
 
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Wall_Run_L_Start{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Wall_Run_R_Start{};
-
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Wall_Run_L_Jump_90_R{};
@@ -1339,12 +1377,12 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Wall_Run_R_Jump_F{};
 
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Wall_Run_L_Finish{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Wall_Run_R_Finish{};
+
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -1370,6 +1408,7 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Landing_Roll_B_R{};
+
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -1426,6 +1465,7 @@ private:
 	UParkour_Action_Data* Wall_Pipe_Jump_Right{};
 
 
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Jump_Up{};
 
@@ -1464,6 +1504,32 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Jump_One_R{};
+
+	
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Balance_Walk_90_L{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Balance_Walk_90_R{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Balance_Walk_180{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Balance_Walk_Jump_Front{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Balance_Drop_L_Hanging{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Balance_Drop_R_Hanging{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_Climb_Up_To_Balanced_Walk_L{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Hanging_Climb_Up_To_Balanced_Walk_R{};
 
 
 	#pragma endregion
@@ -1554,6 +1620,12 @@ void Server_Move_Character_To_Front_Of_Pipe(const FVector& Location_To_Move_Char
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Move_Character_To_Front_Of_Pipe(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
+UFUNCTION(Server, Reliable)
+void Server_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+
 #pragma endregion
 
 #pragma region Set_Network_Variables
@@ -1611,7 +1683,7 @@ public:
 
 	void Add_Movement_Input(const FVector2D& Scale_Value, const bool& bIs_Forward_Backward_Movement);
 	
-	void Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+	void Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 
 	FORCEINLINE void Set_Parkour_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 
@@ -1640,6 +1712,12 @@ public:
 	void Execute_Parkour_Jump();
 
 	void Execute_Balance_Traversal(ABalance_Traversal_Actor* Balance_Traversal_Actor_Reference);
+
+	void Execute_Exit_Balance_Traversal();
+
+	void Execute_Balance_Drop_Hanging();
+
+	void Execute_Free_Hang_To_Balanced_Walk();
 
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 

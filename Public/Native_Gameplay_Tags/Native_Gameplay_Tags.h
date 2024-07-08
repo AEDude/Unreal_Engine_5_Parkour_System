@@ -163,6 +163,23 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_One_L);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Jump_One_R);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Balance_Walk_90_L);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Balance_Walk_90_R);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Balance_Walk_180);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Balance_Walk_Automatic_Hop);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Balance_Drop_L_Hanging);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Balance_Drop_R_Hanging);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Hanging_Climb_Up_To_Balanced_Walk_L);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Hanging_Climb_Up_To_Balanced_Walk_R);
+
+
 #pragma endregion
 
 

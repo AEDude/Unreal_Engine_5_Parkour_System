@@ -109,6 +109,9 @@ private:
 	UPROPERTY(EditAnywhere)
 	FString Warp_Target_Name_3{};
 
+	UPROPERTY(EditAnywhere)
+	FString Warp_Target_Name_4{};
+
 
 
 	//The following float variables will store the offset which needs to be applied to the character's root bone when the parkour montage is complete.
@@ -122,6 +125,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	float Warp_1_Z_Offset{};
 
+
 	UPROPERTY(EditAnywhere)
 	float Warp_2_X_Offset{};
 
@@ -131,6 +135,7 @@ private:
 	UPROPERTY(EditAnywhere)
 	float Warp_2_Z_Offset{};
 
+
 	UPROPERTY(EditAnywhere)
 	float Warp_3_X_Offset{};
 
@@ -139,6 +144,17 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	float Warp_3_Z_Offset{};
+	
+
+	UPROPERTY(EditAnywhere)
+	float Warp_4_X_Offset{};
+
+	UPROPERTY(EditAnywhere)
+	float Warp_4_Y_Offset{};
+
+	UPROPERTY(EditAnywhere)
+	float Warp_4_Z_Offset{};
+	
 
 	/* virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override; */
 
@@ -174,6 +190,8 @@ public:
 
 	FORCEINLINE FString Get_Parkour_Warp_Target_Name_3() const {return Warp_Target_Name_3;}
 
+	FORCEINLINE FString Get_Parkour_Warp_Target_Name_4() const {return Warp_Target_Name_4;}
+
 
 
 	FORCEINLINE float Get_Parkour_Warp_1_X_Offset() const {return Warp_1_X_Offset;}
@@ -182,15 +200,24 @@ public:
 
 	FORCEINLINE float Get_Parkour_Warp_1_Z_Offset() const {return Warp_1_Z_Offset;}
 
+
 	FORCEINLINE float Get_Parkour_Warp_2_X_Offset() const {return Warp_2_X_Offset;}
 
 	FORCEINLINE float Get_Parkour_Warp_2_Y_Offset() const {return Warp_2_Y_Offset;}
 
 	FORCEINLINE float Get_Parkour_Warp_2_Z_Offset() const {return Warp_2_Z_Offset;}
 
+
 	FORCEINLINE float Get_Parkour_Warp_3_X_Offset() const {return Warp_3_X_Offset;}
 
 	FORCEINLINE float Get_Parkour_Warp_3_Y_Offset() const {return Warp_3_Y_Offset;}
 
 	FORCEINLINE float Get_Parkour_Warp_3_Z_Offset() const {return Warp_3_Z_Offset;}
+
+
+	FORCEINLINE float Get_Parkour_Warp_4_X_Offset() const {return Warp_4_X_Offset;}
+
+	FORCEINLINE float Get_Parkour_Warp_4_Y_Offset() const {return Warp_4_Y_Offset;}
+
+	FORCEINLINE float Get_Parkour_Warp_4_Z_Offset() const {return Warp_4_Z_Offset;}
 };

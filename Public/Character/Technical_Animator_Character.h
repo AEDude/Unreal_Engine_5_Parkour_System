@@ -110,6 +110,9 @@ private:
 	UInputAction* Parkour_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Parkour_Action_Double_Tap{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Exit_Parkour_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -148,6 +151,8 @@ private:
 	void On_Jogging_Ended(const FInputActionValue& Value);
 
 	void On_Parkour_Started(const FInputActionValue& Value);
+
+	void On_Parkour_Started_Double_Tap(const FInputActionValue& Value);
 
 	void On_Parkour_Ended(const FInputActionValue& Value);
 

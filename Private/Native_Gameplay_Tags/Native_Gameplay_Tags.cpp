@@ -161,6 +161,22 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_One_L, "Parkour.Action.Jump.One.L
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_One_R, "Parkour.Action.Jump.One.R");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Balance_Walk_90_L, "Parkour.Action.Balance.Walk.90.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Balance_Walk_90_R, "Parkour.Action.Balance.Walk.90.R");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Balance_Walk_180, "Parkour.Action.Balance.Walk.180");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Balance_Walk_Automatic_Hop, "Parkour.Action.Balance.Walk.Automatic.Hop");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Balance_Drop_L_Hanging, "Parkour.Action.Balance.Drop.L.Hanging");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Balance_Drop_R_Hanging, "Parkour.Action.Balance.Drop.R.Hanging");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Hanging_Climb_Up_To_Balanced_Walk_L, "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Hanging_Climb_Up_To_Balanced_Walk_R, "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R");
+
 #pragma endregion
 
 

@@ -1532,6 +1532,11 @@ void UCustom_Movement_Component::Initialize_Parkour_Data_Assets_Arrays()
 	Free_Roam_Accelerating_Drop_Array.Emplace(Two_Hand_L_Drop);
 	Free_Roam_Accelerating_Drop_Array.Emplace(Two_Hand_R_Drop);
 
+
+	Balance_Walk_Automatic_Hop_Array.Emplace(Balance_Walk_Jump_Front);
+	Balance_Walk_Automatic_Hop_Array.Emplace(Jump_One_L);
+	Balance_Walk_Automatic_Hop_Array.Emplace(Jump_One_R);
+
 	#pragma endregion
 	
 }
@@ -2125,9 +2130,14 @@ void UCustom_Movement_Component::Validate_bIs_On_Ground()
 
 	//If the current "Parkour_State" set on the character is "Parkour.State.Climb" then it is evident that the character is not grounded. In this case the global bool
 	//variable "bIs_On_Ground" will be set to false.
-	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
+	/* if(Parkour_State = FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) || 
 	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Run"))) || 
 	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
+	{
+		bIs_On_Ground = false;
+	} */
+
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
 	{
 		bIs_On_Ground = false;
 	}
@@ -2140,7 +2150,7 @@ void UCustom_Movement_Component::Validate_bIs_On_Ground()
 			this,
 			Mesh->GetSocketLocation(FName(TEXT("root"))),
 			Mesh->GetSocketLocation(FName(TEXT("root"))),
-			FVector(10, 10, 20),
+			FVector(30, 30, 25),
 			UKismetMathLibrary::MakeRotFromX(UpdatedComponent->GetForwardVector()),
 			Parkour_Validate_On_Land_Trace_Types,
 			false,
@@ -2235,7 +2245,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 	//the sphere traces are generated is determined by the value placed into the global double variable "Right_Left_Movement_Value". The value here is calculated by the input
 	//into the controller within the function "&UCustom_Movement_Component::Add_Movement_Input" Three sphere traces are generated downwards until there is a blocking hit. If no
 	//all sphere traces are generated and there is no blocking hit, then this means there is no surface which the character can shimmy across. If ".bStartPenetrating" is true
-	//during any iteration of this for loop then this means the character is too close to the surface. In both instances "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables", 
+	//during any iteration of this for loop then this means the character is too close to the surface. In both instances "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables", 
     //"Reset_Movement_Input_Variables" and "return" should be called.
 	for(Index_1; Index_1 <= 7; Index_1++)
 	{
@@ -2267,11 +2277,11 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 			false
 			);
 
-		//If ".bStartPenetrating" is true "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables", "Reset_Movement_Input_Variables" and "return" should be called. This is because the character
+		//If ".bStartPenetrating" is true "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables", "Reset_Movement_Input_Variables" and "return" should be called. This is because the character
 		//is too close to the surface of the wall and in result can't continue shimmying.  
 		if(Parkour_Climbing_Detect_Wall_Hit_Result.bStartPenetrating)
 		{
-			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 			return false;
 		}
 
@@ -2288,7 +2298,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 
 				//This for loop generates a sphere trace which shoots downwards from a forward and upward offset position of the "Parkour_Climbing_Detect_Wall_Hit_Result.ImpactPoint". The goal of this for loop is to perform a ray trace which starts inside
 				//of the wall (infront and slightly upwards from the local FHitResult variable "Parkour_Climbing_Detect_Wall_Hit_Result"). With every iteration of the for loop the ray trace starting position will move up by five units. This is to obtain the new  
-				//"Parkour_Climbing_Wall_Top_Result" (the const reference input parameter). If ".bStartPenetrating" is true and the outer for loop and this inner for loop are both complete then "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" 
+				//"Parkour_Climbing_Wall_Top_Result" (the const reference input parameter). If ".bStartPenetrating" is true and the outer for loop and this inner for loop are both complete then "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" 
 				//and "return" will be called. In this outcome there is no wall top to be obtained and in result the character will not be able to move via the "Move_Character_To_New_Climb_Position_Interpolation_Settings" function. Said function uses the "Parkour_Climbing_Wall_Top_Result"
 				//as the location to to move the character (on the "Z" axis) while simultaneously using "Parkour_Climbing_Detect_Wall_Hit_Result" as the location to move the characer to on the "X" and "Y" axis. Also, if ".bStartPenetrating" is true and both the outer and inner for loop are
 				//complete then this means that there is no room above the hands for the character to shimmy. Due to the starting point of the sphere trace raising on the "Z" axis with every iteration of the for loop until until the threshold is reached the character will have the opportunity 
@@ -2322,14 +2332,14 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 						false
 						);
 
-					//If ".bStartPenetrating" is true and the outer for loop and this inner for loop are both complete then "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" will be called. 
+					//If ".bStartPenetrating" is true and the outer for loop and this inner for loop are both complete then "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" will be called. 
 					//In this outcome there is no wall top to be obtained and in result the character will not be able to move via the "Move_Character_To_New_Climb_Position_Interpolation_Settings" function. Otherwise "continue" will be called.
 					//This is because the threshold for the maximum height that the character can reach up to shimmy up a ledge hasn't been reahced. Otherwise "continue" will be called so that the the wall may continue to be analyzed.
 					if(Parkour_Climbing_Wall_Top_Result.bStartPenetrating)
 					{
 						if(Index_1 == 7 && Index_2 == 7)
 						{
-							Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+							Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 							return false;
 						}
 						
@@ -2341,7 +2351,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 
 					//If ".bStartPenetrating" is false, check to see if the there is a blocking hit on the FHitResult 'Parkour_Climbing_Wall_Top_Result". If there is a blocking hit, return out of this function as the wall has been analyzed and in result the
 					//"Parkour_Climbing_Detect_Wall_Hit_Result" and the "Parkour_Climbing_Wall_Top_Result" has both been obtained. If there is no blocking hit for the FHitResult "Parkour_Climbing_Wall_Top_Result", then check to see if both the outer and inner
-					//for loop are complete. If both for loops are complete, call "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return". Otherwise call "continue" so the wall may be be analyzed further.
+					//for loop are complete. If both for loops are complete, call "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return". Otherwise call "continue" so the wall may be be analyzed further.
 					else
 					{
 						if(Parkour_Climbing_Wall_Top_Result.bBlockingHit)
@@ -2353,7 +2363,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 						{
 							if(Index_1 == 7 && Index_2 == 7)
 							{
-								Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+								Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 								return false;
 							}
 						
@@ -2366,13 +2376,13 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Detect_Wall(FHitResult& Par
 				}
 			}
 
-			//If the HitResult of the outer loop iteration does not have a blocking hit check to see if the loop has completed. If this is the case call "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables"
+			//If the HitResult of the outer loop iteration does not have a blocking hit check to see if the loop has completed. If this is the case call "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables"
 			//and "return". Otherwise call "continue".
 			else
 			{
 				if(Index_1 == 7)
 				{
-					//Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+					//Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 					return false;
 				}
 					
@@ -2397,7 +2407,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Are_There_Obstacles_On_Side
 	traces will only be generated if there is a blocking hit on the line trace which is generated on the first iteration of the for loop. If the first line trace which is generated does not have a blocking hit then this means there is no obstacle 
 	on the respective side of the character's hands (the hand on the side of the body in which the character is shimmying). If there is a blocking hit on the first line trace which is generated, then the for loop will continue to generate more line
 	traces which will all start five units above the previous line trace. This will happen until the threshold is reahced (which means that there is a obsticle on the side of the characters hands) and in result "true" should be returned 
-	(which results in "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" being called within the scope of the if chech which this function is used in within the function "Parkour_Climb_Handle_Shimmying_Movement") or until there
+	(which results in "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" being called within the scope of the if chech which this function is used in within the function "Parkour_Climb_Handle_Shimmying_Movement") or until there
 	is no blocking hit on the most recent line trace. In which case "break" will be called.*/
 	
 	//Offset the starting location of the line trace two units above the input parameter "Starting_Impact_Point". This location will be the "Parkour_Climbing_Wall_Top_Result".
@@ -2424,7 +2434,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Are_There_Obstacles_On_Side
 			);
 		
 		//Check to see if the line traced generated has a blocking hit. If it does have a blocking hit, check to see if the for loop is complete. If the for loop is complete, this means the threshold has been reached and there is a obstacle on the respective
-		//side of the character's hands. in this case true will be returned which will lead to "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" being called in the scope of the if chech that uses this function within the
+		//side of the character's hands. in this case true will be returned which will lead to "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" being called in the scope of the if chech that uses this function within the
 		//fucntion "Parkour_Climb_Handle_Shimmying_Movement". If the for loop is not complete "continue" is called so the area on the respective side of the character's hands may be analyzed for obstacles.
 
 		//IF there is no blocking hit on any line trace which is generated before the threshold is reahced "false" will be retruned.
@@ -2499,7 +2509,7 @@ bool UCustom_Movement_Component::Parkour_Climb_State_Are_There_Obstacles_On_Side
 	if(!Out_Hit.bBlockingHit)
 	return false;
 
-	//If there is a blocking hit "true" will be returned and in result "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" will be called within the scope of 
+	//If there is a blocking hit "true" will be returned and in result "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" will be called within the scope of 
 	//the if check in which this function is used within "&UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement"
 	else
 	return true;
@@ -2521,7 +2531,13 @@ void UCustom_Movement_Component::Parkour_Climb_Initialize_IK_Hands(const bool& b
 	const int Index_1_Multiplier{Index_1 * 2};
 	
 	//This value represents how many units away from the the global FHitResult "Initialize_Parkour_IK_Limbs_Hit_Result" the respective hand should be when the algorithm in this function is complete.
-	const int Distance_To_Offset_Hands_From_Initialize_Parkour_IK_Limbs_Hit_Result{28};
+	int Distance_To_Offset_Hands_From_Initialize_Parkour_IK_Limbs_Hit_Result{};
+
+	if(bIs_Left_Hand == true)
+	Distance_To_Offset_Hands_From_Initialize_Parkour_IK_Limbs_Hit_Result = -15;
+
+	else
+	Distance_To_Offset_Hands_From_Initialize_Parkour_IK_Limbs_Hit_Result = 18;
 	
 	//This value represents in which direction the respective limb should move. Because the helper function "Move_Vector_Right" will be used in the Offset_Vector location, if the respective hand
 	//is the left hand it needs to be moved to the right so the value to move the hand will be multiplied by 1, if the respective hand is the right hand it will need to be moved to the left so the
@@ -2534,6 +2550,7 @@ void UCustom_Movement_Component::Parkour_Climb_Initialize_IK_Hands(const bool& b
 
 	else
 	Select_Left_Or_Right_Hand_Value = -1;
+
 
 	//This is the value to move the respective hand during each iteration of the algorithm.
 	const int Move_Vector_For_Right_Or_Left_Hand_Value{Select_Left_Or_Right_Hand_Value * (Index_1_Multiplier - Distance_To_Offset_Hands_From_Initialize_Parkour_IK_Limbs_Hit_Result)};
@@ -2705,6 +2722,17 @@ void UCustom_Movement_Component::Parkour_Climb_Dynamic_IK_Hands(const bool& bIs_
 	else
 	Select_Left_or_Right_IK_Hand = Mesh->GetSocketLocation(FName(TEXT("ik_hand_r")));
 
+	//Set the offset value of the corresponding hand IK bone location. This value will be used to offset the ray cast for the outer algorithm which in result will set the location of the respective
+	//hand to be closer to the center line (the Z axis) of the character. 
+	int Value_To_Offset_Respective_Hand{};
+	
+	if(bIs_Left_Hand == true)
+	Value_To_Offset_Respective_Hand = -15;
+
+	else
+	Value_To_Offset_Respective_Hand = 18;
+
+
 	
 	FVector Hand_Shimmy_Location{};
 
@@ -2720,7 +2748,8 @@ void UCustom_Movement_Component::Parkour_Climb_Dynamic_IK_Hands(const bool& bIs_
 	/*Obtain the local FHitResult "Parkour_Shimmying_Dynamic_IK_Hands_Detect_Wall_Hit_Result"*/
 	for(Index_1; Index_1 <= 7; Index_1++)
 	{
-		const FVector Offset_Vector_1{Move_Vector_Down(Select_Left_or_Right_IK_Hand, Index_1 * 5.f)};
+		const FVector Offset_Vector{Move_Vector_Left(Select_Left_or_Right_IK_Hand, Direction_Character_Is_Facing, Value_To_Offset_Respective_Hand)};
+		const FVector Offset_Vector_1{Move_Vector_Down(Offset_Vector, Index_1 * 5.f)};
 		const FVector Start_1{Move_Vector_Backward(Offset_Vector_1, Direction_Character_Is_Facing, 30.f)};
 		const FVector End_1{Move_Vector_Forward(Start_1, Direction_Character_Is_Facing, 70.f)};
 
@@ -3390,7 +3419,7 @@ bool UCustom_Movement_Component::Validate_Out_Corner_Shimmying()
 							if(Index_3 == 7)
 							{
 								Debug::Print("Out_Corner_Shimmy_Wall_Top_Not_Obtained", FColor::MakeRandomColor(), 14);
-								Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+								Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 								return false;
 							}
 							
@@ -3413,7 +3442,7 @@ bool UCustom_Movement_Component::Validate_Out_Corner_Shimmying()
 							else
 							{
 								Debug::Print("Out_Corner_Shimmy_Wall_Top_Not_Obtained", FColor::MakeRandomColor(), 14);
-								Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+								Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 								return false;
 							}
 						}
@@ -3424,7 +3453,7 @@ bool UCustom_Movement_Component::Validate_Out_Corner_Shimmying()
 				{
 					if(Index_2 == 7)
 					{
-						Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+						Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 						Debug::Print("Out_Corner_Shimmy_Wall_Surface_Obtained_Not_Obtained", FColor::MakeRandomColor(), 13);
 						return false;
 					}
@@ -3441,7 +3470,7 @@ bool UCustom_Movement_Component::Validate_Out_Corner_Shimmying()
 		{	
 			if(Index_1 == 7)
 			{
-				Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+				Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 				Debug::Print("Out_Corner_Shimmy_Not_Possible", FColor::MakeRandomColor(), 12);
 				return false;
 			}
@@ -6137,7 +6166,7 @@ bool UCustom_Movement_Component::Validate_Foot_Contact_With_Ground(const bool& b
 		Validate_Foot_Contact_With_Ground_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::ForDuration,
+		Debug_Action,
 		Validate_Foot_Contact_With_Ground_Hit_Result,
 		false
 	);
@@ -6184,7 +6213,7 @@ bool UCustom_Movement_Component::Validate_Jumping_Destination_Ground_Surface(con
 			Validate_Jumping_Destination_Ground_Surface_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForDuration,
+			Debug_Action,
 			Validate_Jumping_Destination_Ground_Surface_Hit_Result,
 			false
 		);
@@ -6212,7 +6241,7 @@ bool UCustom_Movement_Component::Validate_Jumping_Destination_Ground_Surface(con
 				Validate_Jumping_Destination_Ground_Surface_Trace_Types,
 				false,
 				TArray<AActor*>(),
-				EDrawDebugTrace::ForDuration,
+				Debug_Action,
 				Validate_Jumping_Destination_For_Obstacles,
 				false
 			);
@@ -6245,7 +6274,7 @@ bool UCustom_Movement_Component::Validate_Jumping_Destination_Ground_Surface(con
 					Validate_Jumping_Destination_Ground_Surface_Trace_Types,
 					false,
 					TArray<AActor*>(),
-					EDrawDebugTrace::ForDuration,
+					Debug_Action,
 					Validate_Jumping_Destination_For_Drop,
 					false
 				);
@@ -6271,7 +6300,7 @@ bool UCustom_Movement_Component::Validate_Jumping_Destination_Ground_Surface(con
 						Validate_Jumping_Destination_Ground_Surface_Trace_Types,
 						false,
 						TArray<AActor*>(),
-						EDrawDebugTrace::ForDuration,
+						Debug_Action,
 						Validate_Jumping_Destination_For_Space,
 						false
 					);
@@ -6290,6 +6319,7 @@ bool UCustom_Movement_Component::Validate_Jumping_Destination_Ground_Surface(con
 						Debug::Print("There_Is_Not_Enough_Room_For_Character_Land", FColor::Red, 83);
 						return false;
 					}
+
 				}
 
 				else
@@ -6327,7 +6357,7 @@ void UCustom_Movement_Component::Detect_Balance_Traversal_Actors(const FVector& 
 
 	for(Index_1; Index_1 <= Scan_Width; Index_1++)
 	{
-		const FVector Offset_Vector_Forward{Move_Vector_Forward(Initial_Balance_Traversal_Actor_Forward_Vector_Location, Initial_Balance_Traversal_Actor_Rotation, 350)};
+		const FVector Offset_Vector_Forward{Move_Vector_Forward(Initial_Balance_Traversal_Actor_Forward_Vector_Location, Initial_Balance_Traversal_Actor_Rotation, 100)};
 		
 		const FVector Offset_Vector_Down{Move_Vector_Down(Offset_Vector_Forward, 100)};
 
@@ -6357,7 +6387,7 @@ void UCustom_Movement_Component::Detect_Balance_Traversal_Actors(const FVector& 
 				Balance_Traversal_Actors_Trace_Types,
 				false,
 				TArray<AActor*>(),
-				EDrawDebugTrace::None,
+				Debug_Action,
 				Out_Hit,
 				true
 			);
@@ -6420,6 +6450,8 @@ bool UCustom_Movement_Component::Validate_Balance_Traversal_Location()
 	if(!Balance_Traversal_Actors_Best_Hit.bBlockingHit || !Owning_Player_Character || !Balance_Traversal_Actor)
 	return false;
 
+	const FVector Character_Location{Owning_Player_Character->GetActorLocation()};
+	
 	const FVector Offset_Vector_Forward{Move_Vector_Forward(Balance_Traversal_Actors_Best_Hit.ImpactPoint, Reversed_Front_Wall_Normal_Z, 10.f)};
 
 	int Index{};
@@ -6439,7 +6471,7 @@ bool UCustom_Movement_Component::Validate_Balance_Traversal_Location()
 			Balance_Traversal_Actors_Trace_Types,
 			false,
 			TArray<AActor*>(),
-			EDrawDebugTrace::ForDuration,
+			Debug_Action,
 			Out_Hit_1,
 			false
 		);
@@ -6464,7 +6496,8 @@ bool UCustom_Movement_Component::Validate_Balance_Traversal_Location()
 			
 			//check to see if there is an obstacle in the way.
 
-			const FVector Offset_Balance_Traversal_Location_Vector_Forward{Move_Vector_Forward(Balance_Traversal_Actor->GetActorLocation(), Reversed_Front_Wall_Normal_Z, 320.f)};
+			const FVector Custom_Character_Location{Character_Location.X, Character_Location.Y, Character_Location.Z - 40.f};
+
 
 			int Index_2{};
 
@@ -6472,7 +6505,7 @@ bool UCustom_Movement_Component::Validate_Balance_Traversal_Location()
 
 			for(Index_2; Index_2 <= 4; Index_2++)
 			{
-				const FVector Start_2{Move_Vector_Up(Offset_Balance_Traversal_Location_Vector_Forward, Index_2 * 40.f)};
+				const FVector Start_2{Move_Vector_Up(Custom_Character_Location, Index_2 * 40.f)};
 
 				const FVector Offset_End_Vector_Up{Move_Vector_Up(Out_Hit_1.ImpactPoint, 10.f)};
 
@@ -6485,7 +6518,7 @@ bool UCustom_Movement_Component::Validate_Balance_Traversal_Location()
 					Balance_Traversal_Actors_Trace_Types,
 					false,
 					TArray<AActor*>(),
-					EDrawDebugTrace::ForDuration,
+					Debug_Action,
 					Out_Hit_2,
 					false
 				);
@@ -6516,7 +6549,7 @@ bool UCustom_Movement_Component::Validate_Balance_Traversal_Location()
 							Balance_Traversal_Actors_Trace_Types,
 							false,
 							TArray<AActor*>(),
-							EDrawDebugTrace::ForDuration,
+							Debug_Action,
 							Out_Hit_3,
 							false
 						);
@@ -6551,6 +6584,763 @@ bool UCustom_Movement_Component::Validate_Balance_Traversal_Location()
 	return false;
 }
 
+bool UCustom_Movement_Component::Parkour_Balance_Walk_Detect_Balance_Surface(FHitResult& Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result_Reference, FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference)
+{
+	//Check to see if the corresponding pointers are valid. If not return safely.
+	if(!Character_Direction_Arrow)
+	return false;
+
+	//Get the location and rotation of the character direction arrow.
+	const FVector Character_Direction_Arrow_Location{Character_Direction_Arrow->GetActorLocation()};
+	const FRotator Character_Direction_Arrow_Rotation{Character_Direction_Arrow->GetActorRotation()};
+
+	/*Check to see if there is a surface for the character to walk on.*/
+	
+	//Offset the vector forward so that it is right in front of the characters body.
+	const FVector Offset_Balance_Walk_Detect_Balance_Surface_Check_Forward{Move_Vector_Forward(Character_Direction_Arrow_Location, Character_Direction_Arrow_Rotation, 40.f)};
+	//Offset the vector down so that it is at the same height with the top of the character's head.
+	const FVector Start_1{Move_Vector_Down(Offset_Balance_Walk_Detect_Balance_Surface_Check_Forward, 30.f)};
+	//Offset the vector down so that it can detect if there is a surface which the character can "Balance_Walk" on.
+	const FVector End_1{Move_Vector_Down(Start_1, 170.f)};
+
+	FHitResult Balance_Walk_Detect_Balance_Surface_Hit_Result{};
+
+	UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start_1,
+		End_1,
+		5.f,
+		Balance_Traversal_Actors_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		Debug_Action,
+		Balance_Walk_Detect_Balance_Surface_Hit_Result,
+		false
+	);
+	
+	if(!Balance_Walk_Detect_Balance_Surface_Hit_Result.bBlockingHit || Balance_Walk_Detect_Balance_Surface_Hit_Result.bStartPenetrating)
+	{
+		Debug::Print("There_Is_No_Surface_For_The_Character_To_Balance_Walk_On", FColor::Red, 77);
+		Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		return false;
+	}
+
+	else if(Balance_Walk_Detect_Balance_Surface_Hit_Result.bBlockingHit && !Balance_Walk_Detect_Balance_Surface_Hit_Result.bStartPenetrating)
+	{
+		Debug::Print("There_Is_A_Surface_For_The_Character_To_Balance_Walk_On", FColor::Green, 77);
+		
+		//Offset the vector down to just above the level of the character's feet.
+		const FVector Offset_Vector_Down_To_Characters_Feet{Move_Vector_Down(Character_Direction_Arrow_Location, 170.f)};
+
+		//Offset the vector forward by multiplyng the value placed into the global double variable "Forward_Backward_Movement_Value" by 110.
+		//The value placed into said global double variable is calculated by the controller within &UCustom_Movement_Component::Add_Movement_Input. 
+		//This will move the vector to the location where the character intends to "Balance_Walk" to.
+		const FVector Offset_Vector_Forward_To_Location_To_Balance_Walk_To{Move_Vector_Forward(Offset_Vector_Down_To_Characters_Feet, Character_Direction_Arrow_Rotation, Forward_Backward_Movement_Value * 70)};
+
+		int Index_1{};
+
+		for(Index_1; Index_1 <= 7; Index_1++)
+		{
+			//With each iteration of the loop offset the vector down. This is to make sure that if the surface of which the character is "Balance_Walking" on has an incline or decline the
+			//correct location values to increase or decrease the height of the character will be calculated.
+			const FVector Offset_Vector_Down_With_Each_Iteration{Move_Vector_Down(Offset_Vector_Forward_To_Location_To_Balance_Walk_To, Index_1 * 7.f)};
+			//Offset the vector to the right side of the characters feet with each iteration of this outer for loop.
+			const FVector Start_2{Move_Vector_Right(Offset_Vector_Down_With_Each_Iteration, Character_Direction_Arrow_Rotation, 50.f)};
+			//Launch the vector to the left to see if there is a surface.
+			const FVector End_2{Move_Vector_Left(Start_2, Character_Direction_Arrow_Rotation, 70.f)};
+
+			UKismetSystemLibrary::SphereTraceSingleForObjects(
+				this,
+				Start_2,
+				End_2,
+				5.f,
+				Balance_Traversal_Actors_Trace_Types,
+				false,
+				TArray<AActor*>(),
+				Debug_Action,
+				Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result_Reference,
+				false
+			);
+		
+			//Check to see if there is a blocking hit on "Balance_Walk_Detect_Balance_Surface_Hit_Result" and "bStartPenetrating is false". If this is the case move on to
+			//the next section of the for loop.
+			if(Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result_Reference.bBlockingHit && !Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result_Reference.bStartPenetrating)
+			{
+				Debug::Print("The_Surace_Has_Begun_Being_Analyzed_For_Balance_Walking", FColor::Green, 78);
+			
+				Reversed_Front_Wall_Normal_Z = Reverse_Wall_Normal_Rotation_Z(Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result_Reference.ImpactNormal);
+			
+				/*Get the location on the surface of the "Balance_Walk" Actor in which the character should always aim to interpolate its location to.*/
+
+				//Offset the vector forward so that it is inside the surface which the character is attempting to "Balance_Walk" on. The vector should be in the middle
+				//of the "Balance_Walk" actor when measuring the width.
+				const FVector Offset_Vector_Forward_Using_Reversed_Front_Wall_Normal_Z{Move_Vector_Forward(Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result_Reference.ImpactPoint, Reversed_Front_Wall_Normal_Z, 15.f)};
+
+				//Offset vector down so it is inside the walkable surface.
+				const FVector Offset_Vector_To_Inside_Walkable_Surface{Move_Vector_Down(Offset_Vector_Forward_Using_Reversed_Front_Wall_Normal_Z, 5.f)};
+			
+				int Index_2{};
+
+				for(Index_2; Index_2 <= 7; Index_2++)
+				{
+					//With each iteration of this inner for loop offset the vector up
+					const FVector Start_3{Move_Vector_Up(Offset_Vector_To_Inside_Walkable_Surface, Index_2 * 5)};
+					//Launch the vector down to get the location on the top surface of the "Balance_Walk" actor.
+					const FVector End_3{Move_Vector_Down(Start_3, Index_2 * 10)};
+
+					UKismetSystemLibrary::SphereTraceSingleForObjects(
+						this,
+						Start_3,
+						End_3,
+						5.f,
+						Balance_Traversal_Actors_Trace_Types,
+						false,
+						TArray<AActor*>(),
+						Debug_Action,
+						Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference,
+						false
+					);
+
+					//Check to see if "bStartPenetrating" is true. If it is then this means that there is a an incline on the surface that thae character is attempting to "balance_Walk"
+					//on. If this is the case continue accordingly. 
+					if(Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference.bStartPenetrating)
+					{
+						if(Index_2 < 7)
+						{
+							continue;
+						}
+
+						else
+						{
+							Debug::Print("The_Surace_Is_Too_High_For_Balance_Walking", FColor::Red, 79);
+							Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+							return false;
+						}
+					}
+
+					else if(Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference.bBlockingHit && !Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference.bStartPenetrating)
+					{
+						Debug::Print("The_Surace_Is_Not_Too_High_For_Balance_Walking", FColor::Green, 79);
+						return true;
+					}
+				}
+			}
+
+			//Check to see if "bStartPenetrating" is true. If it is then continue the for loop accordingly.
+			else
+			{
+				if(Index_1 < 7)
+				{
+					continue;
+				}
+
+				else
+				{
+					Debug::Print("The_Surace_Hasn't_Been_Analyzed_For_Balance_Walking_Because_There_Is_A_Curve_That_Is_Too_Small_In_Radius", FColor::Red, 78);
+					Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+					return false;
+				}
+			}
+		}
+	}
+	
+	//The following line of code is to meet the return requirement of this function type.
+	return false;
+}
+
+bool UCustom_Movement_Component::Parkour_Balance_Walk_Are_There_Obstacles_In_Front_Of_Feet(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference)
+{
+	//The following line of code is to meet the return requirement of this function type.
+	return false;
+}
+
+bool UCustom_Movement_Component::Parkour_Balance_Walk_Are_There_Obstacles_In_Front_Of_Body(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference)
+{
+	//Check to see if the corresponding FHitResult and pointer are valid. If not return safely.
+	if(!Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference.bBlockingHit || !Character_Direction_Arrow)
+	return false;
+
+	//Get the rotation of the "Character_Direction_Arrow".
+	const FRotator Character_Direction_Arrow_Rotation{Character_Direction_Arrow->GetActorRotation()};
+
+	/*Check to see if there is an obstacle in front of the character.*/
+
+	//Offset the vector up so that it is at the same height as the character's hips.
+	const FVector Offset_Vector_To_Hips_Height{Move_Vector_Up(Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference.ImpactPoint, 90.f)};
+	//Offset the vector to the left so that it is in the same allignment on the character's local Y axis as the left shoulder.
+	const FVector Start{Move_Vector_Left(Offset_Vector_To_Hips_Height, Character_Direction_Arrow_Rotation, 15.f)};
+	//Offset the vector to the right so that it is in the same allignment on the character's local Y axis as the right shoulder.
+	const FVector End{Move_Vector_Right(Start, Character_Direction_Arrow_Rotation, 30.f)};
+
+
+	FHitResult Balance_Walk_Are_There_Obstacles_In_Front_Of_Body_Hit_Result{};
+
+	UKismetSystemLibrary::CapsuleTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		5.f,
+		80,
+		Balance_Traversal_Actors_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		Debug_Action,
+		Balance_Walk_Are_There_Obstacles_In_Front_Of_Body_Hit_Result,
+		false
+	);
+
+	if(Balance_Walk_Are_There_Obstacles_In_Front_Of_Body_Hit_Result.bBlockingHit || Balance_Walk_Are_There_Obstacles_In_Front_Of_Body_Hit_Result.bStartPenetrating)
+	{
+		Debug::Print("There_Is_An_Obstacle_In_Front_Of_The_Character", FColor::Red, 80);
+		Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		return true;
+	}
+
+	else if(!Balance_Walk_Are_There_Obstacles_In_Front_Of_Body_Hit_Result.bBlockingHit && !Balance_Walk_Are_There_Obstacles_In_Front_Of_Body_Hit_Result.bStartPenetrating)
+	{
+		Debug::Print("There_Is_No_Obstacle_In_Front_Of_The_Character", FColor::Green, 80);
+		return false;
+	}
+
+	//The following line of code is to meet the return requirement of this function type.
+	return false;
+}
+
+void UCustom_Movement_Component::Balance_Walk_Automatic_Hop_Detect_Wall()
+{	
+	int Index{};
+
+	for(Index; Index <= 20; Index++)
+	{
+		//Get the location of the character.
+		const FVector Component_Location{UpdatedComponent->GetComponentLocation()};
+		//Set the vector which the sphere trace will use to be at ground level. This for loop will create new sphere traces from this location. Each sphere trace will stack ontop of the previous forming a "tower".
+		const FVector Set_Vector_Below_Character{Move_Vector_Down(Component_Location, 270.f)};
+		//With each iteration of the for loop move the vector up 17 units by multiplying the index by 17.
+		const FVector Move_Vector_Up_With_Each_Iteration_Of_Loop{Move_Vector_Up(Set_Vector_Below_Character, Index * 17.f)};
+		//Move the vector forwards 20 units so that it starts right in front of the character.
+		const FVector Start{Move_Vector_Forward(Move_Vector_Up_With_Each_Iteration_Of_Loop, UpdatedComponent->GetComponentRotation(), 90)};
+		//Move the vector forward 140 units so that it ends a good distance away from the character.
+		const FVector End{Move_Vector_Forward(Start, UpdatedComponent->GetComponentRotation(), 290)};
+
+		//Develop a "SphereTraceSingleForObjects()". The objects will be set in the character blueprint.
+		UKismetSystemLibrary::SphereTraceSingleForObjects(
+			this,
+			Start,
+			End,
+			20.f,
+			Balance_Traversal_Actors_Trace_Types,
+			false,
+			Actors_To_Ignore,
+			Debug_Action,
+			Initial_Front_Wall_Hit_Result,
+			false
+			);
+
+		//If there is a blocking hit and there is no initial overlap break out of the for loop early.
+		if(Initial_Front_Wall_Hit_Result.bBlockingHit && !Initial_Front_Wall_Hit_Result.bStartPenetrating)
+		break;
+	}
+	
+	//Drawing debug sphere so the "EDrawDebugTrace" can be set to none on the "SphereTraceSingleForObjects()".
+	//Draw_Debug_Sphere(Initial_Front_Wall_Hit_Result.ImpactPoint, 5.f, FColor::Blue, 1.f, false, 7.f);
+} 
+
+bool UCustom_Movement_Component::Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface()
+{
+	if(!Character_Direction_Arrow)
+	return false;
+	
+	//The global FRotator "Reversed_Front_Wall_Normal_Z" has to be set here to the directrion of the reversed impact normal at 180 degrees for the gloabal FHitResult "Front_Wall_Top_Edge_Best_Hit". 
+	//because within the function &UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Balance_Walk_Position there is a rotation of -90 degrees which is subtracted from the global FRotator "Reversed_Front_Wall_Normal_Z".
+	Reversed_Front_Wall_Normal_Z = Reverse_Wall_Normal_Rotation_Z(Front_Wall_Top_Edge_Best_Hit.ImpactNormal);
+	
+
+	const FVector Offset_Vector_Forward{Move_Vector_Forward(
+				  Front_Wall_Top_Edge_Best_Hit.ImpactPoint, 
+				  Reversed_Front_Wall_Normal_Z,
+				  15.f)};
+		
+	const FVector Start{Move_Vector_Up(Offset_Vector_Forward, 15.f)};
+	const FVector End{Move_Vector_Down(Start, 20.f)};
+
+	UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		5.f,
+		Balance_Traversal_Actors_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		Debug_Action,
+		Balance_Walk_Automatic_Hop_Top_Result,
+		false
+		);
+		
+	//If there is no blocing hit return. This is because the top surface of the wall which is being analyzed had dropped below the threshold which is desired (Sphere trace "End").
+	if(!Balance_Walk_Automatic_Hop_Top_Result.bBlockingHit)
+	{
+		Debug::Print("Analyzing_Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface_Failed", FColor::Red, 80);
+		return false;
+	}
+	
+	//If there is a blocking hit on the Out_Hit, assign said FHitResult to the global FHitResult variable "Wall_Top_Result". 
+	else if(Balance_Walk_Automatic_Hop_Top_Result.bBlockingHit)
+	{
+		Debug::Print("Analyzing_Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface_Succeeded", FColor::Green, 80);
+		//Draw_Debug_Sphere(Wall_Top_Result.ImpactPoint, 15.f, FColor::Emerald, 7.f, false, 7.f);
+		return true;
+	}
+
+	else
+	{
+		Debug::Print("Analyzing_Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface_Failed. There_Is_No_Wall_Top_Result", FColor::Red, 80);
+		return false;
+	}
+
+}
+
+bool UCustom_Movement_Component::Validate_Balance_Walk_Automatic_Hop_Location()
+{
+	if(!Owning_Player_Character || !Balance_Walk_Automatic_Hop_Top_Result.bBlockingHit)
+	{
+		Debug::Print("Validate_Balance_Walk_Automatic_Hop_Location_Did_Not_Begin", FColor::Red, 83);
+		return false;
+	}
+	
+
+	const FVector Character_Location{Owning_Player_Character->GetActorLocation()};
+	
+	/*Check to see if there is an obstacle in the way.*/
+
+	const FVector Custom_Character_Location{Character_Location.X, Character_Location.Y, Character_Location.Z - 40.f};
+
+
+	int Index_2{};
+
+	FHitResult Out_Hit_1{};
+
+	for(Index_2; Index_2 <= 4; Index_2++)
+	{
+		const FVector Start_1{Move_Vector_Up(Custom_Character_Location, Index_2 * 40.f)};
+
+		const FVector Offset_End_Vector_Up{Move_Vector_Up(Balance_Walk_Automatic_Hop_Top_Result.ImpactPoint, 10.f)};
+
+		const FVector End_1{Move_Vector_Up(Offset_End_Vector_Up, Index_2 * 40.f)};
+			
+		UKismetSystemLibrary::LineTraceSingleForObjects(
+			this,
+			Start_1,
+			End_1,
+			Balance_Traversal_Actors_Trace_Types,
+			false,
+			TArray<AActor*>(),
+			Debug_Action,
+			Out_Hit_1,
+			false
+		);
+
+		if(!Out_Hit_1.bBlockingHit)
+		{
+			if(Index_2 != 4)
+			{
+				continue;
+			}
+
+			else if(Index_2 == 4)
+			{
+				Debug::Print("Validate_Balance_Walk_Automatic_Hop_Location_For_No_Obstacles_Succeeded", FColor::Green, 83);
+
+				/*Check for enough room for the character to land.*/
+
+				const FVector Start_2{Move_Vector_Up(Balance_Walk_Automatic_Hop_Top_Result.ImpactPoint, 110.f)};
+
+				FHitResult Out_Hit_2{};
+
+				UKismetSystemLibrary::CapsuleTraceSingleForObjects(
+					this,
+					Start_2,
+					Start_2,
+					40.f,
+					100.f,
+					Balance_Traversal_Actors_Trace_Types,
+					false,
+					TArray<AActor*>(),
+					Debug_Action,
+					Out_Hit_2,
+					false
+				);
+
+				if(!Out_Hit_2.bBlockingHit && !Out_Hit_2.bStartPenetrating)
+				{
+					Debug::Print("Validate_Balance_Walk_Automatic_Hop_Location_For_Enough_Room_For_Character_To_Land_Succeeded", FColor::Green, 84);
+
+					Wall_Top_Result = Out_Hit_1;
+
+					return true;
+				}
+				
+				else
+				{
+					Debug::Print("Validate_Balance_Walk_Automatic_Hop_Location_For_Enough_Room_For_Character_To_Land_Failed", FColor::Red, 84);
+					return false;
+				}
+			}
+		}
+
+		else
+		{
+			Debug::Print("Validate_Balance_Walk_Automatic_Hop_Location_For_No_Obstacles_Failed", FColor::Red, 83);
+			return false;
+		}
+	}
+
+	//The following line of code is to meet the return requirement of this function type.
+	return false;
+	
+}
+
+bool UCustom_Movement_Component::Validate_Balance_Drop_Hanging(const bool& bDrop_To_Left_Side)
+{
+	if(!Character_Direction_Arrow)
+	{
+		Debug::Print("Validate_Balance_Drop_Hanging_Could_Not_Be_Started", FColor::Red, 75);
+		return false;
+	}
+
+	//Get the location and rotation of the "Character_Direction_Arrow".
+	const FVector Character_Direction_Arrow_Location{Character_Direction_Arrow->GetActorLocation()};
+	const FRotator Character_Direction_Arrow_Rotation{Character_Direction_Arrow->GetActorRotation()};
+
+	//Offset the vector just below the height of the character's feet.
+	const FVector Offset_Vector_To_The_Level_Of_The_Feet{Move_Vector_Down(Character_Direction_Arrow_Location, 200.f)};
+	
+	//Whether the value passed in via the input parameter is true or false move the vector to the left or right side of the character.
+	FVector Start_1{};
+	
+	if(bDrop_To_Left_Side)
+	{
+		Start_1 = Move_Vector_Left(Offset_Vector_To_The_Level_Of_The_Feet, Character_Direction_Arrow_Rotation, 50.f);
+	}
+
+	else
+	{
+		Start_1 = Move_Vector_Right(Offset_Vector_To_The_Level_Of_The_Feet, Character_Direction_Arrow_Rotation, 50.f);
+	}
+
+	//Whether the value passed in via the input parameter is true or false move the vector back towards the appropriate side of the character character 
+	FVector End_1{};
+
+	if(bDrop_To_Left_Side)
+	{
+		End_1 = Move_Vector_Right(Offset_Vector_To_The_Level_Of_The_Feet, Character_Direction_Arrow_Rotation, 55.f);
+	}
+
+	else
+	{
+		End_1 = Move_Vector_Left(Offset_Vector_To_The_Level_Of_The_Feet, Character_Direction_Arrow_Rotation, 55.f);
+	}
+
+	FHitResult Detect_Balance_Drop_Hanging{};
+
+	UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start_1,
+		End_1,
+		5.f,
+		Balance_Traversal_Actors_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		Debug_Action,
+		Detect_Balance_Drop_Hanging,
+		false
+	);
+
+	if(Detect_Balance_Drop_Hanging.bBlockingHit && !Detect_Balance_Drop_Hanging.bStartPenetrating)
+	{
+		Debug::Print("Detect_Balance_Drop_Hanging_Succeeded", FColor::Green, 75);
+
+		const FRotator Reversed_Detect_Balance_Drop_Hanging_Normal{Reverse_Wall_Normal_Rotation_Z(Detect_Balance_Drop_Hanging.ImpactNormal)};
+
+		/*Get the Wall Top Result*/
+		const FVector Offset_Vector_Forward{Move_Vector_Forward(Detect_Balance_Drop_Hanging.ImpactPoint, Reversed_Detect_Balance_Drop_Hanging_Normal, 2.f)};
+		const FVector Start_2{Move_Vector_Up(Offset_Vector_Forward, 10.f)};
+		const FVector End_2{Move_Vector_Down(Start_2, 15.f)};
+
+
+		FHitResult Balance_Drop_Hanging_Top_Result{};
+
+		UKismetSystemLibrary::SphereTraceSingleForObjects(
+			this,
+			Start_2,
+			End_2,
+			5.f,
+			Balance_Traversal_Actors_Trace_Types,
+			false,
+			TArray<AActor*>(),
+			Debug_Action,
+			Balance_Drop_Hanging_Top_Result,
+			false
+		);
+
+		if(Balance_Drop_Hanging_Top_Result.bBlockingHit)
+		{
+			Debug::Print("Balance_Drop_Hanging_Top_Result_Succeeded", FColor::Green, 77);
+
+			/*Check to see if there is engough room for the character to Execute_Balance_Drop_Hanging*/
+
+			const FVector Offset_Vector_Backward{Move_Vector_Backward(Detect_Balance_Drop_Hanging.ImpactPoint, Reversed_Detect_Balance_Drop_Hanging_Normal, 50.f)};
+			const FVector Start_3{Move_Vector_Down(Offset_Vector_Backward, 100.f)};
+			const FVector End_3{Start_3};
+			
+			FHitResult Validate_Balance_Drop_Hanging_For_Space{};
+
+			UKismetSystemLibrary::CapsuleTraceSingleForObjects(
+				this,
+				Start_3,
+				End_3,
+				40.f,
+				98.f,
+				Balance_Traversal_Actors_Trace_Types,
+				false,
+				TArray<AActor*>(),
+				Debug_Action,
+				Validate_Balance_Drop_Hanging_For_Space,
+				false
+			);
+
+			if(!Validate_Balance_Drop_Hanging_For_Space.bBlockingHit && !Validate_Balance_Drop_Hanging_For_Space.bStartPenetrating)
+			{
+				Debug::Print("Validate_Balance_Drop_Hanging_For_Space_Succeeded", FColor::Green, 78);
+				Wall_Top_Result = Balance_Drop_Hanging_Top_Result;
+				Reversed_Front_Wall_Normal_Z = Reversed_Detect_Balance_Drop_Hanging_Normal;
+				return true;
+			}
+
+			else
+			{
+				Debug::Print("Validate_Balance_Drop_Hanging_For_Space_Failed", FColor::Red, 78);
+				return false;
+			}
+			
+		}
+
+		else
+		{
+			Debug::Print("Balance_Drop_Hanging_Top_Result_Failed", FColor::Red, 77);
+			return false;
+		}
+	}
+
+	else
+	{
+		Debug::Print("Detect_Balance_Drop_Hanging_Failed", FColor::Red, 75);
+		return false;
+	}
+	
+	//The following line of code is to meet the return requirement of this function type.
+	return false;
+}
+
+bool UCustom_Movement_Component::Validate_Free_Hang_To_Balanced_Walk(const bool& bClimb_To_Left_Side)
+{
+	if(!Character_Direction_Arrow)
+	{
+		Debug::Print("Validate_Free_Hang_To_Balanced_Walk_Did_Not_Start", FColor::Red, 77);
+		return false;
+	}
+
+	//Get the location and rotation of the "Character_Direction_Arrow".
+	const FVector Character_Direction_Arrow_Location{Character_Direction_Arrow->GetActorLocation()};
+	const FRotator Character_Direction_Arrow_Rotation{Character_Direction_Arrow->GetActorRotation()};
+
+	//Offset Vector Backwards
+	const FVector Start_1{Move_Vector_Backward(Character_Direction_Arrow_Location, Character_Direction_Arrow_Rotation, 40.f)};
+	//Offset Vector Forward
+	const FVector End_1{Move_Vector_Forward(Start_1, Character_Direction_Arrow_Rotation, 45.f)};
+
+	FHitResult Detect_Free_Hang_To_Balanced_Walk_1{};
+
+	UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start_1,
+		End_1,
+		5.f,
+		Balance_Traversal_Actors_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::ForDuration,
+		Detect_Free_Hang_To_Balanced_Walk_1,
+		false
+	);
+
+	//Offset Vector Forward
+	const FVector Start_2{Move_Vector_Forward(Character_Direction_Arrow_Location, Character_Direction_Arrow_Rotation, 70.f)};
+	//Offset Vector Backward
+	const FVector End_2{Move_Vector_Backward(Start_2, Character_Direction_Arrow_Rotation, 75.f)};
+
+	FHitResult Detect_Free_Hang_To_Balanced_Walk_2{};
+
+	UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start_2,
+		End_2,
+		5.f,
+		Balance_Traversal_Actors_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		EDrawDebugTrace::ForDuration,
+		Detect_Free_Hang_To_Balanced_Walk_2,
+		false
+	);
+
+
+
+	if((Detect_Free_Hang_To_Balanced_Walk_1.bBlockingHit && Detect_Free_Hang_To_Balanced_Walk_2.bBlockingHit) && (!Detect_Free_Hang_To_Balanced_Walk_1.bStartPenetrating && !Detect_Free_Hang_To_Balanced_Walk_2.bStartPenetrating))
+	{
+		Debug::Print("Detect_Free_Hang_To_Balanced_Walk_Succeeded", FColor::Green, 77);
+
+		const FRotator Free_Hang_To_Balanced_Walk_Reverse_Normal{Reverse_Wall_Normal_Rotation_Z(Detect_Free_Hang_To_Balanced_Walk_1.ImpactNormal)};
+
+		//Get the wall top result.
+
+		const FVector Offset_Vector_Forward{Move_Vector_Forward(Detect_Free_Hang_To_Balanced_Walk_1.ImpactPoint, Free_Hang_To_Balanced_Walk_Reverse_Normal, 10.f)};
+		const FVector Start_3{Move_Vector_Up(Offset_Vector_Forward, 10.f)};
+		const FVector End_3{Move_Vector_Down(Start_3, 15.f)};
+
+
+		FHitResult Free_Hang_To_Balanced_Walk_Top_Result{};
+
+		UKismetSystemLibrary::SphereTraceSingleForObjects(
+			this,
+			Start_3,
+			End_3,
+			5.f,
+			Balance_Traversal_Actors_Trace_Types,
+			false,
+			TArray<AActor*>(),
+			Debug_Action,
+			Free_Hang_To_Balanced_Walk_Top_Result,
+			false
+		);
+
+		if(Free_Hang_To_Balanced_Walk_Top_Result.bBlockingHit)
+		{
+			Debug::Print("Free_Hang_To_Balanced_Walk_Top_Result_Succeeded", FColor::Green, 78);
+
+			/*Check to see if there is engough room for the character to Free_Hang_To_Balanced_Walk*/
+
+			const FVector Start_4{Move_Vector_Up(Free_Hang_To_Balanced_Walk_Top_Result.ImpactPoint, 100.f)};
+			const FVector End_4{Start_4};
+			
+			FHitResult Validate_Free_Hang_To_Balanced_Walk_For_Space{};
+
+			UKismetSystemLibrary::CapsuleTraceSingleForObjects(
+				this,
+				Start_4,
+				End_4,
+				40.f,
+				98.f,
+				Balance_Traversal_Actors_Trace_Types,
+				false,
+				TArray<AActor*>(),
+				Debug_Action,
+				Validate_Free_Hang_To_Balanced_Walk_For_Space,
+				false
+			);
+
+			if(!Validate_Free_Hang_To_Balanced_Walk_For_Space.bBlockingHit && !Validate_Free_Hang_To_Balanced_Walk_For_Space.bStartPenetrating)
+			{
+				Debug::Print("Validate_Free_Hang_To_Balanced_Walk_For_Space_Succeeded", FColor::Green, 79);
+				
+				/*Check to see if there is a wall in front of the character*/
+
+				FRotator Rotated_Vector_To_Check_For_Wall{};
+				
+				if(bClimb_To_Left_Side)
+				{
+					Rotated_Vector_To_Check_For_Wall = FRotator(0.f, Add_Rotator(Free_Hang_To_Balanced_Walk_Reverse_Normal, 90).Yaw, 0.f);
+				}
+				
+				else
+				{
+					Rotated_Vector_To_Check_For_Wall = FRotator(0.f, Add_Rotator(Free_Hang_To_Balanced_Walk_Reverse_Normal, -90).Yaw, 0.f);
+				}
+			
+				const FVector Offset_Wall_Top_Vector_Forward_To_Check_For_Wall{Move_Vector_Forward(Free_Hang_To_Balanced_Walk_Top_Result.ImpactPoint, Rotated_Vector_To_Check_For_Wall, 40.f)};
+
+				const FVector Offset_Wall_Top_Vector_Up_To_Check_For_Wall{Move_Vector_Up(Offset_Wall_Top_Vector_Forward_To_Check_For_Wall, 10.f)};
+				
+				int Index{};
+
+				FHitResult Validate_Free_Hang_To_Balanced_Walk_For_Obstacle{};
+
+				for(Index; Index <= 7; Index++)
+				{
+					const FVector Start_5{Move_Vector_Up(Offset_Wall_Top_Vector_Up_To_Check_For_Wall, 30.f * Index)};
+
+					const FVector End_5{Move_Vector_Forward(Start_5, Rotated_Vector_To_Check_For_Wall, 140.f)};
+
+					UKismetSystemLibrary::LineTraceSingleForObjects(
+						this,
+						Start_5,
+						End_5,
+						Balance_Traversal_Actors_Trace_Types,
+						false,
+						TArray<AActor*>(),
+						Debug_Action,
+						Validate_Free_Hang_To_Balanced_Walk_For_Obstacle,
+						false
+					);
+
+					if(!Validate_Free_Hang_To_Balanced_Walk_For_Obstacle.bBlockingHit)
+					{
+						if(Index < 7)
+						{
+							continue;
+						}
+
+						else
+						{
+							Debug::Print("Validate_Free_Hang_To_Balanced_Walk_For_Obstacle_Succeeded", FColor::Green, 80);
+							Wall_Top_Result = Free_Hang_To_Balanced_Walk_Top_Result;
+							Reversed_Front_Wall_Normal_Z = Free_Hang_To_Balanced_Walk_Reverse_Normal;
+							return true;
+						}
+					}
+
+					else
+					{
+						Debug::Print("Validate_Free_Hang_To_Balanced_Walk_For_Obstacle_Failed", FColor::Red, 80);
+						return false;
+					}
+				}
+			}
+
+			else
+			{
+				Debug::Print("Validate_Free_Hang_To_Balanced_Walk_For_Space_Failed", FColor::Red, 79);
+				return false;
+			}
+		}
+
+		else
+		{
+			Debug::Print("Free_Hang_To_Balanced_Walk_Top_Result_Failed", FColor::Red, 78);
+			return false;
+		}	
+	}
+
+	else
+	{
+		Debug::Print("Detect_Free_Hang_To_Balanced_Walk_Failed", FColor::Red, 77);
+		return false;
+	}
+
+	//The following line of code is to meet the return requirement of this function type.
+	return false;
+}
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -6574,7 +7364,7 @@ void UCustom_Movement_Component::Set_Parkour_State_Attributes(const FGameplayTag
 	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, false, false);
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Jump"))))
-	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Flying, false, false);
+	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Flying, true, true);
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Mantle"))))
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
@@ -6589,7 +7379,7 @@ void UCustom_Movement_Component::Set_Parkour_State_Attributes(const FGameplayTag
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, false);
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Wall.Run"))))
-	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, false, true);
+	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Run"))))
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, false);
@@ -6604,7 +7394,7 @@ void UCustom_Movement_Component::Set_Parkour_State_Attributes(const FGameplayTag
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
-	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, false);
+	Parkour_State_Settings(ECollisionEnabled::QueryOnly, EMovementMode::MOVE_Flying, true, false);
 		
 	Server_Set_Parkour_State_Attributes(Current_Parkour_State);
 		
@@ -7589,78 +8379,181 @@ void UCustom_Movement_Component::Set_Parkour_Action(const FGameplayTag& New_Park
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Jump.Up")))))
 	{
+		/*Play_Parkour_Montage(Jump_Up);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Accurate.Jump.Start.L")))))
 	{
+		/*Play_Parkour_Montage(Accurate_Jump_Start_L);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Accurate.Jump.Start.R")))))
 	{
+		/*Play_Parkour_Montage(Accurate_Jump_Start_R);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Accurate.Jump.Start.L.Warp")))))
 	{
+		/*Play_Parkour_Montage(Accurate_Jump_Start_L_Warp);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Accurate.Jump.Start.R.Warp")))))
 	{
+		/*Play_Parkour_Montage(Accurate_Jump_Start_R_Warp);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Accurate.Jump.Finish")))))
 	{
+		/*Play_Parkour_Montage(Accurate_Jump_Finish);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Jump.Front.L.Start")))))
 	{
+		/*Play_Parkour_Montage(Jump_Front_L_Start);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Jump.Front.R.Start")))))
 	{
+		/*Play_Parkour_Montage(Jump_Front_R_Start);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Jump.Front.L.Start.Warp")))))
 	{
+		/*Play_Parkour_Montage(Jump_Front_L_Start_Warp);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Jump.Front.R.Start.Warp")))))
 	{
+		/*Play_Parkour_Montage(Jump_Front_R_Start_Warp);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Jump.Finish")))))
 	{
+		/*Play_Parkour_Montage(Jump_Finish);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Jump.One.L")))))
 	{
+		/*Play_Parkour_Montage(Jump_One_L);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Jump.One.R")))))
 	{
+		/*Play_Parkour_Montage(Jump_One_R);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Walk.90.L")))))
+	{
+		/*Play_Parkour_Montage(Balance_Walk_90_L);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Walk.90.R")))))
+	{
+		/*Play_Parkour_Montage(Balance_Walk_90_R);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Walk.180")))))
+	{
+		/*Play_Parkour_Montage(Balance_Walk_180);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Walk.Automatic.Hop")))))
+	{
+		/*Execute_Random_Montage(Balance_Walk_Automatic_Hop_Array);*/
+		
+		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 3);
+
+		//Via a while loop check to see if the random integer which is selected from the line of code above is the same as the integer which was selected the last time this Parkour_Action was 
+		//activated (stored within the global int variable "Last_Random_Montage_Played"). If this is the case the while loop should continue to select a random integer until the integer which 
+		//is selected is different from the integer stored within the global int variable "Last_Random_Montage_Played". On the other hand if the integer which was selected in the line of code above 
+		//is different from the integer stored in the global int variable "Last_Random_Montage_Played", this loop will never activate.
+		while(Last_Random_Montage_Played == Random_Montage_To_Play)
+		{
+			Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 3);
+		}
+
+		//Assign the integer which was selected to the global int variable "Last_Random_Montage_Played".
+		Last_Random_Montage_Played = Random_Montage_To_Play;
+		
+		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Drop.L.Hanging")))))
+	{
+		/*Play_Parkour_Montage(Balance_Drop_L_Hanging);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Drop.R.Hanging")))))
+	{
+		/*Play_Parkour_Montage(Balance_Drop_R_Hanging);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT( "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L")))))
+	{
+		/*Play_Parkour_Montage(Hanging_Climb_Up_To_Balanced_Walk_L);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT( "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R")))))
+	{
+		/*Play_Parkour_Montage(Hanging_Climb_Up_To_Balanced_Walk_R);*/
+		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
@@ -8183,6 +9076,16 @@ void UCustom_Movement_Component::Play_Parkour_Montage(UParkour_Action_Data* Park
 			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_3_Z_Offset()),
 		Reversed_Front_Wall_Normal_Z);
 
+	Motion_Warping_Component->AddOrUpdateWarpTargetFromLocationAndRotation(
+		FName(Parkour_Data_Asset_To_Use->Get_Parkour_Warp_Target_Name_4()),
+		Find_Parkour_Warp_Location(
+			Wall_Top_Result.ImpactPoint, 
+			Reversed_Front_Wall_Normal_Z, 
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_4_X_Offset(),
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_4_Y_Offset(),
+			Parkour_Data_Asset_To_Use->Get_Parkour_Warp_4_Z_Offset()),
+		Reversed_Front_Wall_Normal_Z);
+
 
 	/*After the location to offset the root bone is set, use the "Anim_Instance*" to call the function "Montage_Play(). The input argument 
 	"UParkour_Action_Data* Parkour_Data_Asset_To_Use" will be used to call the function "Get_Montage_To_Play()" which is a getter function that returns the 
@@ -8290,12 +9193,12 @@ void UCustom_Movement_Component::Function_To_Execute_On_Animation_Blending_Out(U
 			bParkour_Action_Jump_Finish_On_Blending_Out = false;
 		}
 
-		else if(!bAccurate_Jump_Destination_Found && bParkour_Action_Jump_Finish_On_Blending_Out)
+		/* else if(!bAccurate_Jump_Destination_Found && bParkour_Action_Jump_Finish_On_Blending_Out)
 		{
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Finish"))));
 			bAccurate_Jump_Destination_Found = false;
 			bParkour_Action_Jump_Finish_On_Blending_Out = false;
-		}
+		} */
 		
 		else
 		{
@@ -8331,7 +9234,7 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 	//checking to see the current "Parkour_State" of the character. If the value equals "Parkour.State.Free.Roam" then this means the character should have it's normal ground locomotion.
 	//If the "Parkour_State" is set to "Parkour.State.Climb" then a call to handle "Parkour_Climb_Handle_Shimmying_Movement()" should be made if the value set in the global FGameplayTag "Parkour_State"
 	//is set to "Parkour.State.Climb" and a further nested check to see if there is an animation montage playing returns false. If there is an animation playing call the funtion 
-	//"Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables".
+	//"Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables".
 	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
 	{
 		//This variable is set within the character class in one of the calls to this function. One call sets this variable to true the other sets this variable to false. In each respective call to this function the global double variables
@@ -8376,14 +9279,14 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 		}
 	}
 
-	//If the Parkour_State is set to "Parkour.State.Climb" check to see if there is an animation playing. If so call "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables()". This call will ensure that the character clamps to the surface
+	//If the Parkour_State is set to "Parkour.State.Climb" check to see if there is an animation playing. If so call "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables()". This call will ensure that the character clamps to the surface
 	//of the wall when transitioning the global FGameplayTag "Parkour_State" from "Parkour.State.Free.Roam" to "Parkour.State.Climb" as well as when other montages as played when the global FGameplayTag "Parkour_State" is set to
 	//"Parkour.State.Climb". If no animation is playing and the global FGameplayTag "Parkour_Action" is set to "Parkour.Action.No.Action" call the function "Parkour_Shimmy_Handle_Corner_Movement()". This function handles all the logic for the climb movement.
 	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
 	{
 		if(Anim_Instance->IsAnyMontagePlaying())
 		{
-			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 		}
 		
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
@@ -8392,19 +9295,32 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 		}
 	}
 
-	//If the Parkour_State is set to "Parkour.State.Wall.Pipe.Climb" check to see if there is an animation playing. If so call "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables()". This call will ensure that the character clamps to the surface
+	//If the Parkour_State is set to "Parkour.State.Wall.Pipe.Climb" check to see if there is an animation playing. If so call "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables()". This call will ensure that the character clamps to the surface
 	//of the wall when transitioning the global FGameplayTag "Parkour_State" from "Parkour.State.Free.Roam" to "Parkour.State.Climb" as well as when other montages as played when the global FGameplayTag "Parkour_State" is set to
 	//"Parkour.State.Climb". If no animation is playing and the global FGameplayTag "Parkour_Action" is set to "Parkour.Action.No.Action" call the function "Parkour_Shimmy_Handle_Corner_Movement()". This function handles all the logic for the climb movement.
 	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
 	{
 		if(Anim_Instance->IsAnyMontagePlaying())
 		{
-			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 		}
 
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
 		{
 			Parkour_Wall_Pipe_Climb_Handle_Pipe_Climbing_Movement();
+		}
+	}
+
+	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
+	{
+		if(Anim_Instance->IsAnyMontagePlaying())
+		{
+			Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		}
+
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
+		{
+			Parkour_Balance_Walk_Handle_Balance_Walking_Movement();
 		}
 	}
 	
@@ -8476,7 +9392,7 @@ void UCustom_Movement_Component::Stabilize_Movement_While_Free_Roaming()
 	Interpolated_Right_Left_Movement_Value = Interpolated_Direction.X;
 }
 
-void UCustom_Movement_Component::Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables()
+void UCustom_Movement_Component::Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables()
 {
 	//This function is called within the character class in "&ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered" as 
 	//well as within this class. It resets the values of the global double variables named "Forward_Backward_Movement_Value" and 
@@ -8496,13 +9412,13 @@ void UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement()
 	
 	//Store the absolute value of the value which is passed into the global double variable "Right_Left_Movement_Value". This value will be used to check if the input to move the character to the right or left
 	//within the function "&UCustom_Movement_Component::Add_Movement_Input" is above the threshold to accept input.
-	const double Right_Left_Movement_Value_Absolute_Value{UKismetMathLibrary::Abs(Right_Left_Movement_Value)};
 	const double Forward_Backward_Movement_Value_Absolute_Value{UKismetMathLibrary::Abs(Forward_Backward_Movement_Value)};
+	const double Right_Left_Movement_Value_Absolute_Value{UKismetMathLibrary::Abs(Right_Left_Movement_Value)};
 
 	//Check to see if the absolute value of the value which is passed into the global double variable "Right_Left_Movement_Value" is above the threshold to allow shimmying movement.
 	//If the check is passed, check to see if the value is above or below 0. If the value is above 0 the character is moving to the right, if the value is below 0 the character is 
 	//moving to the left.
-	if(Right_Left_Movement_Value_Absolute_Value > .7 || Forward_Backward_Movement_Value_Absolute_Value > .7)
+	if(Forward_Backward_Movement_Value_Absolute_Value > .7 || Right_Left_Movement_Value_Absolute_Value > .7)
 	{
 		if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
 		{
@@ -8570,9 +9486,9 @@ void UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement()
 		//This function executes an algorithm which determines whether there is a wall infront of the character for climb movememnt to happen, as well as determining if the wall
 		//in the direction in which the character is moving is too high or low to shimmy across. For example if the character is moving to the left and the surface which the character
 		//is shimmying across has a ledge that is too high for the character to reach aka bStartPenetrating is true, (calculated by the maximum number of iterations in the inner for loop), 
-		//then "Parkour_Climbing_Wall_Top_Result" will not be calculated and "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" along with "return" will be called 
+		//then "Parkour_Climbing_Wall_Top_Result" will not be calculated and "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" along with "return" will be called 
 		//within the function in the appropriate location. Same goes for the "Parkour_Climbing_Detect_Wall_Hit_Result". If there is no blocking hit or "bStartPenetrating" is true 
-		//"Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" along with "return" will be called within the function in the appropriate location within the function.
+		//"Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" along with "return" will be called within the function in the appropriate location within the function.
 		if(!Parkour_Climb_State_Detect_Wall(Parkour_Climbing_Detect_Wall_Hit_Result, Parkour_Climbing_Wall_Top_Result))
 		{
 			/*By design choice in corner movemment should only be enabled if the input placed into the controller is that which is consistant with
@@ -8591,7 +9507,7 @@ void UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement()
 
 			else
 			{
-				Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+				Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 				return;
 			}
 		}
@@ -8622,7 +9538,7 @@ void UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement()
 
 			else
 			{
-				Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+				Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 				return;
 			}
 		}
@@ -8639,10 +9555,10 @@ void UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement()
 	}
 
 	//If "Right_Left_Movement_Value_Absolute_Value" is not above .7 then this means the minimum threshold to activate "Shimmying_Movement" has not been met by the input from the player's
-	//controller. In this case, "Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" should be called.
+	//controller. In this case, "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" should be called.
 	else
 	{
-		Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 		return;
 	}
 
@@ -9610,6 +10526,14 @@ void UCustom_Movement_Component::Execute_Random_Montage(TArray<UParkour_Action_D
 			Free_Roam_Accelerating_Drop_Array.Emplace(Two_Hand_R_Drop);
 		}
 
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Walk.Automatic.Hop"))))
+		{
+			Balance_Walk_Automatic_Hop_Array.Emplace(Balance_Walk_Jump_Front);
+			Balance_Walk_Automatic_Hop_Array.Emplace(Jump_One_L);
+			Balance_Walk_Automatic_Hop_Array.Emplace(Jump_One_R);
+			
+		}
+
 	}
 
 	else
@@ -10204,6 +11128,7 @@ void UCustom_Movement_Component::Execute_Parkour_Action()
 	//Decide the Parkour Action to execute based on the current value of the global gameplaytag "Parkour_State" as well as the values stored in the global double variables
 	//"Wall_Height", "Wall_Depth" and "Vault_Height".
 	Decide_Parkour_Action();
+	
 }
 
 void UCustom_Movement_Component::Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam()
@@ -10763,14 +11688,14 @@ void UCustom_Movement_Component::Parkour_Wall_Pipe_Climb_Handle_Pipe_Climbing_Mo
 		//This function determines the location on the wall pipe for climbing movememnt to set the location of the character to. 
 		if(!Parkour_Wall_Pipe_Climb_State_Detect_Wall_Pipe(Parkour_Wall_Pipe_Climbing_Wall_Top_Result))
 		{
-			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 			return;
 		}
 
 		//This function checks to see if there is an obstacle ontop or below the character.
 		else if(Parkour_Wall_Pipe_Climb_State_Are_There_Obstacles_Ontop_Or_Below_Body(Parkour_Wall_Pipe_Climbing_Wall_Top_Result.ImpactPoint) || !Parkour_Wall_Pipe_Climb_Detect_End_Of_Wall_Pipe(Parkour_Wall_Pipe_Climbing_Wall_Top_Result.ImpactPoint))
 		{
-			Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+			Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 			return;
 		}
 
@@ -10782,7 +11707,7 @@ void UCustom_Movement_Component::Parkour_Wall_Pipe_Climb_Handle_Pipe_Climbing_Mo
 
 	else
 	{
-		Stop_Parkour_Climb_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 		return;
 	}
 }
@@ -11093,8 +12018,11 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 				
 				else
 				{
+					/* bAccurate_Jump_Destination_Found = false;
+					bParkour_Action_Jump_Finish_On_Blending_Out = true; */
+
 					bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = true;
+					bParkour_Action_Jump_Finish_On_Blending_Out = false;
 				}
 
 				
@@ -11122,8 +12050,11 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 			
 				else
 				{
+					/* bAccurate_Jump_Destination_Found = false;
+					bParkour_Action_Jump_Finish_On_Blending_Out = true; */
+
 					bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = true;
+					bParkour_Action_Jump_Finish_On_Blending_Out = false;
 				}
 
 				
@@ -11154,8 +12085,11 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 				
 				else
 				{
+					/* bAccurate_Jump_Destination_Found = false;
+					bParkour_Action_Jump_Finish_On_Blending_Out = true; */
+
 					bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = true;
+					bParkour_Action_Jump_Finish_On_Blending_Out = false;
 				}
 				
 
@@ -11182,8 +12116,11 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 				
 				else
 				{
+					/* bAccurate_Jump_Destination_Found = false;
+					bParkour_Action_Jump_Finish_On_Blending_Out = true; */
+
 					bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = true;
+					bParkour_Action_Jump_Finish_On_Blending_Out = false;
 				}
 				
 				
@@ -11203,15 +12140,12 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 
 void UCustom_Movement_Component::Execute_Balance_Traversal(ABalance_Traversal_Actor* Balance_Traversal_Actor_Reference)
 {
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	return;
+	
 	Balance_Traversal_Actor = Balance_Traversal_Actor_Reference;
 	
-	if(!Owning_Player_Character || !Balance_Traversal_Actor)
-	{
-		Debug::Print("Balance_Traversal_Not_Possible", FColor::Red, 70);
-		return;
-	}
-
-	else if(Owning_Player_Character && Balance_Traversal_Actor && bIs_On_Ground)
+	if(Owning_Player_Character && Balance_Traversal_Actor && bIs_On_Ground)
 	{
 		Debug::Print("Balance_Traversal_Possible", FColor::Green, 70);
 
@@ -11220,7 +12154,7 @@ void UCustom_Movement_Component::Execute_Balance_Traversal(ABalance_Traversal_Ac
 
 		Debug::Print("Balance_Traversal_Actor_To_Character_Dot_Product:" + FString::SanitizeFloat(Dot_Product), FColor::Yellow, 71);
 		
-		if(Dot_Product >= .9)
+		if(Dot_Product >= .3)
 		{
 			Debug::Print("Balance_Traversal_Initialized", FColor::Green, 72);
 			
@@ -11256,6 +12190,394 @@ void UCustom_Movement_Component::Execute_Balance_Traversal(ABalance_Traversal_Ac
 			Debug::Print("Balance_Traversal_Not_Initialized", FColor::Red, 72);
 		}
 	}
+
+	/* else
+	{
+		Debug::Print("Balance_Traversal_Not_Possible", FColor::Red, 70);
+		return;
+	} */
+}
+
+void UCustom_Movement_Component::Parkour_Balance_Walk_Handle_Balance_Walking_Movement()
+{
+	/*This function handles calling the functions which will validate whether the character can balance walk in soley the forward direction of the input which is passed into the global double variable "Forward_Backward_Movement_Value". 
+	within the function "&UCustom_Movement_Component::Add_Movement_Input".*/
+	
+	//Store the absolute value of the value which is passed into the global double variable "Right_Left_Movement_Value". This value will be used to check if the input to move the character to the right or left
+	//within the function "&UCustom_Movement_Component::Add_Movement_Input" is above the threshold to accept input.
+	const double Forward_Backward_Movement_Value_Absolute_Value{UKismetMathLibrary::Abs(Forward_Backward_Movement_Value)};
+	const double Right_Left_Movement_Value_Absolute_Value{UKismetMathLibrary::Abs(Right_Left_Movement_Value)};
+
+	//Check to see if the absolute value of the value which is passed into the global double variable "Right_Left_Movement_Value" is above the threshold to allow shimmying movement.
+	//If the check is passed, check to see if the value is above or below 0. If the value is above 0 the character is moving to the right, if the value is below 0 the character is 
+	//moving to the left.
+	if(Forward_Backward_Movement_Value_Absolute_Value > .7 || Right_Left_Movement_Value_Absolute_Value > .7)
+	{
+		if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))) ||
+		Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left"))) ||
+		Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Right"))))
+		{
+			Set_Parkour_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))));
+			Debug::Print("Forward_Backward_Movement_Value: " + FString::FromInt(Forward_Backward_Movement_Value), FColor::MakeRandomColor(), 7);
+
+			/* Handle Moving Character Forward */
+
+			//These variables are filled with values within the function "Parkour_Balance_Walk_Detect_Balance_Surface" (they are passsed in as references via the input arguments in said function). 
+			//The FHitResult stored within the variables "Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result" and "Parkour_Balance_Walk_Balance_Surface_Top_Result" are be used to determine whether there is a Balance Surface 
+			//in front of the character which the character can walk forward on via the functions "Parkour_Balance_Walk_State_Are_There_Obstacles_In_Front_Of_Feet"  and
+			//"Parkour_Balance_Walk_State_Are_There_Obstacles_In_Front_Of_Body". Said FHitResult variables are passed in as const references via the input arguments (they are filled with data 
+			//within the function "Parkour_Balance_Walk_Detect_Balance_Surface").
+			FHitResult Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result{};
+			FHitResult Parkour_Balance_Walk_Balance_Surface_Top_Result{};
+		
+
+			//This function executes an algorithm which determines whether there is a Balance Surface in front of the character which the character can walk on during Balance Walk movememnt. 
+			//Also, the determination of if the Balance Walk surface in the direction in which the character is moving is too high or low to walk across (too big of a stair to step up on). 
+			//For example when the character is moving forward and the surface which the character is walking across has a step that is too high for the character to step up on aka bStartPenetrating is true, 
+			//(calculated by the maximum number of iterations in the inner for loop), then "Parkour_Balance_Walk_Balance_Surface_Top_Result" will not be calculated and "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" 
+			//along with "return" will be called within the function in the appropriate location. Same goes for the "Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result". If there is no blocking hit or "bStartPenetrating" is true 
+			//"Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" along with "return" will be called within the function in the appropriate location within the function.
+			if(!Parkour_Balance_Walk_Detect_Balance_Surface(Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result, Parkour_Balance_Walk_Balance_Surface_Top_Result))
+			{
+				if(Validate_Can_Execute_Balance_Walk_Automatic_Hop())
+				{
+					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Walk.Automatic.Hop"))));
+				}
+
+				else
+				{
+					Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+					return;
+				}
+				
+			}
+		
+			//The check Parkour_Balance_Walk_State_Are_There_Obstacles_In_Front_Of_Feet determines whether there are obstacles in front of the character's feet which should stop the character from Balance Walking forward any furhther.
+			//The function "Parkour_Balance_Walk_State_Are_There_Obstacles_In_Front_Of_Feet" uses "Parkour_Balance_Walk_Balance_Surface_Top_Result.ImpactPoint" as the starting location (const reference input parameter)
+			//of the line traces executed within said function. 
+
+			//The check Parkour_Balance_Walk_State_Are_There_Obstacles_In_Front_Of_Body determines whether there is a obstacle in front of the character's body which should deter the character from Balance Walking forward any further. 
+			//The starting location (const reference input parameter) of the capsule trace executed within the bool function "Parkour_Balance_Walk_State_Are_There_Obstacles_In_Front_Of_Body" is the impact point of 
+			//"Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result".
+			else if(/* Parkour_Balance_Walk_Are_There_Obstacles_In_Front_Of_Feet(Parkour_Balance_Walk_Balance_Surface_Top_Result) || */ Parkour_Balance_Walk_Are_There_Obstacles_In_Front_Of_Body(Parkour_Balance_Walk_Balance_Surface_Top_Result))
+			{
+				Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+				return;
+			}
+
+			//If this line of code is reached then character's movement has been validated and in result "Calculate_And_Move_Character_To_New_Balance_Walk_Position" should be called passing in the FHitResults
+			//"Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result" and "Parkour_Balance_Walk_Balance_Surface_Top_Result" into the input argument. This function uses the location of said FHitResults to interpolate the
+			//character to their location. Considering the locations of said FHitResults are always right in fornt of the arrow actor (offset down to the level of where the character's feet are. The character will always be "chasing" 
+			//the location of the FHitResult "Parkour_Balance_Walk_Balance_Surface_Top_Result" to interpolate the character to its location (causeing an infinite interpolation to said location).
+			else
+			{
+				Calculate_And_Move_Character_To_New_Balance_Walk_Position(Parkour_Balance_Walk_Balance_Surface_Top_Result);
+			}
+		}
+		
+		else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))))
+		{
+			/* Set_Parkour_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))));
+			Debug::Print("Right_Left_Movement_Value: " + FString::FromInt(Right_Left_Movement_Value), FColor::MakeRandomColor(), 7); */
+
+			//Set Parkour_Action to "Parkour.Action.Balance.90.L"
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Walk.90.L"))));
+		}
+		
+		else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))))
+		{
+			/* Set_Parkour_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))));
+			Debug::Print("Right_Left_Movement_Value: " + FString::FromInt(Right_Left_Movement_Value), FColor::MakeRandomColor(), 7); */
+
+			//Set Parkour_Action to "Parkour.Action.Balance.90.R"
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Walk.90.R"))));
+		}
+
+		else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward"))))
+		{
+			/* Set_Parkour_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward"))));
+			Debug::Print("Forward_Backward_Movement_Value: " + FString::FromInt(Forward_Backward_Movement_Value), FColor::MakeRandomColor(), 7); */
+
+			//Set Parkour_Action to "Parkour.Action.Balance.180"
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Walk.180"))));
+		}
+
+		else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Left"))) || 
+				Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Right"))) || 
+				Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))))
+		{
+			Set_Parkour_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))));
+			Debug::Print("Forward_Backward_Movement_Value: " + FString::FromInt(Forward_Backward_Movement_Value) + " Right_Left_Movement_Value: " + FString::FromInt(Right_Left_Movement_Value), FColor::MakeRandomColor(), 7);
+		}
+	}
+
+	//If "Right_Left_Movement_Value_Absolute_Value" is not above .7 then this means the minimum threshold to activate "Balance_Walking_Movement" has not been met by the input from the player's
+	//controller. In this case, "Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" and "return" should be called.
+	else
+	{
+		Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+		return;
+	}
+
+}
+
+void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Balance_Walk_Position(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference)
+{
+	/*This function is called calculates the location to interpolate the character to and passes in the said location into the function "&UCustom_Movement_Component::Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings"
+	as an input argument.*/
+
+	//This value is used to offset the local FVector "Move_Character_To_This_Location" up 94 units. This is because when the actor's location is obtained the vector that is returned is set in the absolue middle of the actor (around the hips).
+	//Therefore the height of the FVector must be increased by the half height of the actors capsule component.
+	const float Value_To_Offset_Character_Up{94.f};
+	
+	//Custom FVector to pass into the function "&UCustom_Movement_Component::Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings" as an input argument. This will be the location to interpolate 
+	//the character to as long as there is input into the player controller and the validation and checks performed in the function "&UCustom_Movement_Component::Parkour_Balance_Walk_Handle_Balance_Walking_Movement"
+	//are successful. 
+	const FVector& Move_Character_To_This_Location(FVector(Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference.ImpactPoint.X, 
+														   Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference.ImpactPoint.Y, 
+														   Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference.ImpactPoint.Z + 94));
+	
+	//Add a rotaion of 90 degrees to the global FRotator "Reversed_Front_Wall_Normal_Z" so that the charater is always facing forwards, heading in the same direction of the surface in which it is walking on.
+	const FRotator Custom_Rotation{Reversed_Front_Wall_Normal_Z.Pitch, Add_Rotator(Reversed_Front_Wall_Normal_Z, -90).Yaw, Reversed_Front_Wall_Normal_Z.Roll};
+	Reversed_Front_Wall_Normal_Z = Custom_Rotation;
+
+	//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+	//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+	//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+	const FHitResult Not_Needed_Here{};
+	Set_Network_Variables(Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+	//This function uses the location which is calculated above (using the variable from the FHitResult input argument "Parkour_Climbing_Detect_Wall_Hit_Result") to interpolate the character to said 
+	//FVector. Considering the locations of the custom FVector will always be updating due to it being dependant on the input argument variable "Parkour_Climbing_Detect_Wall_Hit_Result",  
+	//the character will always be "chasing" the location to interpolate its location to causeing an infinite interpolation. This is because the impact point of the input argument 
+	//"Parkour_Climbing_Detect_Wall_Hit_Result" is offset to the right or left side of the arrow actor (the arrow actor is just above the character) depending on whether the character is moving
+	//to the right or left.
+	Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(Move_Character_To_This_Location, Reversed_Front_Wall_Normal_Z);
+}
+
+void UCustom_Movement_Component::Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
+{
+	if(!Owning_Player_Character)
+	return;
+	
+	//Get the character's location.
+	const FVector Characters_Location{Owning_Player_Character->GetActorLocation()};
+	
+	//Get DeltaTime
+	const double DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+	//Develop double variables for each of the axis in which the character will be interpolated to.
+	const double Interpolate_Character_To_This_X_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.X, Location_To_Move_Character.X, DeltaTime, 3.f)};
+	const double Interpolate_Character_To_This_Y_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.Y, Location_To_Move_Character.Y, DeltaTime, 3.f)};
+	const double Interpolate_Character_To_This_Z_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.Z, Location_To_Move_Character.Z, DeltaTime, 1.f)};
+
+	//Combine the double variables above into a single FVector struct.
+	const FVector Characters_New_Location{Interpolate_Character_To_This_X_Axis, Interpolate_Character_To_This_Y_Axis, Interpolate_Character_To_This_Z_Axis};
+
+	//Call the function "SetActorLocationAndRotation" and pass in the calculated results.
+	Owning_Player_Character->SetActorLocationAndRotation(Characters_New_Location, Rotation_For_Character_To_Face);
+
+	if(!Owning_Player_Character->HasAuthority())
+	{
+		Server_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(Characters_New_Location, Rotation_For_Character_To_Face);
+	}
+}
+
+bool UCustom_Movement_Component::Validate_Can_Execute_Balance_Walk_Automatic_Hop()
+{
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
+	return false;
+	
+	Balance_Walk_Automatic_Hop_Detect_Wall();
+
+	if(Initial_Front_Wall_Hit_Result.bBlockingHit)
+	{
+		Grid_Scan_For_Hit_Results(Initial_Front_Wall_Hit_Result.ImpactPoint, Reverse_Wall_Normal_Rotation_Z(Initial_Front_Wall_Hit_Result.ImpactNormal), 7, 8);
+	}
+
+	//"Grid_Scan_Hit_Traces" array is filled by the function call "Grid_Scan_For_Hit_Results()". 
+	if(Grid_Scan_Hit_Traces.Num() != 0)
+	{
+		//This function analyzes the FHitResults stored in the array "Grid_Scan_Hit_Traces" for the line traces which are just under the top edge on the front side of the wall.
+		//Said line traces are stored in the array "Front_Wall_Top_Edge_Traces".
+		Analyze_Grid_Scan_For_Front_Wall_Top_Edge_Hits();
+		
+		//Empty the array because the information in it has been analyzed in "&UCustom_Movement_Component::Analyze_Grid_Scan_For_Front_Wall_Top_Edge_Hits()".
+		//It needs to be empty so it can be filled with new information the next time it needs to be used.
+		Grid_Scan_Hit_Traces.Empty();
+	}
+
+	//Front_Wall_Top_Edge_Traces are filled by the function call "Analyze_Grid_Scan_For_Front_Wall_Top_Edge_Hits()".
+	if(Front_Wall_Top_Edge_Traces.Num() != 0)
+	{
+		//This function analyzes the line traces stored in the array "Front_Wall_Top_Edge_Traces" for the line trace which is closes to the character's current location.
+		//Said line trace is stored in the global variable "Front_Wall_Top_Edge_Best_Hit{}".
+		Realize_Front_Wall_Top_Edge_Best_Hit();
+
+		//Empty the array because the information in it has been analyzed in "&UCustom_Movement_Component::Realize_Front_Wall_Top_Edge_Best_Hit()".
+		//It needs to be empty so it can be filled with new information the next time it needs to be used.
+		Front_Wall_Top_Edge_Traces.Empty();
+	}
+
+	//Global FhitResult variable "Front_Wall_Top_Edge_Best_Hit" is filled with the line trace that is just under the top edge on the front wall in the function call "Realize_Front_Wall_Top_Edge_Best_Hit()".
+	//This check is to make sure said FHitResult does indeed have a blocking hit and no initial overlap is active. This FHitResult is used to analyze the top surface of the wall which in result will enable
+	//the calculation of the location which the character will land on when vaulting.
+	if(Front_Wall_Top_Edge_Best_Hit.bBlockingHit && !Front_Wall_Top_Edge_Best_Hit.bStartPenetrating)
+	{
+		if(Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface())
+		{
+			Debug::Print("Execute_Balance_Walk_Automatic_Hop_Validated", FColor::Green, 81);
+			
+			if(Validate_Balance_Walk_Automatic_Hop_Location())
+			{
+				Debug::Print("Executing_Balance_Walk_Automatic_Hop", FColor::Green, 85);
+
+				Wall_Top_Result = Balance_Walk_Automatic_Hop_Top_Result;
+				Reversed_Front_Wall_Normal_Z = Reverse_Wall_Normal_Rotation_Z(Front_Wall_Top_Edge_Best_Hit.ImpactNormal);
+
+				return true;
+			}
+
+			else
+			{
+				Debug::Print("Unable_To_Execute_Balance_Walk_Automatic_Hop", FColor::Red, 85);
+				return false;
+			}
+		}
+
+		else
+		{
+			Debug::Print("Execute_Balance_Walk_Automatic_Hop_Not_Validated", FColor::Red, 81);
+			return false;
+		}
+	}
+
+	else
+	{
+		return false;
+	}
+	
+	//The following line of code is to meet the return requirement of this function type.
+	return false;
+}
+
+void UCustom_Movement_Component::Execute_Exit_Balance_Traversal()
+{
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
+	return;
+
+	Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Landing.Down.Front"))));
+}
+
+void UCustom_Movement_Component::Execute_Balance_Drop_Hanging()
+{
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
+	return;
+
+	const int Balance_Drop_Hanging_Random_Number{UKismetMathLibrary::RandomIntegerInRange(1, 2)};
+
+	if(Balance_Drop_Hanging_Random_Number == 1)
+	{
+		if(Validate_Balance_Drop_Hanging(true))
+		{
+			//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
+			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Drop.L.Hanging"))));
+		}
+
+		else if(Validate_Balance_Drop_Hanging(false))
+		{
+			//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
+			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Drop.R.Hanging"))));
+		}
+
+		else
+		{
+			Debug::Print("Executing_Balance_Drop_Hanging Not_Possible", FColor::Red, 75);
+		}
+	}
+
+	else if(Balance_Drop_Hanging_Random_Number == 2)
+	{
+		if(Validate_Balance_Drop_Hanging(false))
+		{
+			//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
+			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Drop.R.Hanging"))));
+		}
+
+		else if(Validate_Balance_Drop_Hanging(true))
+		{
+			//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
+			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Drop.L.Hanging"))));
+		}
+
+		else
+		{
+			Debug::Print("Executing_Balance_Drop_Hanging Not_Possible", FColor::Red, 75);
+		}
+	}
+
+}
+
+void UCustom_Movement_Component::Execute_Free_Hang_To_Balanced_Walk()
+{
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))) &&
+	Parkour_Climb_Style != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.FreeHang"))))
+	return;
+	
+	const int Free_Hang_To_Balanced_Walk_Random_Number{UKismetMathLibrary::RandomIntegerInRange(1, 2)};
+
+	if(Free_Hang_To_Balanced_Walk_Random_Number == 1)
+	{
+		if(Validate_Free_Hang_To_Balanced_Walk(true))
+		{
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L"))));
+		}
+
+		else if(Validate_Free_Hang_To_Balanced_Walk(false))
+		{
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R"))));
+		}
+
+		else
+		{
+			Debug::Print("Executing_Free_Hang_To_Balanced_Walk Not_Possible", FColor::Red, 75);
+		}
+	}
+
+	else if(Free_Hang_To_Balanced_Walk_Random_Number == 2)
+	{
+		if(Validate_Free_Hang_To_Balanced_Walk(false))
+		{
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R"))));
+		}
+
+		else if(Validate_Free_Hang_To_Balanced_Walk(true))
+		{
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L"))));
+		}
+
+		else
+		{
+			Debug::Print("Executing_Free_Hang_To_Balanced_Walk Not_Possible", FColor::Red, 75);
+		}
+	}
+
 }
 
 #pragma region Set_Network_Variables
@@ -12280,6 +13602,59 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_Action_Implementation(con
 		Play_Parkour_Montage(Jump_One_R);
 	}
 
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Walk.90.L")))))
+	{
+		Play_Parkour_Montage(Balance_Walk_90_L);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Walk.90.R")))))
+	{
+		Play_Parkour_Montage(Balance_Walk_90_R);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Walk.180")))))
+	{
+		Play_Parkour_Montage(Balance_Walk_180);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Walk.Automatic.Hop")))))
+	{
+		switch(Network_Random_Montage_To_Play)
+		{
+			case 1:
+			Play_Parkour_Montage(Balance_Walk_Jump_Front);
+			break;
+
+			case 2:
+			Play_Parkour_Montage(Jump_One_L);
+			break;
+
+			case 3:
+			Play_Parkour_Montage(Jump_One_R);
+			break;
+		}
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Drop.L.Hanging")))))
+	{
+		Play_Parkour_Montage(Balance_Drop_L_Hanging);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Balance.Drop.R.Hanging")))))
+	{
+		Play_Parkour_Montage(Balance_Drop_R_Hanging);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT( "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L")))))
+	{
+		Play_Parkour_Montage(Hanging_Climb_Up_To_Balanced_Walk_L);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT( "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R")))))
+	{
+		Play_Parkour_Montage(Hanging_Climb_Up_To_Balanced_Walk_R);
+	}
+
 }
 
 void UCustom_Movement_Component::Server_Perform_Hop_Action_Implementation(const FGameplayTag& Network_Parkour_State, const FGameplayTag& Network_Hop_Action, const int& Network_Random_Montage_To_Play)
@@ -12851,6 +14226,35 @@ void UCustom_Movement_Component::Multicast_Move_Character_To_Front_Of_Pipe_Imple
 	Owning_Player_Character->SetActorLocationAndRotation(New_Location_To_Move_Charater_During_Wall_Pipe_Climb, Reversed_Front_Wall_Normal_Z);
 }
 
+void UCustom_Movement_Component::Server_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings_Implementation(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
+{
+	Multicast_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(Location_To_Move_Character, Rotation_For_Character_To_Face);
+}
+
+void UCustom_Movement_Component::Multicast_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings_Implementation(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
+{
+	if(!Owning_Player_Character)
+	return;
+	
+	//Get the character's location.
+	const FVector Characters_Location{Owning_Player_Character->GetActorLocation()};
+	
+	//Get DeltaTime
+	const double DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
+
+	//Develop double variables for each of the axis in which the character will be interpolated to.
+	const double Interpolate_Character_To_This_X_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.X, Location_To_Move_Character.X, DeltaTime, 3.f)};
+	const double Interpolate_Character_To_This_Y_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.Y, Location_To_Move_Character.Y, DeltaTime, 3.f)};
+	const double Interpolate_Character_To_This_Z_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.Z, Location_To_Move_Character.Z, DeltaTime, 1.f)};
+
+	//Combine the double variables above into a single FVector struct.
+	const FVector Characters_New_Location{Interpolate_Character_To_This_X_Axis, Interpolate_Character_To_This_Y_Axis, Interpolate_Character_To_This_Z_Axis};
+
+	//Call the function "SetActorLocationAndRotation" and pass in the calculated results.
+	Owning_Player_Character->SetActorLocationAndRotation(Characters_New_Location, Rotation_For_Character_To_Face);
+
+}
+
 #pragma endregion
 
 #pragma region Set_Network_Variables
@@ -12904,5 +14308,4 @@ void UCustom_Movement_Component::Server_Set_bIs_Falling_To_False_Implementation(
 #pragma endregion
 
 #pragma endregion 
-
 
