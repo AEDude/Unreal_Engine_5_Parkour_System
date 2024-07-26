@@ -18,6 +18,7 @@ class UCharacter_Animation_Instance;
 class ACharacter_Direction_Arrow;
 class AWall_Pipe_Actor;
 class ABalance_Traversal_Actor;
+class AWall_Vault_Actor;
 
 struct FInputActionValue;
 
@@ -219,6 +220,12 @@ ABalance_Traversal_Actor* Balance_Traversal_Actor{};
 UFUNCTION()
 void On_Replication_Balance_Traversal_Actor(ABalance_Traversal_Actor* Previous_Balance_Traversal_Actor);
 
+UPROPERTY(ReplicatedUsing = On_Replication_Wall_Vault_Actor)
+AWall_Vault_Actor* Wall_Vault_Actor{};
+
+UFUNCTION()
+void On_Replication_Wall_Vault_Actor(AWall_Vault_Actor* Previous_Wall_Vault_Actor);
+
 
 #pragma endregion
 
@@ -262,6 +269,8 @@ public:
 	void Set_Overlapping_Wall_Pipe_Actor(AWall_Pipe_Actor* Overlapping_Wall_Pipe_Actor);
 
 	void Set_Overlapping_Balance_Traversal_Actor(ABalance_Traversal_Actor* Overlapping_Balance_Traversal_Actor);
+
+	void Set_Overlapping_Wall_Vault_Actor(AWall_Vault_Actor* Overlapping_Wall_Vault_Actor);
 
 };
 

@@ -28,6 +28,7 @@ class APlayer_Controller;
 class UParkour_Action_Data;
 class AWall_Pipe_Actor;
 class ABalance_Traversal_Actor;
+class AWall_Vault_Actor;
 
 UENUM(BlueprintType)
 namespace E_Custom_Movement_Mode
@@ -353,7 +354,10 @@ private:
 #pragma region Parkour_Pointers
 
 	UPROPERTY()
-	TArray<AActor*> Actors_To_Ignore{};
+	TArray<AActor*> Wall_Pipe_Actors_To_Ignore{};
+
+	UPROPERTY()
+	TArray<AActor*> Wall_Vault_Actors_To_Ignore{};
 	
 	UPROPERTY()
 	ACharacter_Direction_Arrow* Character_Direction_Arrow{};
@@ -389,6 +393,9 @@ private:
 
 	UPROPERTY()
 	ABalance_Traversal_Actor* Balance_Traversal_Actor{};
+
+	UPROPERTY()
+	AWall_Vault_Actor* Wall_Vault_Actor{};
 
 #pragma endregion
 
@@ -476,8 +483,6 @@ private:
 
 	void Assign_Wall_Run_Hit_Result(const FHitResult& Wall_Found_On_Left_Side, const FHitResult& Wall_Found_On_Right_Side);
 
-	bool Analyze_And_Validate_Wall_Run_Surface();
-
 	void Wall_Run_Detect_Wall(const bool& bAnalyze_Characters_Left_Side);
 	
 	bool Validate_Can_Jump_From_Wall_Run() const;
@@ -528,11 +533,11 @@ private:
 
 	bool Parkour_Balance_Walk_Are_There_Obstacles_In_Front_Of_Body(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference);
 
-	bool Validate_Can_Execute_Balance_Walk_Automatic_Hop();
+	bool Validate_Balance_Walk_Hop();
 
-	void Balance_Walk_Automatic_Hop_Detect_Wall();
+	void Balance_Walk_Hop_Detect_Wall();
 
-	bool Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface();
+	bool Balance_Walk_Hop_Calculate_Wall_Top_Surface();
 
 	bool Validate_Balance_Walk_Automatic_Hop_Location();
 
@@ -632,11 +637,13 @@ private:
 
 	void Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 
+	bool Analyze_And_Validate_Wall_Run_Surface();
+
 	void Calculate_And_Move_Character_To_New_Wall_Run_Position(const FHitResult& Wall_Running_Hit_Result);
 	
 	void Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
-	void Parkour_Wall_Run_Movement();
+	void Parkour_Wall_Run_Handle_Wall_Run_Movement();
 
 	void Dynamic_Wall_Run_Arc_Path();
 
@@ -664,6 +671,8 @@ private:
 
 	void Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
+	void Decide_Wall_Vault_Parkour_Action();
+
 	#pragma region Set_Network_Variables
 
 	void Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
@@ -682,16 +691,16 @@ private:
 
 	#pragma region Gameplay_Tags
 	
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_State)
 	FGameplayTag Parkour_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam")))};
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Climb_Style)
 	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.None")))};
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Wall_Run_Side)
 	FGameplayTag Parkour_Wall_Run_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.None")))};
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Direction)
 	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
 
 	UPROPERTY(Replicated)
@@ -827,11 +836,13 @@ private:
 
 	float Dynamic_Wall_Run_Arc_Value{};
 
+	double Dynamic_Wall_Run_Arc_Value_Degrees{};
+
 	bool bCan_Jump_From_Wall_Run{true};
 
 	FTimerHandle Set_bCan_Jump_From_Wall_Run_Timer_Handle{};
 
-	float Set_bCan_Jump_From_Wall_Run_Timer_Duration{1.f};
+	float Set_bCan_Jump_From_Wall_Run_Timer_Duration{1.5f};
 
 	bool Do_Once_1{true};
 
@@ -946,9 +957,28 @@ private:
 																    Two_Hand_R_Drop */};
 
 	TArray<UParkour_Action_Data*> Balance_Walk_Automatic_Hop_Array{/* Balance_Walk_Jump_Front,
-																	Jump_One_L,
-																	Jump_One_R */};
-																   
+																   Jump_One_L,
+																   Jump_One_R */};
+
+	TArray<UParkour_Action_Data*> Running_Wall_Vault_On{/* Wall_Monkey_On,
+														Wall_Two_Hand_L_On,
+														Wall_Two_Hand_R_On */};
+
+	TArray<UParkour_Action_Data*> Running_Wall_Vault_Over{/* Wall_Monkey_Vault,
+														  Wall_Reverse_L_Vault,
+														  Wall_Reverse_R_Vault,
+														  Wall_Safety_L_Vault,
+														  Wall_Safety_R_Vault,
+														  Wall_Thief_L_Vault, 
+														  Wall_Thief_R_Vault, 
+														  Wall_Two_Hand_L_Vault, 
+														  Wall_Two_Hand_R_Vault */};
+
+	TArray<UParkour_Action_Data*> Running_Wall_Vault_Over_180_Shimmy{/* Wall_L_Turn,
+																	 Wall_R_Turn */};
+
+
+
 	#pragma endregion
 
 #pragma endregion
@@ -1532,6 +1562,63 @@ private:
 	UParkour_Action_Data* Hanging_Climb_Up_To_Balanced_Walk_R{};
 
 
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Wall_Two_Hand_L_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Wall_Safety_On{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Monkey_On{};
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Two_Hand_L_On{};
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Two_Hand_R_On{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Monkey_Vault{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Reverse_L_Vault{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Reverse_R_Vault{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Safety_L_Vault{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Safety_R_Vault{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Thief_L_Vault{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Thief_R_Vault{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Two_Hand_L_Vault{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Two_Hand_R_Vault{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_Under_Bar{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_L_Turn{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Wall_R_Turn{};
+
+
 	#pragma endregion
 
 #pragma endregion
@@ -1563,11 +1650,17 @@ void Multicast_Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_
 UFUNCTION(Server, Reliable)
 void Server_Set_Parkour_State(const FGameplayTag& New_Parkour_State);
 
+UFUNCTION()
+void On_Replication_Parkour_State();
+
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_Parkour_State(const FGameplayTag& New_Parkour_State);
 
 UFUNCTION(Server, Reliable)
 void Server_Set_Parkour_Climb_Style(const FGameplayTag& New_Parkour_Climb_Style);
+
+UFUNCTION()
+void On_Replication_Parkour_Climb_Style();
 
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_Parkour_Climb_Style(const FGameplayTag& New_Parkour_Climb_Style);
@@ -1575,11 +1668,17 @@ void Multicast_Set_Parkour_Climb_Style(const FGameplayTag& New_Parkour_Climb_Sty
 UFUNCTION(Server, Reliable)
 void Server_Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
 
+UFUNCTION()
+void On_Replication_Parkour_Wall_Run_Side();
+
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
 
 UFUNCTION(Server, Reliable)
 void Server_Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
+
+UFUNCTION()
+void On_Replication_Parkour_Direction();
 
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
@@ -1615,6 +1714,12 @@ UFUNCTION(NetMulticast, Reliable)
 void Multicast_Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(Server, Reliable)
+void Server_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+
+UFUNCTION(Server, Reliable)
 void Server_Move_Character_To_Front_Of_Pipe(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(NetMulticast, Reliable)
@@ -1629,6 +1734,9 @@ void Multicast_Move_Character_To_New_Balance_Walk_Position_Interpolation_Setting
 #pragma endregion
 
 #pragma region Set_Network_Variables
+
+UFUNCTION()
+void On_Replication_Set_Add_Movement_Input_Variables();
 
 UFUNCTION(Server, Reliable)
 void Server_Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
@@ -1713,11 +1821,15 @@ public:
 
 	void Execute_Balance_Traversal(ABalance_Traversal_Actor* Balance_Traversal_Actor_Reference);
 
+	void Execute_Balance_Walk_Hop();
+
 	void Execute_Exit_Balance_Traversal();
 
 	void Execute_Balance_Drop_Hanging();
 
 	void Execute_Free_Hang_To_Balanced_Walk();
+
+	void Execute_Wall_Vault(AWall_Vault_Actor* Wall_Vault_Actor_Reference);
 
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 
@@ -1727,11 +1839,14 @@ public:
 
 	FORCEINLINE bool Get_bIs_Falling() const {return bIs_Falling;}
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = On_Replication_Set_Add_Movement_Input_Variables)
 	double Forward_Backward_Movement_Value{};
 
-	UPROPERTY(Replicated)
+	UPROPERTY(ReplicatedUsing = On_Replication_Set_Add_Movement_Input_Variables)
 	double Right_Left_Movement_Value{};
+
+	UFUNCTION(Server, Reliable)
+	void Server_Set_Add_Movement_Input_Variables(const double& Network_Forward_Backward_Movement_Value, const double& Network_Right_Left_Movement_Value);
 
 	FVector Current_Input_Vector{};
 

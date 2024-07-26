@@ -13,7 +13,6 @@ ABalance_Traversal_Actor::ABalance_Traversal_Actor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
-	bReplicates = true;
 
 	Default_Scene_Root = CreateDefaultSubobject<USceneComponent>(FName(TEXT("Default_Scene_Root")));
 	SetRootComponent(Default_Scene_Root);
@@ -39,15 +38,14 @@ void ABalance_Traversal_Actor::BeginPlay()
 
 		Area_Box->OnComponentBeginOverlap.AddDynamic(this, &ABalance_Traversal_Actor::On_Box_Begin_Overlap);
 		Area_Box->OnComponentEndOverlap.AddDynamic(this, &ABalance_Traversal_Actor::On_Box_End_Overlap);
-
-		Balance_Traversal_Actor_Forward_Vector = GetActorLocation() + GetActorForwardVector() * 1;
-
 	}
 
 	if(Display_Widget)
 	{
 		Display_Widget->SetVisibility(false);
 	}
+
+	Balance_Traversal_Actor_Forward_Vector = GetActorLocation() + GetActorForwardVector() * 1;
 	
 }
 

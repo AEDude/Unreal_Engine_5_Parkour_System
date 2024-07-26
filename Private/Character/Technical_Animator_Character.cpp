@@ -21,6 +21,7 @@
 #include "Net/UnrealNetwork.h"
 #include "World_Actors/Wall_Pipe_Actor.h"
 #include "World_Actors/Balance_Traversal_Actor.h"
+#include "World_Actors/Wall_Vault_Actor.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -154,6 +155,8 @@ void ATechnical_Animator_Character::GetLifetimeReplicatedProps(TArray<FLifetimeP
 	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Wall_Pipe_Actor, COND_OwnerOnly);
 
 	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Balance_Traversal_Actor, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Wall_Vault_Actor, COND_OwnerOnly);
 }
 
 void ATechnical_Animator_Character::Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority)
@@ -298,12 +301,14 @@ void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed(const
 				Custom_Movement_Component->Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 				Custom_Movement_Component->Forward_Backward_Movement_Value = 0.f;
 				Custom_Movement_Component->Right_Left_Movement_Value = 0.f;
+				Custom_Movement_Component->Server_Set_Add_Movement_Input_Variables(0.f, 0.f);
 			}
 
 			else
 			{
 				Custom_Movement_Component->Forward_Backward_Movement_Value = 0.f;
 				Custom_Movement_Component->Right_Left_Movement_Value = 0.f;
+				Custom_Movement_Component->Server_Set_Add_Movement_Input_Variables(0.f, 0.f);
 			}
 		}
 	}
@@ -405,6 +410,7 @@ void ATechnical_Animator_Character::On_Parkour_Started(const FInputActionValue& 
 			Debug::Print(TEXT("Parkour_Is_Working"), FColor::MakeRandomColor(), 8);
 			Custom_Movement_Component->Execute_Parkour_Action();
 			Custom_Movement_Component->Execute_Parkour_Wall_Pipe_Climb_Action();
+			Custom_Movement_Component->Execute_Balance_Walk_Hop();
 		}
 	}
 }
@@ -561,20 +567,6 @@ void ATechnical_Animator_Character::On_Take_Cover_Action_Started(const FInputAct
 
 #pragma region Network
 
-void ATechnical_Animator_Character::On_Replication_Wall_Pipe_Actor(AWall_Pipe_Actor* Previous_Wall_Pipe_Actor)
-{
-	/* This fucntion (a rep notify) will only be called on the owning player of the variable which is being replicated "Wall_Pipe_Actor" -  
-	See &ATechnical_Animator_Character::GetLifetimeReplicatedProps. The input parameter holds the previous value of the variable which is being replicated. Therefore, when 
-	"Wall_Pipe_Actor" initially replicates to a valid pointer from being null the input parameter "Previous_Wall_Pipe_Actor" will be a nullptr and when "Wall_Pipe_Actor" replicates to a null pointer 
-	from being vaild then the input argument will be hold the valid data that "Wall_Pipe_Actor" was storing before it became a nullptr.*/
-	
-	if(Wall_Pipe_Actor)
-	Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(true);
-
-	else if(Previous_Wall_Pipe_Actor)
-	Previous_Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(false);
-}
-
 void ATechnical_Animator_Character::Set_Overlapping_Wall_Pipe_Actor(AWall_Pipe_Actor* Overlapping_Wall_Pipe_Actor)
 {
 	/*This function is only called from the server. Therefore when the first "if" check successfully passes this means the Server is calling this function locally 
@@ -592,25 +584,18 @@ void ATechnical_Animator_Character::Set_Overlapping_Wall_Pipe_Actor(AWall_Pipe_A
 	}
 }
 
-void ATechnical_Animator_Character::On_Replication_Balance_Traversal_Actor(ABalance_Traversal_Actor* Previous_Balance_Traversal_Actor)
+void ATechnical_Animator_Character::On_Replication_Wall_Pipe_Actor(AWall_Pipe_Actor* Previous_Wall_Pipe_Actor)
 {
-	/* This fucntion (a rep notify) will only be called on the owning player of the variable which is being replicated "Balance_Traversal_Actor" -  
+	/* This fucntion (a rep notify) will only be called on the owning player of the variable which is being replicated "Wall_Pipe_Actor" -  
 	See &ATechnical_Animator_Character::GetLifetimeReplicatedProps. The input parameter holds the previous value of the variable which is being replicated. Therefore, when 
-	"Balance_Traversal_Actor" initially replicates to a valid pointer from being null the input parameter "Previous_Balance_Traversal_Actor" will be a nullptr and when "Balance_Traversal_Actor" 
-	replicates to a null pointer from being vaild then the input argument will be hold the valid data that "Balance_Traversal_Actor" was storing before it became a nullptr.*/
+	"Wall_Pipe_Actor" initially replicates to a valid pointer from being null the input parameter "Previous_Wall_Pipe_Actor" will be a nullptr and when "Wall_Pipe_Actor" replicates to a null pointer 
+	from being vaild then the input argument will be hold the valid data that "Wall_Pipe_Actor" was storing before it became a nullptr.*/
 	
-	if(Balance_Traversal_Actor && Custom_Movement_Component)
-	{
-		Balance_Traversal_Actor->Show_Display_Widget(true);
-		Custom_Movement_Component->Execute_Balance_Traversal(Balance_Traversal_Actor);
-		Custom_Movement_Component->Execute_Exit_Balance_Traversal();
-	}
-	
-	else if(Previous_Balance_Traversal_Actor && Custom_Movement_Component)
-	{
-		Previous_Balance_Traversal_Actor->Show_Display_Widget(false);
-		Custom_Movement_Component->Execute_Balance_Traversal(nullptr);
-	}
+	if(Wall_Pipe_Actor)
+	Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(true);
+
+	else if(Previous_Wall_Pipe_Actor)
+	Previous_Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(false);
 }
 
 void ATechnical_Animator_Character::Set_Overlapping_Balance_Traversal_Actor(ABalance_Traversal_Actor* Overlapping_Balance_Traversal_Actor)
@@ -635,6 +620,80 @@ void ATechnical_Animator_Character::Set_Overlapping_Balance_Traversal_Actor(ABal
 			Custom_Movement_Component->Execute_Exit_Balance_Traversal();
 		}
 	}
+}
+
+void ATechnical_Animator_Character::On_Replication_Balance_Traversal_Actor(ABalance_Traversal_Actor* Previous_Balance_Traversal_Actor)
+{
+	/* This fucntion (a rep notify) will only be called on the owning player of the variable which is being replicated "Balance_Traversal_Actor" -  
+	See &ATechnical_Animator_Character::GetLifetimeReplicatedProps. The input parameter holds the previous value of the variable which is being replicated. Therefore, when 
+	"Balance_Traversal_Actor" initially replicates to a valid pointer from being null the input parameter "Previous_Balance_Traversal_Actor" will be a nullptr and when "Balance_Traversal_Actor" 
+	replicates to a null pointer from being vaild then the input argument will be hold the valid data that "Balance_Traversal_Actor" was storing before it became a nullptr.*/
+	
+	if(Balance_Traversal_Actor && Custom_Movement_Component)
+	{
+		Balance_Traversal_Actor->Show_Display_Widget(true);
+		Custom_Movement_Component->Execute_Balance_Traversal(Balance_Traversal_Actor);
+		Custom_Movement_Component->Execute_Exit_Balance_Traversal();
+	}
+	
+	else if(Previous_Balance_Traversal_Actor && Custom_Movement_Component)
+	{
+		Previous_Balance_Traversal_Actor->Show_Display_Widget(false);
+		Custom_Movement_Component->Execute_Balance_Traversal(nullptr);
+	}
+}
+
+void ATechnical_Animator_Character::Set_Overlapping_Wall_Vault_Actor(AWall_Vault_Actor* Overlapping_Wall_Vault_Actor)
+{
+	/*This function is only called from the server. Therefore when the first "if" check successfully passes this means the Server is calling this function locally 
+	(a client isn't calling this funtion from from the server).*/
+	
+	Wall_Vault_Actor = Overlapping_Wall_Vault_Actor;
+
+	if(IsLocallyControlled())
+	{
+		if(Wall_Vault_Actor)
+		{
+			if(Custom_Movement_Component)
+			{
+				Custom_Movement_Component->Execute_Wall_Vault(Wall_Vault_Actor);
+			}
+		}
+
+		else if(!Wall_Vault_Actor)
+		{
+			if(Custom_Movement_Component)
+			{
+				Custom_Movement_Component->Execute_Wall_Vault(nullptr);
+			}
+		}
+	}
+
+}
+
+void ATechnical_Animator_Character::On_Replication_Wall_Vault_Actor(AWall_Vault_Actor* Previous_Wall_Vault_Actor)
+{
+	/* This fucntion (a rep notify) will only be called on the owning player of the variable which is being replicated "Wall_Vault_Actor" -  
+	See &ATechnical_Animator_Character::GetLifetimeReplicatedProps. The input parameter holds the previous value of the variable which is being replicated. Therefore, when 
+	"Wall_Vault_Actor" initially replicates to a valid pointer from being null the input parameter "Previous_Wall_Vault_Actor" will be a nullptr and when "Wall_Vault_Actor" 
+	replicates to a null pointer from being vaild then the input argument will be hold the valid data that "Wall_Vault_Actor" was storing before it became a nullptr.*/
+	
+	if(Wall_Vault_Actor)
+	{
+		if(Custom_Movement_Component)
+		{
+		 	Custom_Movement_Component->Execute_Wall_Vault(Wall_Vault_Actor);
+		}
+	}
+
+	else if(!Wall_Vault_Actor)
+	{
+		if(Custom_Movement_Component)
+		{
+		 	Custom_Movement_Component->Execute_Wall_Vault(nullptr);
+		}
+	}
+	
 }
 
 #pragma endregion

@@ -177,6 +177,18 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Hanging_Climb_Up_To_Balanced_Walk_L, "
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Hanging_Climb_Up_To_Balanced_Walk_R, "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Idle_Wall_Vault_On, "Parkour.Action.Idle.Wall.Vault.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Idle_Wall_Vault_Over, "Parkour.Action.Idle.Wall.Vault.Over");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Wall_Vault_On, "Parkour.Action.Running.Wall.Vault.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Wall_Vault_Over, "Parkour.Action.Running.Wall.Vault.Over");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Wall_Vault_Under_Bar, "Parkour.Action.Running.Wall.Vault.Under.Bar");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Wall_Vault_Over_180_Shimmy, "Parkour.Action.Running.Wall.Vault.Over.180.Shimmy");
+
 #pragma endregion
 
 

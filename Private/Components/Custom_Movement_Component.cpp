@@ -18,6 +18,7 @@
 #include "World_Actors/Wall_Pipe_Actor.h"
 #include "Net/UnrealNetwork.h"
 #include "World_Actors/Balance_Traversal_Actor.h"
+#include "World_Actors/Wall_Vault_Actor.h"
 
 UCustom_Movement_Component::UCustom_Movement_Component()
 {
@@ -1441,11 +1442,9 @@ void UCustom_Movement_Component::Initialize_Parkour_Data_Assets_Arrays()
 	Ledge_Climb_Up_Array.Emplace(Climb_Up_The_Ledge);
 			
 
-
 	Hanging_Climb_Up_Array.Emplace(Hanging_Climb_Up);
 	Hanging_Climb_Up_Array.Emplace(Free_Hang_Climb_Up);
 			
-
 
 	Hop_Up_Array.Emplace(Braced_Hang_Hop_Up);
 	Hop_Up_Array.Emplace(Ledge_Jump_Up_Power);								  
@@ -1475,11 +1474,9 @@ void UCustom_Movement_Component::Initialize_Parkour_Data_Assets_Arrays()
 	Braced_And_Adventure_Hop_Up_Right_Array.Emplace(Climb_Shimmy_Long_R_Up_Right);
 
 
-
 	Braced_And_Ledge_Hop_Down_Array.Emplace(Braced_Hang_Hop_Down);
 	Braced_And_Ledge_Hop_Down_Array.Emplace(Ledge_Jump_Down);
 	Braced_And_Ledge_Hop_Down_Array.Emplace(Climb_Leap_Down_To_Ledge);
-
 
 	
 	Exit_Ledge_Jump_Forward_Array.Emplace(Ledge_Climb_Up_Monkey_Vault);
@@ -1493,7 +1490,6 @@ void UCustom_Movement_Component::Initialize_Parkour_Data_Assets_Arrays()
 	Exit_Ledge_Jump_Forward_Array.Emplace(Ledge_Climb_Up_TwoHand_R_Vault);
 
 		
-
 	Exit_Ledge_Jump_Backward_Array.Emplace(Exit_Ledge_Jump_Backward_L);
 	Exit_Ledge_Jump_Backward_Array.Emplace(Exit_Ledge_Jump_Backward_R);
 
@@ -1537,15 +1533,35 @@ void UCustom_Movement_Component::Initialize_Parkour_Data_Assets_Arrays()
 	Balance_Walk_Automatic_Hop_Array.Emplace(Jump_One_L);
 	Balance_Walk_Automatic_Hop_Array.Emplace(Jump_One_R);
 
+
+	Running_Wall_Vault_On.Emplace(Wall_Monkey_On);
+	Running_Wall_Vault_On.Emplace(Wall_Two_Hand_L_On);
+	Running_Wall_Vault_On.Emplace(Wall_Two_Hand_R_On);
+
+
+	Running_Wall_Vault_Over.Emplace(Wall_Monkey_Vault);
+	Running_Wall_Vault_Over.Emplace(Wall_Reverse_L_Vault);
+	Running_Wall_Vault_Over.Emplace(Wall_Reverse_R_Vault);
+	Running_Wall_Vault_Over.Emplace(Wall_Safety_L_Vault);
+	Running_Wall_Vault_Over.Emplace(Wall_Safety_R_Vault);
+	Running_Wall_Vault_Over.Emplace(Wall_Thief_L_Vault);
+	Running_Wall_Vault_Over.Emplace(Wall_Thief_R_Vault);
+	Running_Wall_Vault_Over.Emplace(Wall_Two_Hand_L_Vault);
+	Running_Wall_Vault_Over.Emplace(Wall_Two_Hand_R_Vault);
+
+
+	Running_Wall_Vault_Over_180_Shimmy.Emplace(Wall_L_Turn);												   
+	Running_Wall_Vault_Over_180_Shimmy.Emplace(Wall_R_Turn);
+
 	#pragma endregion
 	
 }
 
 void UCustom_Movement_Component::Initialize_Actors_To_Ignore_Arrays()
 {
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWall_Pipe_Actor::StaticClass(), Actors_To_Ignore);
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWall_Pipe_Actor::StaticClass(), Wall_Pipe_Actors_To_Ignore);
 
-	if(Actors_To_Ignore.Num() == 4)
+	if(Wall_Pipe_Actors_To_Ignore.Num() == 4)
 	{
 		Debug::Print("Wall_Pipe_Actors_Ignored_For_Parkour_Detect_Wall_Trace", FColor::Green, 77);
 		Debug::Print("Wall_Pipe_Actors_Ignored_For_Validate_bIs_On_Ground_Trace", FColor::Green, 78);
@@ -1554,6 +1570,19 @@ void UCustom_Movement_Component::Initialize_Actors_To_Ignore_Arrays()
 	else
 	{
 		Debug::Print("Wall_Pipe_Actors_Not_Ignored", FColor::Red, 77);
+	}
+
+
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AWall_Vault_Actor::StaticClass(), Wall_Vault_Actors_To_Ignore);
+
+	if(Wall_Vault_Actors_To_Ignore.Num() == 4)
+	{
+		Debug::Print("Wall_Vault_Actors_Ignored_For_Parkour_Detect_Wall_Trace", FColor::Green, 79);
+	}
+
+	else
+	{
+		Debug::Print("Wall_Vault_Actors_Not_Ignored", FColor::Red, 79);
 	}
 
 }
@@ -1690,7 +1719,7 @@ void UCustom_Movement_Component::Parkour_Detect_Wall()
 			10.f,
 			Parkour_Detect_Wall_Trace_Types,
 			false,
-			Actors_To_Ignore,
+			Wall_Pipe_Actors_To_Ignore,
 			Debug_Action,
 			Initial_Front_Wall_Hit_Result,
 			false
@@ -1710,7 +1739,6 @@ void UCustom_Movement_Component::Grid_Scan_For_Hit_Results(const FVector& Previo
 	/*The input parameter "Previous_Trace_Rotation" is the Impact Normal for the "SphereTraceSingleForObjects()" found in "&UCustom_Movement_Component::Parkour_Detect_Wall()". 
 	This normal will be reversed when this function is called so that the ray cast performed in this function will face towards the wall of the impact point passed into "Previous_Trace_Location".
 	This impact point is also foundin "&UCustom_Movement_Component::Parkour_Detect_Wall() "Scan_Width_Value" and "Scan_Height_Value" will are variables which may be set in C++ or in the character Blueprint*/
-	
 	
 	//The "LineTraceSingleForObjects()" performed in the for loop will fill this FHitResult with data.
 	FHitResult Out_Hit{};
@@ -2123,6 +2151,9 @@ double UCustom_Movement_Component::Calculate_Vault_Height()
 
 void UCustom_Movement_Component::Validate_bIs_On_Ground()
 {
+	if(!Mesh)
+	return; 
+		
 	/*This function will be called every "Tick()" within the function "Parkour_Call_In_Tick()". The goal of this function is to determine whether the character is 
 	grounded or airborne. By using a BoxTraceSingleForObjects that generates a box ray cast that is located at the same location as the root bone of the character 
 	the result of whether there is a blocking hit or not stored in the local FHitResult variable "Out_Hit" can be used to set the value of the global bool variable 
@@ -2150,11 +2181,11 @@ void UCustom_Movement_Component::Validate_bIs_On_Ground()
 			this,
 			Mesh->GetSocketLocation(FName(TEXT("root"))),
 			Mesh->GetSocketLocation(FName(TEXT("root"))),
-			FVector(30, 30, 25),
+			FVector(25, 25, 25),
 			UKismetMathLibrary::MakeRotFromX(UpdatedComponent->GetForwardVector()),
 			Parkour_Validate_On_Land_Trace_Types,
 			false,
-			Actors_To_Ignore,
+			Wall_Pipe_Actors_To_Ignore,
 			Debug_Action,
 			Out_Hit,
 			false
@@ -4524,29 +4555,28 @@ bool UCustom_Movement_Component::Validate_Drop_To_Shimmy(const int& Maximum_Dist
 
 void UCustom_Movement_Component::Realize_Wall_Run_Surfaces(const bool& bAnalyze_Characters_Left_Side)
 {
-	//Get the component's location
-	const FVector Component_Location{UpdatedComponent->GetComponentLocation()};
-
-	//Get the Character Direction Arrow Rotation.
+	if(!Character_Direction_Arrow)
+	return;
+	
+	//Get the Character Direction Arrow Location and Rotation
+	const FVector Character_Direction_Arrow_Location{Character_Direction_Arrow->GetActorLocation()};
 	const FRotator Character_Direction_Arrow_Rotation{Character_Direction_Arrow->GetActorRotation()};
 
-	int Side_Of_The_Character_To_Execute_The_Raycast{};
 	//Depending on the value set through the input parameter set the value of the local int variable "Side_Of_The_Character_To_Execute_The_Raycast" to determine which side of the 
 	//character to launch the ray cast.
+	int Side_Of_The_Character_To_Execute_The_Raycast{};
+	
 	if(bAnalyze_Characters_Left_Side)
 	Side_Of_The_Character_To_Execute_The_Raycast = -1;
 
 	else if(!bAnalyze_Characters_Left_Side)
 	Side_Of_The_Character_To_Execute_The_Raycast = 1;
 
-	//Offset the vector up
-	const FVector Offset_Vector_1{Move_Vector_Up(Component_Location, 100.f)};
+	const FVector Start{Character_Direction_Arrow_Location};
+	const FVector End{Move_Vector_Right(Start, Character_Direction_Arrow_Rotation, Side_Of_The_Character_To_Execute_The_Raycast * 70.f)};
 
 	//Declare the local FHitResult which will store the hit result of the sphere trace which is performed.
 	FHitResult Realize_Wall_Run_Surfaces_Hit_Result{};
-
-	const FVector Start{Offset_Vector_1};
-	const FVector End{Move_Vector_Right(Start, Character_Direction_Arrow_Rotation, Side_Of_The_Character_To_Execute_The_Raycast * 70.f)};
 
 	UKismetSystemLibrary::SphereTraceSingleForObjects(
 		this,
@@ -4639,145 +4669,19 @@ void UCustom_Movement_Component::Assign_Wall_Run_Hit_Result(const FHitResult& Wa
 	}
 }
 
-bool UCustom_Movement_Component::Analyze_And_Validate_Wall_Run_Surface()
-{
-	/*This function takes care of making sure the wall is perpendicular to the character (just to be safe), analyzing the wall to get the direction which the character will be wall running in,  
-	and making sure the character is attempting to start wall running from the appropriate angle ranges.*/
-
-	//Make sure the character is perpendicular to the wall.
-	double Dot_Product_Of_Wall_Run_Surface_And_Character{};
-
-	if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
-	{
-		Dot_Product_Of_Wall_Run_Surface_And_Character = FVector::DotProduct(Wall_Run_Hit_Result.ImpactNormal, UpdatedComponent->GetUpVector());
-		Debug::Print("Wall_Run_Left_Side_Dot_Product_Of_Wall_Run_Surface_And_Character: " + FString::SanitizeFloat(Dot_Product_Of_Wall_Run_Surface_And_Character), FColor::Yellow, 22);
-		
-	}
-
-	else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
-	{
-		Dot_Product_Of_Wall_Run_Surface_And_Character = FVector::DotProduct(Wall_Run_Hit_Result.ImpactNormal, UpdatedComponent->GetUpVector());
-		Debug::Print("Wall_Run_Right_Side_Dot_Product_Of_Wall_Run_Surface_And_Character: " + FString::SanitizeFloat(Dot_Product_Of_Wall_Run_Surface_And_Character), FColor::Yellow, 22);
-	}
-
-	if(Dot_Product_Of_Wall_Run_Surface_And_Character != 0)
-	{
-		Debug::Print("Wall_Is_Not_Perpendicular_To_Character", FColor::Red, 23);
-		Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
-		return false;
-	}
-
-	else if(Dot_Product_Of_Wall_Run_Surface_And_Character == 0)
-	{
-		Debug::Print("Wall_Is_Perpendicular_To_Character", FColor::Green, 23);
-	}
-
-	//Get the direction the charcter will be running in by getting the cross product of the character's respective vector and the impact normal of the wall and store it in the global FVector "Direction_To_Wall_Run"
-
-	if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
-	{
-		Direction_To_Wall_Run = FVector::CrossProduct(Wall_Run_Hit_Result.ImpactNormal, UpdatedComponent->GetUpVector());
-		Direction_To_Wall_Run = Direction_To_Wall_Run.GetSafeNormal();
-		Debug::Print("Wall_Run_Left_Side_Direction_To_Wall_Run: " + Direction_To_Wall_Run.ToCompactString(), FColor::Green, 24);
-	}
-
-	else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
-	{
-		Direction_To_Wall_Run = FVector::CrossProduct(Wall_Run_Hit_Result.ImpactNormal, -UpdatedComponent->GetUpVector());
-		Direction_To_Wall_Run = Direction_To_Wall_Run.GetSafeNormal();
-		Debug::Print("Wall_Run_Right_Side_Direction_To_Wall_Run: " + Direction_To_Wall_Run.ToCompactString(), FColor::Green, 24);
-	}
-
-	//Make sure the character is attempting to start wall running from the appropriate angle ranges.
-	double Angle_Attempting_To_Enter_Wall_Run_SIDE{};
-	
-	if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
-	{
-		Angle_Attempting_To_Enter_Wall_Run_SIDE = UKismetMathLibrary::DegAcos(Direction_To_Wall_Run.Dot(UpdatedComponent->GetRightVector()));
-		
-		if(Angle_Attempting_To_Enter_Wall_Run_SIDE > 90.f)
-		{
-			Debug::Print("Angle_Which_The_Character_Is_Attempting_Start_LEFT_Wall_Running_Is_Invalid: " + 
-			FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_SIDE), 
-			FColor::Red, 25);
-
-			Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
-
-			return false;
-		}
-
-		else
-		{
-			Debug::Print("Angle_Which_The_Character_Is_Attempting_Start_LEFT_Wall_Running_Is_Valid: " + 
-			FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_SIDE), 
-			FColor::Green, 25);
-		}
-	}
-
-	else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
-	{
-		Angle_Attempting_To_Enter_Wall_Run_SIDE = UKismetMathLibrary::DegAcos(Direction_To_Wall_Run.Dot(-UpdatedComponent->GetRightVector()));
-
-		if(Angle_Attempting_To_Enter_Wall_Run_SIDE > 90)
-		{
-			Debug::Print("Angle_Which_The_Character_Is_Attempting_Start_RIGHT_Wall_Running_Is_Invalid: " + 
-			FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_SIDE), 
-			FColor::Red, 25);
-
-			Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
-
-			return false;
-		}
-
-		else
-		{
-			Debug::Print("Angle_Which_The_Character_Is_Attempting_Start_RIGHT_Wall_Running_Is_Valid: " + 
-			FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_SIDE), 
-			FColor::Green, 25);
-		}
-	}
-
-	
-	double Angle_Attempting_To_Enter_Wall_Run_FRONT{UKismetMathLibrary::DegAcos(Direction_To_Wall_Run.Dot(UpdatedComponent->GetForwardVector()))};
-
-	if(Angle_Attempting_To_Enter_Wall_Run_FRONT < 10 || Angle_Attempting_To_Enter_Wall_Run_FRONT > 90)
-	{
-		Debug::Print("Charater_Has_To_Face_The_Wall_More_In_Order_To_Begin_Wall_Running: " + 
-		FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_FRONT), 
-		FColor::Red, 27);
-
-		Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
-		return false;
-	}
-
-	else
-	{
-		Debug::Print("Charater_IS_READY_To_Begin_Wall_Running: " + 
-		FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_FRONT), 
-		FColor::Green, 27);
-
-		//The global FHitResult "Wall_Top_Result" is used by the function "&UCustom_Movement_Component::Play_Parkour_Montage". Therefore it will be used to play specicific montages from the Wall_Run
-		//when necessary.
-		Wall_Top_Result = Wall_Run_Hit_Result;
-		return true;
-
-	}
-
-	//This line is to meet the requirement type of this function
-	return false;
-}
-
 void UCustom_Movement_Component::Wall_Run_Detect_Wall(const bool& bAnalyze_Characters_Left_Side)
 {
-	//Get the component's location
-	const FVector Component_Location{UpdatedComponent->GetComponentLocation()};
-
-	//Get the Character Direction Arrow Rotation.
+	if(!Character_Direction_Arrow)
+	return;
+	
+	//Get the Character Direction Arrow Location and Rotation
+	const FVector Character_Direction_Arrow_Location{Character_Direction_Arrow->GetActorLocation()};
 	const FRotator Character_Direction_Arrow_Rotation{Character_Direction_Arrow->GetActorRotation()};
 
-	int Side_Of_The_Character_To_Execute_The_Raycast{};
 	//Depending on the value set through the input parameter set the value of the local int variable "Side_Of_The_Character_To_Execute_The_Raycast" to determine which side of the 
 	//character to launch the ray cast.
+	int Side_Of_The_Character_To_Execute_The_Raycast{};
+	
 	if(bAnalyze_Characters_Left_Side)
 	Side_Of_The_Character_To_Execute_The_Raycast = -1;
 
@@ -4785,7 +4689,7 @@ void UCustom_Movement_Component::Wall_Run_Detect_Wall(const bool& bAnalyze_Chara
 	Side_Of_The_Character_To_Execute_The_Raycast = 1;
 
 	//Offset the vector up
-	const FVector Offset_Vector_1{Move_Vector_Down(Component_Location, 70.f)};
+	const FVector Offset_Vector_1{Move_Vector_Down(Character_Direction_Arrow_Location, 200.f)};
 
 	//Declare the local FHitResult which will store the hit result of the sphere trace which is performed.
 	FHitResult Wall_Run_Detect_Wall_Hit_Result{};
@@ -4879,7 +4783,7 @@ bool UCustom_Movement_Component::Validate_Drop_Off_Ledge_While_Sprinting()
 		10.f,
 		Validate_Drop_Off_Ledge_While_Sprinting_Trace_Types,
 		false,
-		TArray<AActor*>(),
+		Wall_Vault_Actors_To_Ignore,
 		Debug_Action,
 		Drop_Off_Ledge_While_Sprinting_Sphere_Trace_Hit_Result,
 		false
@@ -4905,7 +4809,7 @@ bool UCustom_Movement_Component::Validate_Drop_Off_Ledge_While_Sprinting()
 			98.f,
 			Validate_Drop_Off_Ledge_While_Sprinting_Trace_Types,
 			false,
-			TArray<AActor*>(),
+			Wall_Vault_Actors_To_Ignore,
 			Debug_Action,
 			Drop_Off_Ledge_While_Sprinting_Capsule_Trace_1_Hit_Result,
 			false
@@ -4930,7 +4834,7 @@ bool UCustom_Movement_Component::Validate_Drop_Off_Ledge_While_Sprinting()
 				100.f,
 				Validate_Drop_Off_Ledge_While_Sprinting_Trace_Types,
 				false,
-				TArray<AActor*>(),
+				Wall_Vault_Actors_To_Ignore,
 				Debug_Action,
 				Drop_Off_Ledge_While_Sprinting_Capsule_Trace_2_Hit_Result,
 				false
@@ -6199,7 +6103,9 @@ bool UCustom_Movement_Component::Validate_Jumping_Destination_Ground_Surface(con
 	for(Index; Index <= Distance_To_Check_For_Landing_Destination; Index++)
 	{
 		//Set the starting location of the sphere traces.
-		const FVector Start_1{Move_Vector_Forward(Character_Direction_Arrow_Location, Character_Direction_Arrow_Rotation, 100.f + (Index * 20.f))};
+		const FVector Offset_Vector_Up{Move_Vector_Up(Character_Direction_Arrow_Location, 20.f)};
+		
+		const FVector Start_1{Move_Vector_Forward(Offset_Vector_Up, Character_Direction_Arrow_Rotation, 100.f + (Index * 20.f))};
 
 		const FVector End_1{Move_Vector_Down(Start_1, 150.f)};
 
@@ -6597,7 +6503,7 @@ bool UCustom_Movement_Component::Parkour_Balance_Walk_Detect_Balance_Surface(FHi
 	/*Check to see if there is a surface for the character to walk on.*/
 	
 	//Offset the vector forward so that it is right in front of the characters body.
-	const FVector Offset_Balance_Walk_Detect_Balance_Surface_Check_Forward{Move_Vector_Forward(Character_Direction_Arrow_Location, Character_Direction_Arrow_Rotation, 40.f)};
+	const FVector Offset_Balance_Walk_Detect_Balance_Surface_Check_Forward{Move_Vector_Forward(Character_Direction_Arrow_Location, Character_Direction_Arrow_Rotation, 10.f)};
 	//Offset the vector down so that it is at the same height with the top of the character's head.
 	const FVector Start_1{Move_Vector_Down(Offset_Balance_Walk_Detect_Balance_Surface_Check_Forward, 30.f)};
 	//Offset the vector down so that it can detect if there is a surface which the character can "Balance_Walk" on.
@@ -6609,7 +6515,7 @@ bool UCustom_Movement_Component::Parkour_Balance_Walk_Detect_Balance_Surface(FHi
 		this,
 		Start_1,
 		End_1,
-		5.f,
+		10.f,
 		Balance_Traversal_Actors_Trace_Types,
 		false,
 		TArray<AActor*>(),
@@ -6629,13 +6535,19 @@ bool UCustom_Movement_Component::Parkour_Balance_Walk_Detect_Balance_Surface(FHi
 	{
 		Debug::Print("There_Is_A_Surface_For_The_Character_To_Balance_Walk_On", FColor::Green, 77);
 		
+		//Set global FHitResult "Wall_Top_Result" to equal the same value as the local FHitResult "Balance_Walk_Detect_Balance_Surface_Hit_Result". This will be used to determine if the character 
+		//can perfrom a Balance Walk hop action or not..
+		Wall_Top_Result = Balance_Walk_Detect_Balance_Surface_Hit_Result;
+
+		/*Get the location in which the character will be walking on.*/
+		
 		//Offset the vector down to just above the level of the character's feet.
 		const FVector Offset_Vector_Down_To_Characters_Feet{Move_Vector_Down(Character_Direction_Arrow_Location, 170.f)};
 
 		//Offset the vector forward by multiplyng the value placed into the global double variable "Forward_Backward_Movement_Value" by 110.
 		//The value placed into said global double variable is calculated by the controller within &UCustom_Movement_Component::Add_Movement_Input. 
 		//This will move the vector to the location where the character intends to "Balance_Walk" to.
-		const FVector Offset_Vector_Forward_To_Location_To_Balance_Walk_To{Move_Vector_Forward(Offset_Vector_Down_To_Characters_Feet, Character_Direction_Arrow_Rotation, Forward_Backward_Movement_Value * 70)};
+		const FVector Offset_Vector_Forward_To_Location_To_Balance_Walk_To{Move_Vector_Forward(Offset_Vector_Down_To_Characters_Feet, Character_Direction_Arrow_Rotation, Forward_Backward_Movement_Value * 50.f)};
 
 		int Index_1{};
 
@@ -6670,7 +6582,7 @@ bool UCustom_Movement_Component::Parkour_Balance_Walk_Detect_Balance_Surface(FHi
 			
 				Reversed_Front_Wall_Normal_Z = Reverse_Wall_Normal_Rotation_Z(Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result_Reference.ImpactNormal);
 			
-				/*Get the location on the surface of the "Balance_Walk" Actor in which the character should always aim to interpolate its location to.*/
+				/*Get the location on the surface of the "Balance_Walk" Actor in which the character should always aim to interpolate its location to (Top Result).*/
 
 				//Offset the vector forward so that it is inside the surface which the character is attempting to "Balance_Walk" on. The vector should be in the middle
 				//of the "Balance_Walk" actor when measuring the width.
@@ -6726,7 +6638,6 @@ bool UCustom_Movement_Component::Parkour_Balance_Walk_Detect_Balance_Surface(FHi
 				}
 			}
 
-			//Check to see if "bStartPenetrating" is true. If it is then continue the for loop accordingly.
 			else
 			{
 				if(Index_1 < 7)
@@ -6736,7 +6647,7 @@ bool UCustom_Movement_Component::Parkour_Balance_Walk_Detect_Balance_Surface(FHi
 
 				else
 				{
-					Debug::Print("The_Surace_Hasn't_Been_Analyzed_For_Balance_Walking_Because_There_Is_A_Curve_That_Is_Too_Small_In_Radius", FColor::Red, 78);
+					Debug::Print("The_Surace_Hasn't_Been_Retrieved_For_Balance_Walking", FColor::Red, 78);
 					Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 					return false;
 				}
@@ -6806,7 +6717,7 @@ bool UCustom_Movement_Component::Parkour_Balance_Walk_Are_There_Obstacles_In_Fro
 	return false;
 }
 
-void UCustom_Movement_Component::Balance_Walk_Automatic_Hop_Detect_Wall()
+void UCustom_Movement_Component::Balance_Walk_Hop_Detect_Wall()
 {	
 	int Index{};
 
@@ -6815,9 +6726,9 @@ void UCustom_Movement_Component::Balance_Walk_Automatic_Hop_Detect_Wall()
 		//Get the location of the character.
 		const FVector Component_Location{UpdatedComponent->GetComponentLocation()};
 		//Set the vector which the sphere trace will use to be at ground level. This for loop will create new sphere traces from this location. Each sphere trace will stack ontop of the previous forming a "tower".
-		const FVector Set_Vector_Below_Character{Move_Vector_Down(Component_Location, 270.f)};
+		const FVector Set_Vector_Below_Character{Move_Vector_Down(Component_Location, 300.f)};
 		//With each iteration of the for loop move the vector up 17 units by multiplying the index by 17.
-		const FVector Move_Vector_Up_With_Each_Iteration_Of_Loop{Move_Vector_Up(Set_Vector_Below_Character, Index * 17.f)};
+		const FVector Move_Vector_Up_With_Each_Iteration_Of_Loop{Move_Vector_Up(Set_Vector_Below_Character, Index * 20.f)};
 		//Move the vector forwards 20 units so that it starts right in front of the character.
 		const FVector Start{Move_Vector_Forward(Move_Vector_Up_With_Each_Iteration_Of_Loop, UpdatedComponent->GetComponentRotation(), 90)};
 		//Move the vector forward 140 units so that it ends a good distance away from the character.
@@ -6831,7 +6742,7 @@ void UCustom_Movement_Component::Balance_Walk_Automatic_Hop_Detect_Wall()
 			20.f,
 			Balance_Traversal_Actors_Trace_Types,
 			false,
-			Actors_To_Ignore,
+			TArray<AActor*>(),
 			Debug_Action,
 			Initial_Front_Wall_Hit_Result,
 			false
@@ -6846,7 +6757,7 @@ void UCustom_Movement_Component::Balance_Walk_Automatic_Hop_Detect_Wall()
 	//Draw_Debug_Sphere(Initial_Front_Wall_Hit_Result.ImpactPoint, 5.f, FColor::Blue, 1.f, false, 7.f);
 } 
 
-bool UCustom_Movement_Component::Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface()
+bool UCustom_Movement_Component::Balance_Walk_Hop_Calculate_Wall_Top_Surface()
 {
 	if(!Character_Direction_Arrow)
 	return false;
@@ -6880,21 +6791,21 @@ bool UCustom_Movement_Component::Balance_Walk_Automatic_Hop_Calculate_Wall_Top_S
 	//If there is no blocing hit return. This is because the top surface of the wall which is being analyzed had dropped below the threshold which is desired (Sphere trace "End").
 	if(!Balance_Walk_Automatic_Hop_Top_Result.bBlockingHit)
 	{
-		Debug::Print("Analyzing_Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface_Failed", FColor::Red, 80);
+		Debug::Print("Analyzing_Balance_Walk_Hop_Calculate_Wall_Top_Surface_Failed", FColor::Red, 80);
 		return false;
 	}
 	
 	//If there is a blocking hit on the Out_Hit, assign said FHitResult to the global FHitResult variable "Wall_Top_Result". 
 	else if(Balance_Walk_Automatic_Hop_Top_Result.bBlockingHit)
 	{
-		Debug::Print("Analyzing_Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface_Succeeded", FColor::Green, 80);
+		Debug::Print("Analyzing_Balance_Walk_Hop_Calculate_Wall_Top_Surface_Succeeded", FColor::Green, 80);
 		//Draw_Debug_Sphere(Wall_Top_Result.ImpactPoint, 15.f, FColor::Emerald, 7.f, false, 7.f);
 		return true;
 	}
 
 	else
 	{
-		Debug::Print("Analyzing_Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface_Failed. There_Is_No_Wall_Top_Result", FColor::Red, 80);
+		Debug::Print("Analyzing_Balance_Walk_Hop_Calculate_Wall_Top_Surface_Failed. There_Is_No_Wall_Top_Result", FColor::Red, 80);
 		return false;
 	}
 
@@ -7408,13 +7319,12 @@ void UCustom_Movement_Component::Set_Parkour_State(const FGameplayTag& New_Parko
 	if(Parkour_State != New_Parkour_State)
 	{
 		Parkour_State = New_Parkour_State;
-		if(Parkour_Interface) Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
+		Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
 		Set_Parkour_State_Attributes(Parkour_State);
+		Server_Set_Parkour_State(New_Parkour_State);
 	}
 
 	else return;
-		
-	Server_Set_Parkour_State(Parkour_State);
 }
 
 void UCustom_Movement_Component::Set_Parkour_Climb_Style(const FGameplayTag& New_Parkour_Climb_Style)
@@ -7426,11 +7336,10 @@ void UCustom_Movement_Component::Set_Parkour_Climb_Style(const FGameplayTag& New
 	{
 		Parkour_Climb_Style = New_Parkour_Climb_Style;
 		Parkour_Interface->Execute_Set_Parkour_Climb_Style(Anim_Instance, Parkour_Climb_Style);
+		Server_Set_Parkour_Climb_Style(New_Parkour_Climb_Style);
 	}
 	
 	else return;
-
-	Server_Set_Parkour_Climb_Style(Parkour_Climb_Style);
 }
 
 void UCustom_Movement_Component::Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side)
@@ -7442,11 +7351,10 @@ void UCustom_Movement_Component::Set_Parkour_Wall_Run_Side(const FGameplayTag& N
 	{
 		Parkour_Wall_Run_Side = New_Wall_Run_Side;
 		Parkour_Interface->Execute_Set_Parkour_Wall_Run_Side(Anim_Instance, Parkour_Wall_Run_Side);
+		Server_Set_Parkour_Wall_Run_Side(New_Wall_Run_Side);
 	}
 
 	else return;
-	
-	Server_Set_Parkour_Wall_Run_Side(New_Wall_Run_Side);
 }
 
 void UCustom_Movement_Component::Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction)
@@ -7458,11 +7366,10 @@ void UCustom_Movement_Component::Set_Parkour_Direction(const FGameplayTag& New_P
 	{
 		Parkour_Direction = New_Parkour_Direction;
 		Parkour_Interface->Execute_Set_Parkour_Direction(Anim_Instance, Parkour_Direction);
+		Server_Set_Parkour_Direction(New_Parkour_Direction);
 	}
 
 	else return;
-
-	Server_Set_Parkour_Direction(Parkour_Direction);
 }
 
 void UCustom_Movement_Component::Set_Parkour_Action(const FGameplayTag& New_Parkour_Action)
@@ -8542,7 +8449,7 @@ void UCustom_Movement_Component::Set_Parkour_Action(const FGameplayTag& New_Park
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
-	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT( "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L")))))
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L")))))
 	{
 		/*Play_Parkour_Montage(Hanging_Climb_Up_To_Balanced_Walk_L);*/
 		
@@ -8550,12 +8457,99 @@ void UCustom_Movement_Component::Set_Parkour_Action(const FGameplayTag& New_Park
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
 	}
 
-	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT( "Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R")))))
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R")))))
 	{
 		/*Play_Parkour_Montage(Hanging_Climb_Up_To_Balanced_Walk_R);*/
 		
 		int Not_Needed_Here{};
 		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Idle.Wall.Vault.On")))))
+	{
+		/*Play_Parkour_Montage(Idle_Wall_Two_Hand_L_On);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Idle.Wall.Vault.Over")))))
+	{
+		/*Play_Parkour_Montage(Idle_Wall_Safety_On);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.On")))))
+	{
+		/*Execute_Random_Montage(Running_Wall_Vault_On);*/
+
+		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 3);
+
+		//Via a while loop check to see if the random integer which is selected from the line of code above is the same as the integer which was selected the last time this Parkour_Action was 
+		//activated (stored within the global int variable "Last_Random_Montage_Played"). If this is the case the while loop should continue to select a random integer until the integer which 
+		//is selected is different from the integer stored within the global int variable "Last_Random_Montage_Played". On the other hand if the integer which was selected in the line of code above 
+		//is different from the integer stored in the global int variable "Last_Random_Montage_Played", this loop will never activate.
+		while(Last_Random_Montage_Played == Random_Montage_To_Play)
+		{
+			Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 3);
+		}
+
+		//Assign the integer which was selected to the global int variable "Last_Random_Montage_Played".
+		Last_Random_Montage_Played = Random_Montage_To_Play;
+		
+		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.Over")))))
+	{
+		/*Execute_Random_Montage(Running_Wall_Vault_On);*/
+
+		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 9);
+
+		//Via a while loop check to see if the random integer which is selected from the line of code above is the same as the integer which was selected the last time this Parkour_Action was 
+		//activated (stored within the global int variable "Last_Random_Montage_Played"). If this is the case the while loop should continue to select a random integer until the integer which 
+		//is selected is different from the integer stored within the global int variable "Last_Random_Montage_Played". On the other hand if the integer which was selected in the line of code above 
+		//is different from the integer stored in the global int variable "Last_Random_Montage_Played", this loop will never activate.
+		while(Last_Random_Montage_Played == Random_Montage_To_Play)
+		{
+			Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 9);
+		}
+
+		//Assign the integer which was selected to the global int variable "Last_Random_Montage_Played".
+		Last_Random_Montage_Played = Random_Montage_To_Play;
+		
+		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.Under.Bar")))))
+	{
+		/*Play_Parkour_Montage(Wall_Under_Bar);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.Over.180.Shimmy")))))
+	{
+		/*Execute_Random_Montage(Running_Wall_Vault_Over_180_Shimmy);*/
+
+		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 2);
+
+		//Via a while loop check to see if the random integer which is selected from the line of code above is the same as the integer which was selected the last time this Parkour_Action was 
+		//activated (stored within the global int variable "Last_Random_Montage_Played"). If this is the case the while loop should continue to select a random integer until the integer which 
+		//is selected is different from the integer stored within the global int variable "Last_Random_Montage_Played". On the other hand if the integer which was selected in the line of code above 
+		//is different from the integer stored in the global int variable "Last_Random_Montage_Played", this loop will never activate.
+		while(Last_Random_Montage_Played == Random_Montage_To_Play)
+		{
+			Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 2);
+		}
+
+		//Assign the integer which was selected to the global int variable "Last_Random_Montage_Played".
+		Last_Random_Montage_Played = Random_Montage_To_Play;
+		
+		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
 	}
 
 }
@@ -8630,12 +8624,13 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 		if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Climb"))))
 		{
 			Debug::Print("Shimmy_180_Shimmy_Climb_Or_Hop", FColor::MakeRandomColor(), 7);
-
+			
 			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
 			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
 			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
 			const FHitResult Not_Needed_Here{};
 			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
 
 			Decide_Shimmy_180_Shimmy_Mantle_Or_Hop();	
 		}
@@ -8647,9 +8642,26 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
 			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
 			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
-			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Custom_Wall_Pipe_Actor_Forward_Vector_Hit_Result);
-
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+			
 			Decide_Wall_Pipe_Maneuver_To_Free_Hang_Mantle_Or_Hop();
+		}
+
+		else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
+		{
+			Debug::Print("Balance_Walk_Hop", FColor::MakeRandomColor(), 7);
+
+			if(Validate_Balance_Walk_Hop())
+			{
+				//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+				//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+				//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+				const FHitResult Not_Needed_Here{};
+				Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+					
+				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Walk.Automatic.Hop"))));
+			}
 		}
 
 		else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
@@ -8742,25 +8754,6 @@ void UCustom_Movement_Component::Decide_Parkour_Action()
 					{
 						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang"))));
 					}
-				}
-
-				//Set the value within the global FGameplayTag "Parkour_Wall_Run_Side" to the appropriate value (Calculated within "&UCustom_Movement_Component::Assign_Wall_Run_Hit_Result"). 
-				//This will initiate the respective montage to play which will place the character at the location stored in the FHitResult "Wall_Run_Hit_Result 
-				//(location transfered to the global FHitResult variable "Wall_Top_Result" within "&UCustom_Movement_Component::Analyze_And_Validate_Wall_Run_Surface").
-				//After these lines of code are executed the value set in the global FGameplayTag Parkour_State will be set to "Parkour.State.Wall.Run" via the UParkour_Action_Data object that stores the respective information. 
-				//Therefore the fucntions called within &UCustom_Movement_Component::Parkour_Call_In_Tick within "else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Run"))))" 
-				//will handle the rest of the wall run execution.
-				else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
-				{
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.Start.Left"))));
-
-					Debug::Print("Parkour_Action_Set_To_Wall_Run_Start_Left", FColor::Emerald, 28);
-				}
-
-				else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
-				{
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.Start.Right"))));
-					Debug::Print("Parkour_Action_Set_To_Wall_Run_Start_Right", FColor::Emerald, 28);
 				}
 
 				else if(bReady_To_Initialize_Parkour_Wall_Pipe)
@@ -8955,10 +8948,10 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 		Debug::Print("Ground_Speed: " + FString::FromInt(Ground_Speed), FColor::Red, 18);
 		Debug::Print("Air_Speed: " + FString::FromInt(Air_Speed), FColor::Yellow, 19);
 		
-		Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
+		//Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 
 		//Set_Parkour_Climb_Style(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.None"))));
-		Set_Parkour_Wall_Run_Side(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.None"))));
+		//Set_Parkour_Wall_Run_Side(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.None"))));
 
 		Execute_Accelerating_Drop_Free_Roam();
 
@@ -8985,16 +8978,21 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 
 	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Run"))))
 	{
-		if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
+		if(Forward_Backward_Movement_Value == 0.f && Right_Left_Movement_Value == 0.f)
+		{
+			Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
+		}
+		
+		/* if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
 		{
 			Wall_Run_Detect_Wall(true);
-			Parkour_Wall_Run_Movement();
+			Parkour_Wall_Run_Handle_Wall_Run_Movement();
 		}
 
 		else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
 		{
 			Wall_Run_Detect_Wall(false);
-			Parkour_Wall_Run_Movement();
+			Parkour_Wall_Run_Handle_Wall_Run_Movement();
 		}
 
 		if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))) || 
@@ -9002,8 +9000,9 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 		Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Left"))) || 
 		Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Right"))))
 		{
+			
 			Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
-		}
+		} */
 	}
 
 }
@@ -9230,7 +9229,8 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 	else
 	Right_Left_Movement_Value = Scale_Value.X;
 
-
+	Server_Set_Add_Movement_Input_Variables(Forward_Backward_Movement_Value, Right_Left_Movement_Value);
+	
 	//checking to see the current "Parkour_State" of the character. If the value equals "Parkour.State.Free.Roam" then this means the character should have it's normal ground locomotion.
 	//If the "Parkour_State" is set to "Parkour.State.Climb" then a call to handle "Parkour_Climb_Handle_Shimmying_Movement()" should be made if the value set in the global FGameplayTag "Parkour_State"
 	//is set to "Parkour.State.Climb" and a further nested check to see if there is an animation montage playing returns false. If there is an animation playing call the funtion 
@@ -9292,6 +9292,32 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
 		{
 			Parkour_Climb_Handle_Shimmying_Movement();
+		}
+	}
+
+	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Run"))))
+	{
+		if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
+		{
+			if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
+			{
+				Wall_Run_Detect_Wall(true);
+				Parkour_Wall_Run_Handle_Wall_Run_Movement();
+			}
+
+			else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
+			{
+				Wall_Run_Detect_Wall(false);
+				Parkour_Wall_Run_Handle_Wall_Run_Movement();
+			}
+
+			if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))) || 
+			Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward"))) ||
+			Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Left"))) || 
+			Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Right"))))
+			{
+				Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
+			}
 		}
 	}
 
@@ -9571,41 +9597,35 @@ void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Climb_Posit
 	
 	//Offset value to be used to offset the character backwards from the wall. This is because the impact points found within the input parameter "Parkour_Climbing_Detect_Wall_Hit_Result" is right on
 	//the surface of the wall. Therefore the character needs to be moved back so that the animation playing will look realistic and natural. 
-	const float& Offset_Character_Backwards_From_Wall_Value{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 40.f, 7.f)};
+	const float Offset_Character_Backwards_From_Wall_Value{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 40.f, 7.f)};
 	const FVector Offset_Vector_Backwards_From_Wall{Move_Vector_Backward(Parkour_Climbing_Detect_Wall_Hit_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z, Offset_Character_Backwards_From_Wall_Value)};
 
 
 	//According to the "Parkour_Climb_Style" this is the value to offset the character in the "Z" axis from the location of the "Parkour_Climbing_Wall_Top_Result.ImpactPoint.Z". 
-	const float& Pick_Climb_Style_Value_Character_Height{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 55.f, 103.f)};
+	const float Pick_Climb_Style_Value_Character_Height{Select_Value_Based_On_Climb_Style(Parkour_Climb_Style, 55.f, 103.f)};
 	
 	
 	/*These values are used to make a custom FVector variable ("Move_Character_To_This_Location").*/
 
 	//Value to use on the "X" axis of the custom FVector "Move_Character_To_This_Location".	
-	const double& Set_Character_To_This_Position_Perpendicular_From_Wall{Offset_Vector_Backwards_From_Wall.X};			
+	const double Set_Character_To_This_Position_Perpendicular_From_Wall{Offset_Vector_Backwards_From_Wall.X};			
 	//Value to use on the "Y" axis of the custom FVector "Move_Character_To_This_Location".	
-	const double& Set_Character_To_This_Position_Parallel_From_Wall{Offset_Vector_Backwards_From_Wall.Y};
+	const double Set_Character_To_This_Position_Parallel_From_Wall{Offset_Vector_Backwards_From_Wall.Y};
 	//Value to use on the "Z" axis of the custom FVector "Move_Character_To_This_Location".	
-	const double& Set_Character_To_This_Height_Position{Parkour_Climbing_Wall_Top_Result.ImpactPoint.Z - Pick_Climb_Style_Value_Character_Height};
+	const double Set_Character_To_This_Height_Position{Parkour_Climbing_Wall_Top_Result.ImpactPoint.Z - Pick_Climb_Style_Value_Character_Height};
 
 
 	//Custom FVector to pass into the function "&UCustom_Movement_Component::Move_Character_To_New_Climb_Position_Interpolation_Settings" as an input argument. This will be the location to interpolate 
 	//the character to as long as there is input into the player controller and the validation and checks performed in the function "&UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement"
 	//are successful.. 
-	const FVector& Move_Character_To_This_Location(FVector(Set_Character_To_This_Position_Perpendicular_From_Wall, 
+	const FVector Move_Character_To_This_Location(FVector(Set_Character_To_This_Position_Perpendicular_From_Wall, 
 														   Set_Character_To_This_Position_Parallel_From_Wall, 
 														   Set_Character_To_This_Height_Position));
-	
-	//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
-	//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
-	//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
-	const FHitResult Not_Needed_Here{};
-	Set_Network_Variables(Parkour_Climbing_Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
 
 	//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
 	//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
 	//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
-	Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+	Decide_Climb_Style(Parkour_Climbing_Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
 
 	//This function uses the location which is calculated above (using the variable from the FHitResult input argument "Parkour_Climbing_Detect_Wall_Hit_Result") to interpolate the character to said 
 	//FVector. Considering the locations of the custom FVector will always be updating due to it being dependant on the input argument variable "Parkour_Climbing_Detect_Wall_Hit_Result",  
@@ -9616,10 +9636,14 @@ void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Climb_Posit
 
 	//const FVector Offset_Decide_Climb_Style_Impact_Point{Move_Vector_Right(Parkour_Climbing_Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z, Right_Left_Movement_Value * -10.f)};
 	//Decide_Climb_Style(Offset_Decide_Climb_Style_Impact_Point, Reversed_Front_Wall_Normal_Z);
+
 }
 
 void UCustom_Movement_Component::Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
 {
+	if(!Owning_Player_Character)
+	return;
+
 	/*Using the location from the input argument "Location_To_Move_Character" which is is calculated in the function "&UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Climb_Position"
 	(via said functions const reference FHitResult input argument "Parkour_Climbing_Detect_Wall_Hit_Result"), this function handles interpolating the character to said location. 
 	Considering the location of the input parameter FVector "Location_To_Move_Character" will always be updating due to it being dependant on the input argument variable (of the function 
@@ -9657,7 +9681,7 @@ void UCustom_Movement_Component::Move_Character_To_New_Climb_Position_Interpolat
 	const double Z_Interpolation{UKismetMathLibrary::FInterpTo(Updated_Component_Location.Z, Location_To_Move_Character.Z, DeltaTime, Pick_Interpolation_Speed_For_Z_Axis)};
 
 	//This variable holds the interpolated data of where the caracter needs to move to.
-	const FVector& Interpolated_Location_To_Move_Character{FVector(X_Interpolation, Y_Interpolation, Z_Interpolation)};
+	const FVector Interpolated_Location_To_Move_Character{X_Interpolation, Y_Interpolation, Z_Interpolation};
 
 	//Call "SetActorLocationAndRotation" and pass in the variable which holds the interpolated data where the caracter needs to move to (Interpolated_Location_To_Move_Character).
 	Owning_Player_Character->SetActorLocationAndRotation(Interpolated_Location_To_Move_Character, Rotation_For_Character_To_Face);
@@ -10534,6 +10558,35 @@ void UCustom_Movement_Component::Execute_Random_Montage(TArray<UParkour_Action_D
 			
 		}
 
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.On"))))
+		{
+			Running_Wall_Vault_On.Emplace(Wall_Monkey_On);
+			Running_Wall_Vault_On.Emplace(Wall_Two_Hand_L_On);
+			Running_Wall_Vault_On.Emplace(Wall_Two_Hand_R_On);
+			
+		}
+
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.Over"))))
+		{
+			Running_Wall_Vault_Over.Emplace(Wall_Monkey_Vault);
+			Running_Wall_Vault_Over.Emplace(Wall_Reverse_L_Vault);
+			Running_Wall_Vault_Over.Emplace(Wall_Reverse_R_Vault);
+			Running_Wall_Vault_Over.Emplace(Wall_Safety_L_Vault);
+			Running_Wall_Vault_Over.Emplace(Wall_Safety_R_Vault);
+			Running_Wall_Vault_Over.Emplace(Wall_Thief_L_Vault);
+			Running_Wall_Vault_Over.Emplace(Wall_Thief_R_Vault);
+			Running_Wall_Vault_Over.Emplace(Wall_Two_Hand_L_Vault);
+			Running_Wall_Vault_Over.Emplace(Wall_Two_Hand_R_Vault);
+			
+		}
+
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.Over.180.Shimmy"))))
+		{
+			Running_Wall_Vault_Over_180_Shimmy.Emplace(Wall_L_Turn);												   
+			Running_Wall_Vault_Over_180_Shimmy.Emplace(Wall_R_Turn);
+			
+		}
+
 	}
 
 	else
@@ -10871,6 +10924,7 @@ bool UCustom_Movement_Component::Realize_And_Validate_Hop_Destnation_And_Action(
 		Debug::Print("Hop_Location_Not_Found", FColor::Red, 17);
 		return false;
 	}
+
 }
 
 void UCustom_Movement_Component::Perform_Hop_Action(const FGameplayTag& Hop_Action)
@@ -11046,9 +11100,7 @@ void UCustom_Movement_Component::On_Landing_Impact()
 {
 	// if(Ground_Speed <= 250.f && (Air_Speed <= -700.f && Air_Speed >= -1000.f))
 	// Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Landing.Down.Light"))));
-	if(!Owning_Player_Character)
-	return;
-
+	
 	if(Ground_Speed < 240.f && ((Air_Speed <= -800.f && Air_Speed >= -900.f) || Air_Speed <= -1100.f && Air_Speed >= -1200.f))
 	{
 		Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Landing.Down.Impact"))));
@@ -11069,8 +11121,11 @@ void UCustom_Movement_Component::On_Landing_Impact()
 void UCustom_Movement_Component::Execute_Parkour_Action()
 {
 	if(Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))) || 
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Run"))) ||
 	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))) ||
-	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Wall.Pipe.Climb"))))
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Wall.Pipe.Climb"))) || 
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Balance.Walk"))) ||
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
 	return;
 
 	Parkour_Detect_Wall();
@@ -11125,10 +11180,23 @@ void UCustom_Movement_Component::Execute_Parkour_Action()
 	//in the function call "Calculate_Wall_Vault_Location()"), calculations are made to obtain the Wall_Height, Wall_Depth and Vault_Height.
 	Measure_Wall();
 
-	//Decide the Parkour Action to execute based on the current value of the global gameplaytag "Parkour_State" as well as the values stored in the global double variables
-	//"Wall_Height", "Wall_Depth" and "Vault_Height".
-	Decide_Parkour_Action();
+	//Check to see if the global pointer "Wall_Vault_Actor" is valid. If it is indeed valid then this means the player is overlapping with a "AWall_Vault_Actor" and the 
+	//appropriate action should be executed within "&UCustom_Movement_Component::Decide_Wall_Vault_Parkour_Action". Otherwise call "&UCustom_Movement_Component::Decide_Parkour_Action" 
+	//to execute the actions which are enabled by default to the character.
 	
+	if(Wall_Vault_Actor)
+	{
+		//Decide the Parkour Action to execute based on the current value of the global gameplaytag "Parkour_State" as well as the values stored in the global double variables
+		//"Wall_Height", "Wall_Depth" and "Vault_Height".
+		Decide_Wall_Vault_Parkour_Action();
+	}
+	
+	else
+	{
+		//Decide the Parkour Action to execute based on the current value of the global gameplaytag "Parkour_State" as well as the values stored in the global double variables
+		//"Wall_Height", "Wall_Depth" and "Vault_Height".
+		Decide_Parkour_Action();
+	}
 }
 
 void UCustom_Movement_Component::Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam()
@@ -11136,6 +11204,8 @@ void UCustom_Movement_Component::Reset_Wall_Run_Variables_And_Set_Parkour_State_
 	const float In_Time{1.f};
 
 	Set_Parkour_State(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))));
+
+	Set_Parkour_Wall_Run_Side(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.None"))));
 
 	Realize_Wall_Run_Left_Side_Hit_Result.Reset(In_Time, false);
 
@@ -11145,11 +11215,147 @@ void UCustom_Movement_Component::Reset_Wall_Run_Variables_And_Set_Parkour_State_
 
 	Direction_To_Wall_Run = FVector(0, 0, 0);
 
-	Location_To_Move_Charater_During_Wall_Run =  FVector(0, 0, 0);
+	Location_To_Move_Charater_During_Wall_Run = FVector(0, 0, 0);
 	
 	Direction_To_Wall_Run_Scalar_Value_Multiplier = 1.f;
 
 	Dynamic_Wall_Run_Arc_Value = 0.f;
+}
+
+bool UCustom_Movement_Component::Analyze_And_Validate_Wall_Run_Surface()
+{
+	/*This function takes care of making sure the wall is perpendicular to the character (just to be safe), analyzing the wall to get the direction which the character will be wall running in,  
+	and making sure the character is attempting to start wall running from the appropriate angle ranges.*/
+
+	//Make sure the character is perpendicular to the wall.
+	double Dot_Product_Of_Wall_Run_Surface_And_Character{};
+
+	if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
+	{
+		Dot_Product_Of_Wall_Run_Surface_And_Character = FVector::DotProduct(Wall_Run_Hit_Result.ImpactNormal, UpdatedComponent->GetUpVector());
+		Debug::Print("Wall_Run_Left_Side_Dot_Product_Of_Wall_Run_Surface_And_Character: " + FString::SanitizeFloat(Dot_Product_Of_Wall_Run_Surface_And_Character), FColor::Yellow, 22);
+		
+	}
+
+	else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
+	{
+		Dot_Product_Of_Wall_Run_Surface_And_Character = FVector::DotProduct(Wall_Run_Hit_Result.ImpactNormal, UpdatedComponent->GetUpVector());
+		Debug::Print("Wall_Run_Right_Side_Dot_Product_Of_Wall_Run_Surface_And_Character: " + FString::SanitizeFloat(Dot_Product_Of_Wall_Run_Surface_And_Character), FColor::Yellow, 22);
+	}
+
+	if(Dot_Product_Of_Wall_Run_Surface_And_Character != 0)
+	{
+		Debug::Print("Wall_Is_Not_Perpendicular_To_Character", FColor::Red, 23);
+		Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
+		return false;
+	}
+
+	else if(Dot_Product_Of_Wall_Run_Surface_And_Character == 0)
+	{
+		Debug::Print("Wall_Is_Perpendicular_To_Character", FColor::Green, 23);
+	}
+
+	//Get the direction the charcter will be running in by getting the cross product of the character's respective vector and the impact normal of the wall and store it in the global FVector "Direction_To_Wall_Run"
+
+	if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
+	{
+		Direction_To_Wall_Run = FVector::CrossProduct(Wall_Run_Hit_Result.ImpactNormal, UpdatedComponent->GetUpVector());
+		Direction_To_Wall_Run = Direction_To_Wall_Run.GetSafeNormal();
+		Debug::Print("Wall_Run_Left_Side_Direction_To_Wall_Run: " + Direction_To_Wall_Run.ToCompactString(), FColor::Green, 24);
+	}
+
+	else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
+	{
+		Direction_To_Wall_Run = FVector::CrossProduct(Wall_Run_Hit_Result.ImpactNormal, -UpdatedComponent->GetUpVector());
+		Direction_To_Wall_Run = Direction_To_Wall_Run.GetSafeNormal();
+		Debug::Print("Wall_Run_Right_Side_Direction_To_Wall_Run: " + Direction_To_Wall_Run.ToCompactString(), FColor::Green, 24);
+	}
+
+	//Make sure the character is attempting to start wall running from the appropriate angle ranges.
+	double Angle_Attempting_To_Enter_Wall_Run_SIDE{};
+	
+	if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
+	{
+		Angle_Attempting_To_Enter_Wall_Run_SIDE = UKismetMathLibrary::DegAcos(Direction_To_Wall_Run.Dot(UpdatedComponent->GetRightVector()));
+		
+		if(Angle_Attempting_To_Enter_Wall_Run_SIDE > 90.f)
+		{
+			Debug::Print("Angle_Which_The_Character_Is_Attempting_Start_LEFT_Wall_Running_Is_Invalid: " + 
+			FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_SIDE), 
+			FColor::Red, 25);
+
+			Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
+
+			return false;
+		}
+
+		else
+		{
+			Debug::Print("Angle_Which_The_Character_Is_Attempting_Start_LEFT_Wall_Running_Is_Valid: " + 
+			FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_SIDE), 
+			FColor::Green, 25);
+		}
+	}
+
+	else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
+	{
+		Angle_Attempting_To_Enter_Wall_Run_SIDE = UKismetMathLibrary::DegAcos(Direction_To_Wall_Run.Dot(-UpdatedComponent->GetRightVector()));
+
+		if(Angle_Attempting_To_Enter_Wall_Run_SIDE > 90)
+		{
+			Debug::Print("Angle_Which_The_Character_Is_Attempting_Start_RIGHT_Wall_Running_Is_Invalid: " + 
+			FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_SIDE), 
+			FColor::Red, 25);
+
+			Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
+
+			return false;
+		}
+
+		else
+		{
+			Debug::Print("Angle_Which_The_Character_Is_Attempting_Start_RIGHT_Wall_Running_Is_Valid: " + 
+			FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_SIDE), 
+			FColor::Green, 25);
+		}
+	}
+
+	
+	double Angle_Attempting_To_Enter_Wall_Run_FRONT{UKismetMathLibrary::DegAcos(Direction_To_Wall_Run.Dot(UpdatedComponent->GetForwardVector()))};
+
+	if(Angle_Attempting_To_Enter_Wall_Run_FRONT < 0 /* 10 */ || Angle_Attempting_To_Enter_Wall_Run_FRONT > 90)
+	{
+		Debug::Print("Character_Has_To_Face_The_Wall_More_In_Order_To_Begin_Wall_Running: " + 
+		FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_FRONT), 
+		FColor::Red, 27);
+
+		Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
+		return false;
+	}
+
+	else
+	{
+		Debug::Print("Charater_IS_READY_To_Begin_Wall_Running: " + 
+		FString::SanitizeFloat(Angle_Attempting_To_Enter_Wall_Run_FRONT), 
+		FColor::Green, 27);
+
+		//The global FHitResult "Wall_Top_Result" is used by the function "&UCustom_Movement_Component::Play_Parkour_Montage". Therefore it will be used to play specicific montages from the Wall_Run
+		//when necessary.
+		Wall_Top_Result = Wall_Run_Hit_Result;
+		Reversed_Front_Wall_Normal_Z = UKismetMathLibrary::MakeRotFromX(Direction_To_Wall_Run);
+
+		//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+		//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+		//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+		const FHitResult Not_Needed_Here{};
+		Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+		return true;
+
+	}
+
+	//This line is to meet the requirement type of this function
+	return false;
 }
 
 void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Wall_Run_Position(const FHitResult& Wall_Running_Hit_Result)
@@ -11179,12 +11385,12 @@ void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Wall_Run_Po
 	//while wall running. This will cause an effect of the character "chasing" the new location (current location multipled by the scalar value) until the wall run is over. 
 	//In short the magnitude of the global FVector "Direction_To_Wall_Run" will increse every tick when the value set in the global float "Direction_To_Wall_Run_Scalar_Value_Multiplier" is incremented
 	//within "&UCustom_Movement_Component::Move_Character_To_New_Wall_Run_Position_Interpolation_Settings".
-	Location_To_Move_Charater_During_Wall_Run = {(Direction_To_Wall_Run * Direction_To_Wall_Run_Scalar_Value_Multiplier) + Offset_Vector};
+	Location_To_Move_Charater_During_Wall_Run = (Direction_To_Wall_Run * Direction_To_Wall_Run_Scalar_Value_Multiplier) + Offset_Vector;
 
 	//Call the function "&UCustom_Movement_Component::Move_Character_To_New_Wall_Run_Position_Interpolation_Settings" to interpolate the characters current location to the one identified in this function.
 	Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(Location_To_Move_Charater_During_Wall_Run, Direction_For_The_Character_To_Face);
 
-	//Call the function "&UCustom_Movement_Component::Dynamic_Wall_Run_Arc_Path" which handles offseting the Capsult Component's world Z location when wall running to give an arc like look.
+	//Call the function "&UCustom_Movement_Component::Dynamic_Wall_Run_Arc_Path" which handles offseting the Capsule Component's world Z location when wall running to give an arc like look.
 	Dynamic_Wall_Run_Arc_Path();
 	
 	return;
@@ -11192,19 +11398,32 @@ void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Wall_Run_Po
 
 void UCustom_Movement_Component::Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
 {
+	if(!Owning_Player_Character)
+	return;
+
 	//Get the current location of the character and dismantle the vector.
-	const FVector Characters_Current_Location{UpdatedComponent->GetComponentLocation()};
+	const FVector Characters_Current_Location{Owning_Player_Character->GetActorLocation()};
 
 	//Store DeltaTime in a variable so that it may be used to interpolate the character.
 	const double DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
 
 	//Store the Interpolation speed into a local double variable.
-	const double Interploation_Speed{700.f};
+	const double Interploation_Speed{400.f};
 
 	//Store the values of the interpolation where the character will be when the interpolation is over in local double variables.
 	const double Interpolated_Location_X{UKismetMathLibrary::FInterpTo_Constant(Characters_Current_Location.X, Location_To_Move_Character.X, DeltaTime, Interploation_Speed)};
 	const double Interpolated_Location_Y{UKismetMathLibrary::FInterpTo_Constant(Characters_Current_Location.Y, Location_To_Move_Character.Y, DeltaTime, Interploation_Speed)};
-	const double Interpolated_Location_Z{Characters_Current_Location.Z};
+	double Interpolated_Location_Z{};
+
+	if(Owning_Player_Character->HasAuthority())
+	{
+		Interpolated_Location_Z = Characters_Current_Location.Z + Dynamic_Wall_Run_Arc_Value_Degrees/2.f;
+	}
+
+	else
+	{
+		Interpolated_Location_Z = Characters_Current_Location.Z + Dynamic_Wall_Run_Arc_Value_Degrees/2.5f;
+	}
 
 	//Store the location where the character will be into a local FVector.
 	const FVector New_Location_To_Move_Charater_During_Wall_Run{FVector(Interpolated_Location_X, Interpolated_Location_Y, Interpolated_Location_Z)};
@@ -11215,6 +11434,11 @@ void UCustom_Movement_Component::Move_Character_To_New_Wall_Run_Position_Interpo
 	//Increment the global double variable "Direction_To_Wall_Run_Scalar_Value_Multiplier".
 	Direction_To_Wall_Run_Scalar_Value_Multiplier++;
 
+	if(!Owning_Player_Character->HasAuthority())
+	{
+		Server_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(New_Location_To_Move_Charater_During_Wall_Run, Rotation_For_Character_To_Face);
+	}
+
 	return;
 }
 
@@ -11224,10 +11448,9 @@ void UCustom_Movement_Component::Dynamic_Wall_Run_Arc_Path()
 	const double DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
 
 	//Interpolate the value which will be set into the global float variable "Dynamic_Wall_Run_Arc_Value" between 0 and 180. This will be used alongside DegSin to generate the Sine degree direction to set the capsule component.
-	Dynamic_Wall_Run_Arc_Value = UKismetMathLibrary::FInterpTo_Constant(Dynamic_Wall_Run_Arc_Value, 180.f, DeltaTime, 70.f);
+	Dynamic_Wall_Run_Arc_Value = UKismetMathLibrary::FInterpTo_Constant(Dynamic_Wall_Run_Arc_Value, 180.f, DeltaTime, 45.f);
 
 	Debug::Print(FString::SanitizeFloat(Dynamic_Wall_Run_Arc_Value), FColor::Red, 30);
-
 
 	//Check to see if the value set within the global float variable "Dynamic_Wall_Run_Arc_Value" is greater than or equal to 179. If this is the case then the character has performed a wall run which has exhausted the arc path set within this function. 
 	//Therefore set the variable within the global FGameplayTag "Parkour_Action" to the appropriate gameplay tag via "&UCustom_Movement_Component::Set_Parkour_Action" so the respective montage may be played. Otherwise, generate the arc path.
@@ -11236,12 +11459,14 @@ void UCustom_Movement_Component::Dynamic_Wall_Run_Arc_Path()
 		if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
 		{
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.L.Finish"))));
+			Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 			return;
 		}
 
 		else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
 		{
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.R.Finish"))));
+			Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 			return;
 		}
 	}
@@ -11253,7 +11478,7 @@ void UCustom_Movement_Component::Dynamic_Wall_Run_Arc_Path()
 		if(Dynamic_Wall_Run_Arc_Value >= 90)
 		{
 			//Generate the degrees for the arc by multiplying the value stored into the global float variable "Dynamic_Wall_Run_Arc_Value" by -1 (because the arc is now on the downward slope).
-			const double Dynamic_Wall_Run_Arc_Value_Degrees{UKismetMathLibrary::DegSin(Dynamic_Wall_Run_Arc_Value * -1)};
+			Dynamic_Wall_Run_Arc_Value_Degrees = UKismetMathLibrary::DegSin(Dynamic_Wall_Run_Arc_Value * -1);
 
 			//Store the offset location back into the local FVector variable "Location_To_Offset_Updated_Component"
 			const FVector Location_To_Offset_Updated_Component{0, 0, Dynamic_Wall_Run_Arc_Value_Degrees};
@@ -11267,7 +11492,7 @@ void UCustom_Movement_Component::Dynamic_Wall_Run_Arc_Path()
 		else if(Dynamic_Wall_Run_Arc_Value < 90)
 		{
 			//Generate the degrees for the arc by usung the value stored into the global float variable "Dynamic_Wall_Run_Arc_Value".
-			const double Dynamic_Wall_Run_Arc_Value_Degrees{UKismetMathLibrary::DegSin(Dynamic_Wall_Run_Arc_Value)};
+			Dynamic_Wall_Run_Arc_Value_Degrees = UKismetMathLibrary::DegSin(Dynamic_Wall_Run_Arc_Value);
 
 			//Store the offset location back into the local FVector variable "Location_To_Offset_Updated_Component"
 			const FVector Location_To_Offset_Updated_Component{0, 0, Dynamic_Wall_Run_Arc_Value_Degrees};
@@ -11280,7 +11505,7 @@ void UCustom_Movement_Component::Dynamic_Wall_Run_Arc_Path()
 	}
 }
 
-void UCustom_Movement_Component::Parkour_Wall_Run_Movement()
+void UCustom_Movement_Component::Parkour_Wall_Run_Handle_Wall_Run_Movement()
 {
 	// //Store the absolute value of the global double variable "Right_Left_Movement_Value"
 	const double Right_Left_Movement_Absolute_Value{UKismetMathLibrary::Abs(Right_Left_Movement_Value)};
@@ -11313,6 +11538,7 @@ void UCustom_Movement_Component::Parkour_Wall_Run_Movement()
 			else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
 			{
 				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.Right.Jump.90.L"))));
+				Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 			}
 
 			return;
@@ -11330,6 +11556,7 @@ void UCustom_Movement_Component::Parkour_Wall_Run_Movement()
 			else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
 			{
 				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.Right.Jump.90.L"))));
+				Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 			}
 
 			Debug::Print("Wall_Run_Direction_Set_To_FORWARD_LEFT", FColor::Cyan, 29);
@@ -11344,6 +11571,7 @@ void UCustom_Movement_Component::Parkour_Wall_Run_Movement()
 			if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
 			{
 				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.Left.Jump.90.R"))));
+				Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 			}
 
 			else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
@@ -11361,6 +11589,7 @@ void UCustom_Movement_Component::Parkour_Wall_Run_Movement()
 			if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
 			{
 				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.Left.Jump.90.R"))));
+				Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 			}
 
 			else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
@@ -11373,10 +11602,15 @@ void UCustom_Movement_Component::Parkour_Wall_Run_Movement()
 		}
 	}
 
-	else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))) || 
+	/* else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))) || 
 	Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward"))) ||
 	Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Left"))) || 
 	Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Backward.Right"))))
+	{
+		Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
+	} */
+
+	else
 	{
 		Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 	}
@@ -11390,7 +11624,7 @@ void UCustom_Movement_Component::Set_bCan_Jump_From_Wall_Run_To_True()
 	//is started. Until this cool down timer is complete the character will not be able to call the function &UCustom_Movement_Component::Execute_Exit_Wall_Run_With_Jump_Forward while
 	//the FGameplayTag set into the global FGameplayTag variable "Parkour_State" is set to "Parkour.State.Wall.Run".
 	
-	bCan_Jump_From_Braced_Climb = true;
+	bCan_Jump_From_Wall_Run = true;
 	Debug::Print("bCan_Jump_From_Wall_Run Set To True");
 }
 
@@ -11407,6 +11641,7 @@ void UCustom_Movement_Component::Execute_Exit_Wall_Run_With_Jump_Forward()
 			{
 				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.L.Jump.F"))));
 				bCan_Jump_From_Wall_Run = false;
+				Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 
 				if(Owning_Player_Character)
 				{
@@ -11423,6 +11658,7 @@ void UCustom_Movement_Component::Execute_Exit_Wall_Run_With_Jump_Forward()
 			{
 				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.R.Jump.F"))));
 				bCan_Jump_From_Wall_Run = false;
+				Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 
 				if(Owning_Player_Character)
 				{
@@ -11469,7 +11705,23 @@ void UCustom_Movement_Component::Execute_Wall_Run()
 			//make sure the wall is perpendicular to the character (just to be safe) and make sure the character is attempting to start wall running from the appropriate angle ranges.
 			if(Analyze_And_Validate_Wall_Run_Surface())
 			{
-				Decide_Parkour_Action();
+				//Set the value within the global FGameplayTag "Parkour_Wall_Run_Side" to the appropriate value (Calculated within "&UCustom_Movement_Component::Assign_Wall_Run_Hit_Result"). 
+				//This will initiate the respective montage to play which will place the character at the location stored in the FHitResult "Wall_Run_Hit_Result 
+				//(location transfered to the global FHitResult variable "Wall_Top_Result" within "&UCustom_Movement_Component::Analyze_And_Validate_Wall_Run_Surface").
+				//After these lines of code are executed the value set in the global FGameplayTag Parkour_State will be set to "Parkour.State.Wall.Run" via the UParkour_Action_Data object that stores the respective information. 
+				//Therefore the fucntions called within &UCustom_Movement_Component::Parkour_Call_In_Tick within "else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Run"))))" 
+				//will handle the rest of the wall run execution.
+				if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Left"))))
+				{
+					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.Start.Left"))));
+					Debug::Print("Parkour_Action_Set_To_Wall_Run_Start_Left", FColor::Emerald, 28);
+				}
+
+				else if(Parkour_Wall_Run_Side == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.Right"))))
+				{
+					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Run.Start.Right"))));
+					Debug::Print("Parkour_Action_Set_To_Wall_Run_Start_Right", FColor::Emerald, 28);
+				}
 			}
 	
 			else
@@ -11520,7 +11772,8 @@ void UCustom_Movement_Component::Execute_Wall_Run()
 		}
 	}
 	
-	else return;
+	else 
+	return;
 }
 
 void UCustom_Movement_Component::Execute_Accelerating_Drop_Free_Roam()
@@ -11719,23 +11972,23 @@ void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Wall_Pipe_C
 	
 	//Offset value to be used to offset the character backwards from the wall pipe. This is because the impact point found within the input parameter "Parkour_Wall_Pipe_Climbing_Wall_Top_Result_Reference" is right on
 	//the surface of the wall. Therefore the character needs to be moved back so that the animation playing will look realistic and natural. 
-	const float& Offset_Character_Backwards_From_Wall_Pipe_Value{25.f};
+	const float Offset_Character_Backwards_From_Wall_Pipe_Value{25.f};
 	const FVector Offset_Vector_Backwards_From_Wall_Pipe{Move_Vector_Backward(Custom_Wall_Pipe_Actor_Forward_Vector_Hit_Result.TraceStart, Reversed_Front_Wall_Normal_Z, Offset_Character_Backwards_From_Wall_Pipe_Value)};
 
 	/*These values are used to make a custom FVector variable ("Move_Character_To_This_Location").*/
 
 	//Value to use on the "X" axis of the custom FVector "Move_Character_To_This_Location".	
-	const double& Set_Character_To_This_Position_Parallel_From_Wall_Pipe{Offset_Vector_Backwards_From_Wall_Pipe.X};			
+	const double Set_Character_To_This_Position_Parallel_From_Wall_Pipe{Offset_Vector_Backwards_From_Wall_Pipe.X};			
 	//Value to use on the "Y" axis of the custom FVector "Move_Character_To_This_Location".	
-	const double& Set_Character_To_This_Position_Perpendicular_From_Wall_Pipe{Offset_Vector_Backwards_From_Wall_Pipe.Y};
+	const double Set_Character_To_This_Position_Perpendicular_From_Wall_Pipe{Offset_Vector_Backwards_From_Wall_Pipe.Y};
 	//Value to use on the "Z" axis of the custom FVector "Move_Character_To_This_Location".	
-	const double& Set_Character_To_This_Height_Position{Parkour_Wall_Pipe_Climbing_Wall_Top_Result_Reference.ImpactPoint.Z};
+	const double Set_Character_To_This_Height_Position{Parkour_Wall_Pipe_Climbing_Wall_Top_Result_Reference.ImpactPoint.Z};
 
 
 	//Custom FVector to pass into the function "&UCustom_Movement_Component::Move_Character_To_New_Climb_Position_Interpolation_Settings" as an input argument. This will be the location to interpolate 
 	//the character to as long as there is input into the player controller and the validation and checks performed in the function "&UCustom_Movement_Component::Parkour_Climb_Handle_Shimmying_Movement"
 	//are successful.. 
-	const FVector& Move_Character_To_This_Location(FVector(Set_Character_To_This_Position_Parallel_From_Wall_Pipe, 
+	const FVector Move_Character_To_This_Location(FVector(Set_Character_To_This_Position_Parallel_From_Wall_Pipe, 
 														   Set_Character_To_This_Position_Perpendicular_From_Wall_Pipe, 
 														   Set_Character_To_This_Height_Position));
 	
@@ -11799,6 +12052,8 @@ void UCustom_Movement_Component::Decide_Wall_Pipe_Maneuver_To_Free_Hang_Mantle_O
 			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
 				
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Wall.Pipe.Climb.Up.2.Hand"))));
+
+			Wall_Pipe_Actor = nullptr;
 		}
 
 		else if(Validate_Wall_Pipe_Climb_Hop_Destnation_And_Action())
@@ -12033,6 +12288,12 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 				
 				else
 				{
+					//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+					//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+					//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+					const FHitResult Not_Needed_Here{};
+					Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
 					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.L.Warp"))));
 				}
 
@@ -12065,6 +12326,12 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 				
 				else
 				{
+					//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+					//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+					//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+					const FHitResult Not_Needed_Here{};
+					Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+					
 					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.R.Warp"))));
 				}
 			}
@@ -12100,6 +12367,12 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 				
 				else
 				{
+					//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+					//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+					//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+					const FHitResult Not_Needed_Here{};
+					Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+					
 					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.L.Start.Warp"))));
 				}
 				
@@ -12131,6 +12404,12 @@ void UCustom_Movement_Component::Execute_Parkour_Jump()
 				
 				else
 				{
+					//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+					//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+					//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+					const FHitResult Not_Needed_Here{};
+					Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+					
 					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.R.Start.Warp"))));
 				}
 			}
@@ -12174,11 +12453,23 @@ void UCustom_Movement_Component::Execute_Balance_Traversal(ABalance_Traversal_Ac
 				
 					if(Validate_Foot_Contact_With_Ground(true))
 					{
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+						
 						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.One.L"))));
 					}
 
 					else if(Validate_Foot_Contact_With_Ground(false))
 					{
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+						
 						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.One.R"))));
 					}
 				}
@@ -12239,17 +12530,8 @@ void UCustom_Movement_Component::Parkour_Balance_Walk_Handle_Balance_Walking_Mov
 			//"Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables" along with "return" will be called within the function in the appropriate location within the function.
 			if(!Parkour_Balance_Walk_Detect_Balance_Surface(Parkour_Balance_Walk_Detect_Balance_Surface_Hit_Result, Parkour_Balance_Walk_Balance_Surface_Top_Result))
 			{
-				if(Validate_Can_Execute_Balance_Walk_Automatic_Hop())
-				{
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Walk.Automatic.Hop"))));
-				}
-
-				else
-				{
-					Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
-					return;
-				}
-				
+				Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+				return;
 			}
 		
 			//The check Parkour_Balance_Walk_State_Are_There_Obstacles_In_Front_Of_Feet determines whether there are obstacles in front of the character's feet which should stop the character from Balance Walking forward any furhther.
@@ -12321,6 +12603,14 @@ void UCustom_Movement_Component::Parkour_Balance_Walk_Handle_Balance_Walking_Mov
 
 }
 
+void UCustom_Movement_Component::Execute_Balance_Walk_Hop()
+{
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
+	return;
+	
+	Decide_Parkour_Action();
+}
+
 void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Balance_Walk_Position(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference)
 {
 	/*This function is called calculates the location to interpolate the character to and passes in the said location into the function "&UCustom_Movement_Component::Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings"
@@ -12341,11 +12631,11 @@ void UCustom_Movement_Component::Calculate_And_Move_Character_To_New_Balance_Wal
 	const FRotator Custom_Rotation{Reversed_Front_Wall_Normal_Z.Pitch, Add_Rotator(Reversed_Front_Wall_Normal_Z, -90).Yaw, Reversed_Front_Wall_Normal_Z.Roll};
 	Reversed_Front_Wall_Normal_Z = Custom_Rotation;
 
-	//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+	/* //Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
 	//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
 	//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
 	const FHitResult Not_Needed_Here{};
-	Set_Network_Variables(Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+	Set_Network_Variables(Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference, Reversed_Front_Wall_Normal_Z, Not_Needed_Here); */
 
 	//This function uses the location which is calculated above (using the variable from the FHitResult input argument "Parkour_Climbing_Detect_Wall_Hit_Result") to interpolate the character to said 
 	//FVector. Considering the locations of the custom FVector will always be updating due to it being dependant on the input argument variable "Parkour_Climbing_Detect_Wall_Hit_Result",  
@@ -12372,23 +12662,23 @@ void UCustom_Movement_Component::Move_Character_To_New_Balance_Walk_Position_Int
 	const double Interpolate_Character_To_This_Z_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.Z, Location_To_Move_Character.Z, DeltaTime, 1.f)};
 
 	//Combine the double variables above into a single FVector struct.
-	const FVector Characters_New_Location{Interpolate_Character_To_This_X_Axis, Interpolate_Character_To_This_Y_Axis, Interpolate_Character_To_This_Z_Axis};
+	const FVector Interpolated_Location_To_Move_Character{Interpolate_Character_To_This_X_Axis, Interpolate_Character_To_This_Y_Axis, Interpolate_Character_To_This_Z_Axis};
 
 	//Call the function "SetActorLocationAndRotation" and pass in the calculated results.
-	Owning_Player_Character->SetActorLocationAndRotation(Characters_New_Location, Rotation_For_Character_To_Face);
+	Owning_Player_Character->SetActorLocationAndRotation(Interpolated_Location_To_Move_Character, Rotation_For_Character_To_Face);
 
 	if(!Owning_Player_Character->HasAuthority())
 	{
-		Server_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(Characters_New_Location, Rotation_For_Character_To_Face);
+		Server_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(Interpolated_Location_To_Move_Character, Rotation_For_Character_To_Face);
 	}
 }
 
-bool UCustom_Movement_Component::Validate_Can_Execute_Balance_Walk_Automatic_Hop()
+bool UCustom_Movement_Component::Validate_Balance_Walk_Hop()
 {
 	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
 	return false;
 	
-	Balance_Walk_Automatic_Hop_Detect_Wall();
+	Balance_Walk_Hop_Detect_Wall();
 
 	if(Initial_Front_Wall_Hit_Result.bBlockingHit)
 	{
@@ -12424,7 +12714,7 @@ bool UCustom_Movement_Component::Validate_Can_Execute_Balance_Walk_Automatic_Hop
 	//the calculation of the location which the character will land on when vaulting.
 	if(Front_Wall_Top_Edge_Best_Hit.bBlockingHit && !Front_Wall_Top_Edge_Best_Hit.bStartPenetrating)
 	{
-		if(Balance_Walk_Automatic_Hop_Calculate_Wall_Top_Surface())
+		if(Balance_Walk_Hop_Calculate_Wall_Top_Surface())
 		{
 			Debug::Print("Execute_Balance_Walk_Automatic_Hop_Validated", FColor::Green, 81);
 			
@@ -12484,6 +12774,12 @@ void UCustom_Movement_Component::Execute_Balance_Drop_Hanging()
 			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
 			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
 			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
 
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Drop.L.Hanging"))));
 		}
@@ -12494,6 +12790,12 @@ void UCustom_Movement_Component::Execute_Balance_Drop_Hanging()
 			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
 			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
 			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
 			
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Drop.R.Hanging"))));
 		}
@@ -12513,6 +12815,12 @@ void UCustom_Movement_Component::Execute_Balance_Drop_Hanging()
 			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
 			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
 			
+			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+			
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Drop.R.Hanging"))));
 		}
 
@@ -12522,6 +12830,12 @@ void UCustom_Movement_Component::Execute_Balance_Drop_Hanging()
 			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
 			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
 			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
 			
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Balance.Drop.L.Hanging"))));
 		}
@@ -12546,11 +12860,33 @@ void UCustom_Movement_Component::Execute_Free_Hang_To_Balanced_Walk()
 	{
 		if(Validate_Free_Hang_To_Balanced_Walk(true))
 		{
+			//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
+			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+			
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L"))));
 		}
 
 		else if(Validate_Free_Hang_To_Balanced_Walk(false))
 		{
+			//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
+			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+			
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R"))));
 		}
 
@@ -12564,11 +12900,33 @@ void UCustom_Movement_Component::Execute_Free_Hang_To_Balanced_Walk()
 	{
 		if(Validate_Free_Hang_To_Balanced_Walk(false))
 		{
+			//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
+			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+			
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.R"))));
 		}
 
 		else if(Validate_Free_Hang_To_Balanced_Walk(true))
 		{
+			//Call the function "&UCustom_Movement_Component::Decide_Climb_Style" to determine which "Parkour_Climb_Style" to set the character to. This function uses an offset location units below the 
+			//Wall Top Result passed into it to generate ray casts at the level of the characters feet when said character is in the braced climb style. If there is no blocking hit on the ray cast
+			//then the characters "Parkour_Climb_Style" will be set to "Parkour.Climb.Style.FreeHang".
+			Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+			
+			//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+			//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+			//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+			const FHitResult Not_Needed_Here{};
+			Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+			
 			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Hanging.Climb.Up.To.Balanced.Walk.L"))));
 		}
 
@@ -12576,6 +12934,261 @@ void UCustom_Movement_Component::Execute_Free_Hang_To_Balanced_Walk()
 		{
 			Debug::Print("Executing_Free_Hang_To_Balanced_Walk Not_Possible", FColor::Red, 75);
 		}
+	}
+
+}
+
+void UCustom_Movement_Component::Execute_Wall_Vault(AWall_Vault_Actor* Wall_Vault_Actor_Reference)
+{
+	Wall_Vault_Actor = Wall_Vault_Actor_Reference;
+
+	if(Wall_Vault_Actor)
+	{
+		Debug::Print("Wall_Vault_Actor_Is_Valid_Proceeding_To_Execute_Wall_Vault", FColor::Green, 75);
+
+	}
+
+	else
+	{
+		Debug::Print("Wall_Vault_Actor_Is_Not_Valid", FColor::Red, 75);
+	}
+}
+
+void UCustom_Movement_Component::Decide_Wall_Vault_Parkour_Action()
+{
+	if(!Wall_Vault_Actor)
+	return;
+	
+	Debug::Print("Decide_Wall_Vault_Parkour_Action_Called", FColor::Green, 77);
+	
+	if(Wall_Top_Result.bBlockingHit)
+	{
+		if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+		{
+			if(bIs_On_Ground)
+			{
+				if(Ground_Speed <= 250.f)
+				{
+					if(Wall_Vault_Actor->Get_bEnable_Wall_Under_Bar())
+					{
+						Debug::Print("Character_Needs_More_Speed_For_Running_Wall_Under_Bar", FColor::Red, 78);
+					}
+
+					else if(Wall_Vault_Actor->Get_bEnable_Over_Wall_180_Shimmy())
+					{
+						Debug::Print("Character_Needs_More_Speed_For_Over_180_Shimmy", FColor::Red, 78);
+					}
+
+					else
+					{
+						if(Wall_Depth >= 70.f)
+						{
+							Debug::Print("Idle_Wall_Vault_On", FColor::MakeRandomColor(), 78);
+
+							//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+							//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+							//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+							const FHitResult Not_Needed_Here{};
+							Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+							
+							Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Idle.Wall.Vault.On"))));
+						}
+
+						else
+						{
+							if(Owning_Player_Character->Get_Is_Jogging())
+							{
+								Debug::Print("Idle_Wall_Vault_Over", FColor::MakeRandomColor(), 78);
+
+								//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+								//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+								//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+								const FHitResult Not_Needed_Here{};
+								Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+								
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Idle.Wall.Vault.Over"))));
+							}
+						}
+					}
+				}
+				
+				else if(Ground_Speed > 250.f)
+				{
+					if(Wall_Vault_Actor->Get_bEnable_Wall_Under_Bar())
+					{
+						Debug::Print("Running_Wall_Under_Bar", FColor::MakeRandomColor(), 78);
+						
+						//Set_Parkour_Action and use custom Wall_Top_Result from "AWall_Vault_Actor".
+						Wall_Top_Result = Wall_Vault_Actor->Get_Wall_Vault_Actor_Wall_Top_Result();
+
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.Under.Bar"))));
+					}
+
+					else if(Wall_Vault_Actor->Get_bEnable_Over_Wall_180_Shimmy())
+					{
+						Debug::Print("Over_Wall_180_Shimmy", FColor::MakeRandomColor(), 78);
+						
+						Reversed_Front_Wall_Normal_Z = FRotator(Reversed_Front_Wall_Normal_Z.Pitch, Reversed_Front_Wall_Normal_Z.Yaw - 180.f, Reversed_Front_Wall_Normal_Z.Roll);
+
+						Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+					
+						// The FHitResult stored in the global FHitResult variable "Wall_Top_Result" is copied to the the global 
+						// FHitResult variable Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result so that when the function "Reset_Parkour_Variables()" is called within
+						// "&UCustom_Movement_Component::Parkour_Call_In_Tick" and "&UCustom_Movement_Component::Set_Parkour_Action"
+						// after each Parkour Action is complete within "&UCustom_Movement_Component::Play_Parkour_Montage" there will still be 
+						// a location to begin the next sequence of ray casts.
+						Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result;
+						
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+						
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.Over.180.Shimmy"))));
+					}
+					
+					else
+					{
+						if(Wall_Depth >= 70.f)
+						{
+							Debug::Print("Running_Wall_Vault_On", FColor::MakeRandomColor(), 78);
+
+							//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+							//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+							//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+							const FHitResult Not_Needed_Here{};
+							Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+							Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.On"))));
+						}
+
+						else
+						{
+							if(Owning_Player_Character->Get_Is_Jogging())
+							{
+								Debug::Print("Running_Wall_Vault_Over", FColor::MakeRandomColor(), 78);
+
+								//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+								//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+								//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+								const FHitResult Not_Needed_Here{};
+								Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+								
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.Over"))));
+							}
+
+							else
+							{
+								Debug::Print("Running_Wall_Vault_Over_180_Shimmy", FColor::MakeRandomColor(), 78);
+
+								//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+								//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+								//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+								const FHitResult Not_Needed_Here{};
+								Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.Over.180.Shimmy"))));
+							}
+						}
+					}
+				}
+
+			}
+
+			else
+			{
+				if(Wall_Height >= 140 && Wall_Height <= 280 && Validate_Can_Start_Shimmying_While_Airborne())
+				{								
+												// negative value in "Air_Speed" means character is falling  //Ground_Speed >= 700.f || Air_Speed <= -1000.f || Air_Speed <= 20.f
+					if(Owning_Player_Character->Get_Is_Jogging() && (Air_Speed >= -200.f || Air_Speed <= 200.f))
+					{
+						Debug::Print("Parkour_Dynamic_Airorne_Climb", FColor::MakeRandomColor(), 7);
+
+						// The FHitResult stored in the global FHitResult variable "Wall_Top_Result" is copied to the the global 
+						// FHitResult variable Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result so that when the function "Reset_Parkour_Variables()" is called within
+						// "&UCustom_Movement_Component::Parkour_Call_In_Tick" and "&UCustom_Movement_Component::Set_Parkour_Action"
+						// after each Parkour Action is complete within "&UCustom_Movement_Component::Play_Parkour_Montage" there will still be 
+						// a location to begin the next sequence of ray casts.
+						Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result;
+						
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+						Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+
+						if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))))
+						{
+							if(Air_Speed <= -500.f)
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb.Slipped"))));
+							}
+
+							else if(Air_Speed >= -499.f)
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb"))));
+							}
+						}
+						
+						if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.FreeHang"))))
+						{
+							if(Validate_Can_Fly_Hanging_Jump())
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Falling.Climb.Hanging.Jump"))));
+							}
+							
+							else
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Falling.Climb"))));
+							}
+						}
+					}
+
+					else
+					{
+						Debug::Print("Parkour_Airorne_Climb", FColor::MakeRandomColor(), 7);
+						Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+					
+						// The FHitResult stored in the global FHitResult variable "Wall_Top_Result" is copied to the the global 
+						// FHitResult variable Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result so that when the function "Reset_Parkour_Variables()" is called within
+						// "&UCustom_Movement_Component::Parkour_Call_In_Tick" and "&UCustom_Movement_Component::Set_Parkour_Action"
+						// after each Parkour Action is complete within "&UCustom_Movement_Component::Play_Parkour_Montage" there will still be 
+						// a location to begin the next sequence of ray casts.
+						Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result;
+						
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+						if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))))
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb"))));
+
+						else
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Falling.Climb"))));
+					}
+
+				}
+
+				else
+				{
+					Debug::Print("No_Action", FColor::MakeRandomColor(), 7);
+					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))));
+				}
+
+			}
+		}
+
 	}
 
 }
@@ -12615,6 +13228,70 @@ void UCustom_Movement_Component::Set_Network_Move_Character_To_Front_Of_Pipe(con
 #pragma endregion
 
 #pragma region Network
+
+
+#pragma region Set_Network_Variables
+
+void UCustom_Movement_Component::Server_Set_Add_Movement_Input_Variables_Implementation(const double& Network_Forward_Backward_Movement_Value, const double& Network_Right_Left_Movement_Value)
+{
+	Forward_Backward_Movement_Value = Network_Forward_Backward_Movement_Value;
+
+	Right_Left_Movement_Value = Network_Right_Left_Movement_Value;
+}
+
+void UCustom_Movement_Component::On_Replication_Set_Add_Movement_Input_Variables()
+{
+	Forward_Backward_Movement_Value = Forward_Backward_Movement_Value;
+
+	Right_Left_Movement_Value = Right_Left_Movement_Value;
+}
+
+void UCustom_Movement_Component::Server_Set_Network_Wall_Calculations_Implementation(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height)
+{
+	Multicast_Set_Network_Wall_Calculations(Network_Wall_Height, Network_Wall_Depth, Network_Vault_Height);
+}
+
+void UCustom_Movement_Component::Multicast_Set_Network_Wall_Calculations_Implementation(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height)
+{
+	Wall_Height = Network_Wall_Height;
+
+	Wall_Depth = Network_Wall_Depth;
+
+	Vault_Height = Network_Vault_Height;
+}
+
+void UCustom_Movement_Component::Server_Set_Network_Variables_Implementation(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector)
+{
+	Multicast_Set_Network_Variables(Network_Wall_Top_Result, Network_Reversed_Front_Wall_Normal_Z, Custom_Wall_Pipe_Forward_Vector);
+}
+
+void UCustom_Movement_Component::Multicast_Set_Network_Variables_Implementation(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector)
+{
+	//Set the global FHitResult "Wall_Top_Result" to equal the global FHitResult "Network_Wall_Top_Result". "Network_Wall_Top_Result" is set within the function 
+	//&UCustom_Movement_Component::Realize_Wall_Pipe_Surfaces.
+	Wall_Top_Result = Network_Wall_Top_Result;
+		
+	//Set the value within the global variable "Reversed_Front_Wall_Normal_Z" to eqaul the the  gloabl "Wall_Pipe_Forward_Vector" (using the helper function "Reverse_Wall_Normal_Rotation_Z()")
+	//which is set within /&UCustom_Movement_Component::Realize_Wall_Pipe_Surfaces.
+	Reversed_Front_Wall_Normal_Z = Network_Reversed_Front_Wall_Normal_Z;
+
+	Initialize_Parkour_IK_Limbs_Hit_Result = Network_Wall_Top_Result;
+
+	Custom_Wall_Pipe_Actor_Forward_Vector_Hit_Result = Custom_Wall_Pipe_Forward_Vector;
+}
+
+void UCustom_Movement_Component::Server_Set_bIs_Falling_To_True_Implementation()
+{
+	bIs_Falling = true;
+}
+
+void UCustom_Movement_Component::Server_Set_bIs_Falling_To_False_Implementation()
+{
+	bIs_Falling = false;
+}
+
+
+#pragma endregion
 
 #pragma region Network_Core
 
@@ -12709,6 +13386,15 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_State_Attributes_Implemen
 	if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
 	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, false, false);
 
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Jump"))))
+	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Flying, true, true);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Mantle"))))
+	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Vault"))))
+	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
+
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Ready.To.Climb"))))
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
 
@@ -12716,7 +13402,7 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_State_Attributes_Implemen
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, false);
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Wall.Run"))))
-	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, false, true);
+	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Run"))))
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, false);
@@ -12727,17 +13413,38 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_State_Attributes_Implemen
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))))
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, false);
 
-	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Mantle"))))
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Balance.Walk"))))
 	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
 
-	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Vault"))))
-	Parkour_State_Settings(ECollisionEnabled::NoCollision, EMovementMode::MOVE_Flying, true, true);
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
+	Parkour_State_Settings(ECollisionEnabled::QueryOnly, EMovementMode::MOVE_Flying, true, false);
 
 }
 
 void UCustom_Movement_Component::Server_Set_Parkour_State_Implementation(const FGameplayTag& New_Parkour_State)
 {
-	Multicast_Set_Parkour_State(New_Parkour_State);
+	if(!Parkour_Interface)
+	return;
+	
+	if(Parkour_State != New_Parkour_State)
+	{
+		Parkour_State = New_Parkour_State;
+		Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
+		//Set_Parkour_State_Attributes(Parkour_State);
+	}
+
+	else return;
+	
+	//Multicast_Set_Parkour_State(New_Parkour_State);
+}
+
+void UCustom_Movement_Component::On_Replication_Parkour_State()
+{
+	if(!Parkour_Interface)
+	return;
+	
+	Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
+	//Set_Parkour_State_Attributes(Parkour_State);
 }
 
 void UCustom_Movement_Component::Multicast_Set_Parkour_State_Implementation(const FGameplayTag& New_Parkour_State)
@@ -12748,7 +13455,7 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_State_Implementation(cons
 	if(Parkour_State != New_Parkour_State)
 	{
 		Parkour_State = New_Parkour_State;
-		if(Parkour_Interface) Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
+		Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
 		Set_Parkour_State_Attributes(Parkour_State);
 	}
 
@@ -12757,7 +13464,26 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_State_Implementation(cons
 
 void UCustom_Movement_Component::Server_Set_Parkour_Climb_Style_Implementation(const FGameplayTag& New_Parkour_Climb_Style)
 {
-	Multicast_Set_Parkour_Climb_Style(New_Parkour_Climb_Style);
+	if(!Parkour_Interface)
+	return;
+	
+	if(Parkour_Climb_Style != New_Parkour_Climb_Style)
+	{
+		Parkour_Climb_Style = New_Parkour_Climb_Style;
+		Parkour_Interface->Execute_Set_Parkour_Climb_Style(Anim_Instance, Parkour_Climb_Style);
+	}
+	
+	else return;
+	
+	//Multicast_Set_Parkour_Climb_Style(New_Parkour_Climb_Style);
+}
+
+void UCustom_Movement_Component::On_Replication_Parkour_Climb_Style()
+{
+	if(!Parkour_Interface)
+	return;
+	
+	Parkour_Interface->Execute_Set_Parkour_Climb_Style(Anim_Instance, Parkour_Climb_Style);
 }
 
 void UCustom_Movement_Component::Multicast_Set_Parkour_Climb_Style_Implementation(const FGameplayTag& New_Parkour_Climb_Style)
@@ -12776,7 +13502,27 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_Climb_Style_Implementatio
 
 void UCustom_Movement_Component::Server_Set_Parkour_Wall_Run_Side_Implementation(const FGameplayTag& New_Wall_Run_Side)
 {
-	Multicast_Set_Parkour_Wall_Run_Side(New_Wall_Run_Side);
+	if(!Parkour_Interface)
+	return;
+	
+	if(Parkour_Wall_Run_Side != New_Wall_Run_Side)
+	{
+		Parkour_Wall_Run_Side = New_Wall_Run_Side;
+		Parkour_Interface->Execute_Set_Parkour_Wall_Run_Side(Anim_Instance, New_Wall_Run_Side);
+	}
+
+	else return;
+	
+	//Multicast_Set_Parkour_Wall_Run_Side(New_Wall_Run_Side);
+}
+
+void UCustom_Movement_Component::On_Replication_Parkour_Wall_Run_Side()
+{
+	if(!Parkour_Interface)
+	return;
+	
+	Parkour_Interface->Execute_Set_Parkour_Wall_Run_Side(Anim_Instance, Parkour_Wall_Run_Side);
+
 }
 
 void UCustom_Movement_Component::Multicast_Set_Parkour_Wall_Run_Side_Implementation(const FGameplayTag& New_Wall_Run_Side)
@@ -12787,7 +13533,7 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_Wall_Run_Side_Implementat
 	if(Parkour_Wall_Run_Side != New_Wall_Run_Side)
 	{
 		Parkour_Wall_Run_Side = New_Wall_Run_Side;
-		Parkour_Interface->Execute_Set_Parkour_Wall_Run_Side(Anim_Instance, Parkour_Wall_Run_Side);
+		Parkour_Interface->Execute_Set_Parkour_Wall_Run_Side(Anim_Instance, New_Wall_Run_Side);
 	}
 
 	else return;
@@ -12795,7 +13541,26 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_Wall_Run_Side_Implementat
 
 void UCustom_Movement_Component::Server_Set_Parkour_Direction_Implementation(const FGameplayTag& New_Parkour_Direction)
 {
-	Multicast_Set_Parkour_Direction(New_Parkour_Direction);
+	if(!Parkour_Interface)
+	return;
+
+	if(Parkour_Direction != New_Parkour_Direction)
+	{
+		Parkour_Direction = New_Parkour_Direction;
+		Parkour_Interface->Execute_Set_Parkour_Direction(Anim_Instance, Parkour_Direction);
+	}
+
+	else return;
+	
+	//Multicast_Set_Parkour_Direction(New_Parkour_Direction);
+}
+
+void UCustom_Movement_Component::On_Replication_Parkour_Direction()
+{
+	if(!Parkour_Interface)
+	return;
+
+	Parkour_Interface->Execute_Set_Parkour_Direction(Anim_Instance, Parkour_Direction);
 }
 
 void UCustom_Movement_Component::Multicast_Set_Parkour_Direction_Implementation(const FGameplayTag& New_Parkour_Direction)
@@ -13655,6 +14420,111 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_Action_Implementation(con
 		Play_Parkour_Montage(Hanging_Climb_Up_To_Balanced_Walk_R);
 	}
 
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Idle.Wall.Vault.On")))))
+	{
+		Play_Parkour_Montage(Idle_Wall_Two_Hand_L_On);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Idle.Wall.Vault.Over")))))
+	{
+		Play_Parkour_Montage(Idle_Wall_Safety_On);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.On")))))
+	{
+		/*Execute_Random_Montage(Running_Wall_Vault_On);*/
+
+		//Execute a switch statement to play the random montage.
+		switch(Network_Random_Montage_To_Play)
+		{
+			case 1:
+			Play_Parkour_Montage(Wall_Monkey_On);
+			break;
+
+			case 2:
+			Play_Parkour_Montage(Wall_Two_Hand_L_On);
+			break;
+
+			case 3:
+			Play_Parkour_Montage(Wall_Two_Hand_R_On);
+			break;
+
+			default:
+			Debug::Print("Parkour_Running_Wall_Vault_On_ERROR_SELECTING_RANDOM_MONTAGE_TO_PLAY", FColor::Red, 21);
+		}
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.Over")))))
+	{
+		/*Execute_Random_Montage(Running_Wall_Vault_On);*/
+
+		//Execute a switch statement to play the random montage.
+		switch(Network_Random_Montage_To_Play)
+		{
+			case 1:
+			Play_Parkour_Montage(Wall_Monkey_Vault);
+			break;
+
+			case 2:
+			Play_Parkour_Montage(Wall_Reverse_L_Vault);
+			break;
+
+			case 3:
+			Play_Parkour_Montage(Wall_Reverse_R_Vault);
+			break;
+
+			case 4:
+			Play_Parkour_Montage(Wall_Safety_L_Vault);
+			break;
+
+			case 5:
+			Play_Parkour_Montage(Wall_Safety_R_Vault);
+			break;
+
+			case 6:
+			Play_Parkour_Montage(Wall_Thief_L_Vault);
+			break;
+
+			case 7:
+			Play_Parkour_Montage(Wall_Thief_R_Vault);
+			break;
+
+			case 8:
+			Play_Parkour_Montage(Wall_Two_Hand_L_Vault);
+			break;
+
+			case 9:
+			Play_Parkour_Montage(Wall_Two_Hand_R_Vault);
+			break;
+
+			default:
+			Debug::Print("Parkour_Running_Wall_Vault_Over_ERROR_SELECTING_RANDOM_MONTAGE_TO_PLAY", FColor::Red, 21);
+		}
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.Under.Bar")))))
+	{
+		Play_Parkour_Montage(Wall_Under_Bar);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.Over.180.Shimmy")))))
+	{
+		//Execute a switch statement to play the random montage.
+		switch(Network_Random_Montage_To_Play)
+		{
+			case 1:
+			Play_Parkour_Montage(Wall_L_Turn);
+			break;
+
+			case 2:
+			Play_Parkour_Montage(Wall_R_Turn);
+			break;
+
+			default:
+			Debug::Print("Parkour_Running_Wall_Vault_Over_180_Shimmy_ERROR_SELECTING_RANDOM_MONTAGE_TO_PLAY", FColor::Red, 21);
+		}
+	}
+
 }
 
 void UCustom_Movement_Component::Server_Perform_Hop_Action_Implementation(const FGameplayTag& Network_Parkour_State, const FGameplayTag& Network_Hop_Action, const int& Network_Random_Montage_To_Play)
@@ -14196,9 +15066,28 @@ void UCustom_Movement_Component::Server_Move_Character_To_New_Climb_Position_Int
 
 void UCustom_Movement_Component::Multicast_Move_Character_To_New_Climb_Position_Interpolation_Settings_Implementation(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
 {
+	if(!Owning_Player_Character)
+	return;
+	
 	//Call "SetActorLocationAndRotation" and pass in the variable which holds the interpolated data where the caracter needs to move to (Interpolated_Location_To_Move_Character).
 	Owning_Player_Character->SetActorLocationAndRotation(Location_To_Move_Character, Rotation_For_Character_To_Face);
 	
+	return;
+}
+
+void UCustom_Movement_Component::Server_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings_Implementation(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
+{
+	Multicast_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(Location_To_Move_Character, Rotation_For_Character_To_Face);
+}
+
+void UCustom_Movement_Component::Multicast_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings_Implementation(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face)
+{
+	if(!Owning_Player_Character)
+	return;
+
+	//Call the function "Owning_Player_Character->SetActorLocationAndRotation()" and pass in the new location to move the character every tick.
+	Owning_Player_Character->SetActorLocationAndRotation(Location_To_Move_Character, Rotation_For_Character_To_Face);
+
 	return;
 }
 
@@ -14236,74 +15125,12 @@ void UCustom_Movement_Component::Multicast_Move_Character_To_New_Balance_Walk_Po
 	if(!Owning_Player_Character)
 	return;
 	
-	//Get the character's location.
-	const FVector Characters_Location{Owning_Player_Character->GetActorLocation()};
-	
-	//Get DeltaTime
-	const double DeltaTime{UGameplayStatics::GetWorldDeltaSeconds(this)};
-
-	//Develop double variables for each of the axis in which the character will be interpolated to.
-	const double Interpolate_Character_To_This_X_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.X, Location_To_Move_Character.X, DeltaTime, 3.f)};
-	const double Interpolate_Character_To_This_Y_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.Y, Location_To_Move_Character.Y, DeltaTime, 3.f)};
-	const double Interpolate_Character_To_This_Z_Axis{UKismetMathLibrary::FInterpTo(Characters_Location.Z, Location_To_Move_Character.Z, DeltaTime, 1.f)};
-
-	//Combine the double variables above into a single FVector struct.
-	const FVector Characters_New_Location{Interpolate_Character_To_This_X_Axis, Interpolate_Character_To_This_Y_Axis, Interpolate_Character_To_This_Z_Axis};
-
 	//Call the function "SetActorLocationAndRotation" and pass in the calculated results.
-	Owning_Player_Character->SetActorLocationAndRotation(Characters_New_Location, Rotation_For_Character_To_Face);
-
+	Owning_Player_Character->SetActorLocationAndRotation(Location_To_Move_Character, Rotation_For_Character_To_Face);
 }
 
 #pragma endregion
 
-#pragma region Set_Network_Variables
-
-void UCustom_Movement_Component::Server_Set_Network_Wall_Calculations_Implementation(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height)
-{
-	Multicast_Set_Network_Wall_Calculations(Network_Wall_Height, Network_Wall_Depth, Network_Vault_Height);
-}
-
-void UCustom_Movement_Component::Multicast_Set_Network_Wall_Calculations_Implementation(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height)
-{
-	Wall_Height = Network_Wall_Height;
-
-	Wall_Depth = Network_Wall_Depth;
-
-	Vault_Height = Network_Vault_Height;
-}
-
-void UCustom_Movement_Component::Server_Set_Network_Variables_Implementation(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector)
-{
-	Multicast_Set_Network_Variables(Network_Wall_Top_Result, Network_Reversed_Front_Wall_Normal_Z, Custom_Wall_Pipe_Forward_Vector);
-}
-
-void UCustom_Movement_Component::Multicast_Set_Network_Variables_Implementation(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector)
-{
-	//Set the global FHitResult "Wall_Top_Result" to equal the global FHitResult "Network_Wall_Top_Result". "Network_Wall_Top_Result" is set within the function 
-	//&UCustom_Movement_Component::Realize_Wall_Pipe_Surfaces.
-	Wall_Top_Result = Network_Wall_Top_Result;
-		
-	//Set the value within the global variable "Reversed_Front_Wall_Normal_Z" to eqaul the the  gloabl "Wall_Pipe_Forward_Vector" (using the helper function "Reverse_Wall_Normal_Rotation_Z()")
-	//which is set within /&UCustom_Movement_Component::Realize_Wall_Pipe_Surfaces.
-	Reversed_Front_Wall_Normal_Z = Network_Reversed_Front_Wall_Normal_Z;
-
-	Initialize_Parkour_IK_Limbs_Hit_Result = Network_Wall_Top_Result;
-
-	Custom_Wall_Pipe_Actor_Forward_Vector_Hit_Result = Custom_Wall_Pipe_Forward_Vector;
-}
-
-void UCustom_Movement_Component::Server_Set_bIs_Falling_To_True_Implementation()
-{
-	bIs_Falling = true;
-}
-
-void UCustom_Movement_Component::Server_Set_bIs_Falling_To_False_Implementation()
-{
-	bIs_Falling = false;
-}
-
-#pragma endregion
 
 #pragma endregion
 
