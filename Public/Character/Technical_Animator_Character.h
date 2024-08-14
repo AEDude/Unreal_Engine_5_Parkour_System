@@ -19,6 +19,7 @@ class ACharacter_Direction_Arrow;
 class AWall_Pipe_Actor;
 class ABalance_Traversal_Actor;
 class AWall_Vault_Actor;
+class ATic_Tac_Actor;
 
 struct FInputActionValue;
 
@@ -226,6 +227,15 @@ AWall_Vault_Actor* Wall_Vault_Actor{};
 UFUNCTION()
 void On_Replication_Wall_Vault_Actor(AWall_Vault_Actor* Previous_Wall_Vault_Actor);
 
+UPROPERTY(ReplicatedUsing = On_Replication_Tic_Tac_Actor)
+ATic_Tac_Actor* Tic_Tac_Actor{};
+
+UFUNCTION()
+void On_Replication_Tic_Tac_Actor(ATic_Tac_Actor* Previous_Tic_Tac_Actor);
+
+UPROPERTY(Replicated)
+int Tic_Tac_Actor_Area_Box_ID{};
+
 
 #pragma endregion
 
@@ -271,6 +281,8 @@ public:
 	void Set_Overlapping_Balance_Traversal_Actor(ABalance_Traversal_Actor* Overlapping_Balance_Traversal_Actor);
 
 	void Set_Overlapping_Wall_Vault_Actor(AWall_Vault_Actor* Overlapping_Wall_Vault_Actor);
+
+	void Set_Overlapping_Tic_Tac_Actor(ATic_Tac_Actor* Overlapping_Tic_Tac_Actor, const int& Tic_Tac_Area_Box_ID);
 
 };
 

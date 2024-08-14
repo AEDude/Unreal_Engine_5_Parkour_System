@@ -31,6 +31,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Initialize_Balance_Walk);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Balance_Walk);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Tic_Tac);
+
 
 #pragma endregion
 
@@ -191,6 +193,22 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Running_Wall_Vault_Under_Bar);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Running_Wall_Vault_Over_180_Shimmy);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_L_Over_Front_Wall);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_R_Over_Front_Wall);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_L_On_Front_Wall_To_Idle);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_L_On_Front_Wall_To_Run);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_R_On_Front_Wall_To_Idle);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_R_On_Front_Wall_To_Run);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_L_Over_Right_Wall);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_R_Over_Left_Wall);
+
 
 #pragma endregion
 
@@ -250,6 +268,43 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Landing_Down_Impact);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Landing_Down_Front);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Landing_Down_Roll);
+
+
+#pragma endregion
+
+
+#pragma region Parkour_Tic_Tac
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Jump_On);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Jump_On_Run);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Vault_On);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_R_Jump_On);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_R_Jump_On_Run);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_R_Vault_On);
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Jump_Over);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Reverse_Over);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Speed_Over);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_R_Jump_Over);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_R_Reverse_Over);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_R_Speed_Over);
+
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Jump_Side_Over);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_R_Jump_Side_Over);
 
 
 #pragma endregion

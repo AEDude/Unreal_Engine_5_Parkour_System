@@ -29,6 +29,7 @@ class UParkour_Action_Data;
 class AWall_Pipe_Actor;
 class ABalance_Traversal_Actor;
 class AWall_Vault_Actor;
+class ATic_Tac_Actor;
 
 UENUM(BlueprintType)
 namespace E_Custom_Movement_Mode
@@ -397,6 +398,9 @@ private:
 	UPROPERTY()
 	AWall_Vault_Actor* Wall_Vault_Actor{};
 
+	UPROPERTY()
+	ATic_Tac_Actor* Tic_Tac_Actor{};
+
 #pragma endregion
 
 #pragma region Initialize_Parkour
@@ -545,6 +549,8 @@ private:
 
 	bool Validate_Free_Hang_To_Balanced_Walk(const bool& bClimb_To_Left_Side);
 
+	bool Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(const FGameplayTag& Direction_To_Tic_Tac, const bool& bCan_Tic_Tac_Over_Front_Wall);
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -672,6 +678,8 @@ private:
 	void Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 	void Decide_Wall_Vault_Parkour_Action();
+
+	void Decide_Tic_Tac_Parkour_Action();
 
 	#pragma region Set_Network_Variables
 
@@ -855,6 +863,8 @@ private:
 	bool bAccurate_Jump_Destination_Found{false};
 
 	bool bParkour_Action_Jump_Finish_On_Blending_Out{false};
+
+	int Tic_Tac_Actor_Area_Box_ID{};
 	
 	#pragma endregion
 
@@ -960,11 +970,11 @@ private:
 																   Jump_One_L,
 																   Jump_One_R */};
 
-	TArray<UParkour_Action_Data*> Running_Wall_Vault_On{/* Wall_Monkey_On,
+	TArray<UParkour_Action_Data*> Running_Wall_Vault_On_Array{/* Wall_Monkey_On,
 														Wall_Two_Hand_L_On,
 														Wall_Two_Hand_R_On */};
 
-	TArray<UParkour_Action_Data*> Running_Wall_Vault_Over{/* Wall_Monkey_Vault,
+	TArray<UParkour_Action_Data*> Running_Wall_Vault_Over_Array{/* Wall_Monkey_Vault,
 														  Wall_Reverse_L_Vault,
 														  Wall_Reverse_R_Vault,
 														  Wall_Safety_L_Vault,
@@ -974,8 +984,23 @@ private:
 														  Wall_Two_Hand_L_Vault, 
 														  Wall_Two_Hand_R_Vault */};
 
-	TArray<UParkour_Action_Data*> Running_Wall_Vault_Over_180_Shimmy{/* Wall_L_Turn,
+	
+	TArray<UParkour_Action_Data*> Running_Wall_Vault_Over_180_Shimmy_Array{/* Wall_L_Turn,
 																	 Wall_R_Turn */};
+	
+	TArray<UParkour_Action_Data*> Tic_Tac_L_Over_Front_Wall_Array{/* Tic_Tac_L_Jump_Over,
+																	 Tic_Tac_L_Reverse_Over.
+																	 Tic_Tac_L_Speed_Over*/};
+
+	TArray<UParkour_Action_Data*> Tic_Tac_R_Over_Front_Wall_Array{/* Tic_Tac_R_Jump_Over,
+																	 Tic_Tac_R_Reverse_Over,
+																	 Tic_Tac_R_Speed_Over */};
+
+	TArray<UParkour_Action_Data*> Tic_Tac_L_On_Front_Wall_To_Idle_Array{/* Tic_Tac_L_Jump_On,
+	 																	   Tic_Tac_L_Vault_On*/};
+
+	TArray<UParkour_Action_Data*> Tic_Tac_R_On_Front_Wall_To_Idle_Array{/* Tic_Tac_R_Jump_On,
+	 																	   Tic_Tac_R_Vault_On*/};
 
 
 
@@ -1118,6 +1143,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Balance_Traversal_Actors_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Tic_Tac_Actors_Trace_Types{};
 	
 
 	#pragma endregion
@@ -1619,6 +1647,54 @@ private:
 	UParkour_Action_Data* Wall_R_Turn{};
 
 
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_L_Jump_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_L_Jump_On_Run{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_L_Vault_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_R_Jump_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_R_Jump_On_Run{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_R_Vault_On{};
+
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_L_Jump_Over{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_L_Reverse_Over{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_L_Speed_Over{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_R_Jump_Over{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_R_Reverse_Over{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_R_Speed_Over{};
+
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_L_Jump_Side_Over{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Tic_Tac_R_Jump_Side_Over{};
+
+
 	#pragma endregion
 
 #pragma endregion
@@ -1830,6 +1906,8 @@ public:
 	void Execute_Free_Hang_To_Balanced_Walk();
 
 	void Execute_Wall_Vault(AWall_Vault_Actor* Wall_Vault_Actor_Reference);
+
+	void Execute_Tic_Tac(ATic_Tac_Actor* Tic_Tac_Actor_Reference, const int& Tic_Tac_Area_Box_ID);
 
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 

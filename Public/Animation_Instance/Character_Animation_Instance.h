@@ -53,9 +53,12 @@ private:
 
 	void Calculate_Direction();
 
+	void Get_Is_Jogging();
+
 	void Get_Should_Move();
 
 	void Get_Is_Falling();
+
 
 #pragma endregion
 
@@ -117,6 +120,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
 	bool bIs_Falling{};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
+	bool bIs_Jogging{false};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
 	EGround_Locomotion_State Ground_Locomotion_State{};

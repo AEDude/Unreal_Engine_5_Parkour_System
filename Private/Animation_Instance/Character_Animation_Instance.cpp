@@ -82,6 +82,7 @@ void UCharacter_Animation_Instance::Update_Variables_On_Secondary_Thread(const f
     Get_Ground_Speed();
     Get_Air_Speed();
     Get_Velocity();
+    Get_Is_Jogging();
     Calculate_Direction();
     Get_Predicted_Stop_Distance_Variables();
     Get_Should_Move();
@@ -151,6 +152,19 @@ void UCharacter_Animation_Instance::Calculate_Direction()
     if(Technical_Animator_Character)
     {
        Direction_For_Orientation_Warping = UKismetAnimationLibrary::CalculateDirection(Velocity, Technical_Animator_Character->GetActorRotation()); 
+    }
+}
+
+void UCharacter_Animation_Instance::Get_Is_Jogging()
+{
+    if(Technical_Animator_Character)
+    {
+        bIs_Jogging = Technical_Animator_Character->Get_Is_Jogging();
+    }
+
+    else
+    {
+        bIs_Jogging = false;
     }
 }
 

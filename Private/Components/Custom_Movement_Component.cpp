@@ -19,6 +19,7 @@
 #include "Net/UnrealNetwork.h"
 #include "World_Actors/Balance_Traversal_Actor.h"
 #include "World_Actors/Wall_Vault_Actor.h"
+#include "World_Actors/Tic_Tac_Actor.h"
 
 UCustom_Movement_Component::UCustom_Movement_Component()
 {
@@ -1534,24 +1535,45 @@ void UCustom_Movement_Component::Initialize_Parkour_Data_Assets_Arrays()
 	Balance_Walk_Automatic_Hop_Array.Emplace(Jump_One_R);
 
 
-	Running_Wall_Vault_On.Emplace(Wall_Monkey_On);
-	Running_Wall_Vault_On.Emplace(Wall_Two_Hand_L_On);
-	Running_Wall_Vault_On.Emplace(Wall_Two_Hand_R_On);
+	Running_Wall_Vault_On_Array.Emplace(Wall_Monkey_On);
+	Running_Wall_Vault_On_Array.Emplace(Wall_Two_Hand_L_On);
+	Running_Wall_Vault_On_Array.Emplace(Wall_Two_Hand_R_On);
 
 
-	Running_Wall_Vault_Over.Emplace(Wall_Monkey_Vault);
-	Running_Wall_Vault_Over.Emplace(Wall_Reverse_L_Vault);
-	Running_Wall_Vault_Over.Emplace(Wall_Reverse_R_Vault);
-	Running_Wall_Vault_Over.Emplace(Wall_Safety_L_Vault);
-	Running_Wall_Vault_Over.Emplace(Wall_Safety_R_Vault);
-	Running_Wall_Vault_Over.Emplace(Wall_Thief_L_Vault);
-	Running_Wall_Vault_Over.Emplace(Wall_Thief_R_Vault);
-	Running_Wall_Vault_Over.Emplace(Wall_Two_Hand_L_Vault);
-	Running_Wall_Vault_Over.Emplace(Wall_Two_Hand_R_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Monkey_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Reverse_L_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Reverse_R_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Safety_L_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Safety_R_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Thief_L_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Thief_R_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Two_Hand_L_Vault);
+	Running_Wall_Vault_Over_Array.Emplace(Wall_Two_Hand_R_Vault);
 
 
-	Running_Wall_Vault_Over_180_Shimmy.Emplace(Wall_L_Turn);												   
-	Running_Wall_Vault_Over_180_Shimmy.Emplace(Wall_R_Turn);
+	Running_Wall_Vault_Over_180_Shimmy_Array.Emplace(Wall_L_Turn);												   
+	Running_Wall_Vault_Over_180_Shimmy_Array.Emplace(Wall_R_Turn);
+
+
+	Tic_Tac_L_Over_Front_Wall_Array.Emplace(Tic_Tac_L_Jump_Over);
+	Tic_Tac_L_Over_Front_Wall_Array.Emplace(Tic_Tac_L_Reverse_Over);
+	Tic_Tac_L_Over_Front_Wall_Array.Emplace(Tic_Tac_L_Speed_Over);
+
+																	 
+	Tic_Tac_R_Over_Front_Wall_Array.Emplace(Tic_Tac_R_Jump_Over);
+	Tic_Tac_R_Over_Front_Wall_Array.Emplace(Tic_Tac_R_Reverse_Over);
+	Tic_Tac_R_Over_Front_Wall_Array.Emplace(Tic_Tac_R_Speed_Over);
+
+
+	Tic_Tac_L_On_Front_Wall_To_Idle_Array.Emplace(Tic_Tac_L_Jump_On);
+	Tic_Tac_L_On_Front_Wall_To_Idle_Array.Emplace(Tic_Tac_L_Vault_On);
+
+
+	Tic_Tac_R_On_Front_Wall_To_Idle_Array.Emplace(Tic_Tac_R_Jump_On);
+	Tic_Tac_R_On_Front_Wall_To_Idle_Array.Emplace(Tic_Tac_R_Vault_On);
+
+
+
 
 	#pragma endregion
 	
@@ -1708,8 +1730,19 @@ void UCustom_Movement_Component::Parkour_Detect_Wall()
 		const FVector Move_Vector_Up_With_Each_Iteration_Of_Loop{Move_Vector_Up(Set_Vector_At_Ground_Level, Index * 17.f)};
 		//Move the vector backwards 20 units so that it starts right behind the character.
 		const FVector Start{Move_Vector_Backward(Move_Vector_Up_With_Each_Iteration_Of_Loop, UpdatedComponent->GetComponentRotation(), 20)};
-		//Move the vector forward 140 units so that it ends a good distance away from the character.
-		const FVector End{Move_Vector_Forward(Start, UpdatedComponent->GetComponentRotation(), 140)};
+		//Move the vector forward 100 - 140 units so that it ends a good distance away from the character.
+		FVector End{};
+
+		if(bIs_On_Ground)
+		{
+			End = Move_Vector_Forward(Start, UpdatedComponent->GetComponentRotation(), 100);
+		}
+
+		else
+		{
+			End = Move_Vector_Forward(Start, UpdatedComponent->GetComponentRotation(), 140);
+		}
+
 
 		//Develop a "SphereTraceSingleForObjects()". The objects will be set in the character blueprint.
 		UKismetSystemLibrary::SphereTraceSingleForObjects(
@@ -7252,6 +7285,252 @@ bool UCustom_Movement_Component::Validate_Free_Hang_To_Balanced_Walk(const bool&
 	return false;
 }
 
+bool UCustom_Movement_Component::Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(const FGameplayTag& Direction_To_Tic_Tac, const bool& bCan_Tic_Tac_Over_Front_Wall)
+{
+	if(!Tic_Tac_Actor || !Tic_Tac_Actor->Get_Tic_Tac_Front_Wall_Hit_Result().bBlockingHit ||!Wall_Top_Result.bBlockingHit)
+	{
+		return false;
+	}
+	
+	const FVector Offset_Vector_Down{Move_Vector_Down(Wall_Top_Result.ImpactPoint, 50.f)};
+
+	FVector Offset_Vector_To_Left_Or_Right{};
+
+	//Overlapping wall on left side.
+	if(Tic_Tac_Actor_Area_Box_ID == 2)
+	{
+		Offset_Vector_To_Left_Or_Right = Move_Vector_Left(Offset_Vector_Down, Tic_Tac_Actor->GetActorRotation(), 30.f);
+	}
+
+	//Overlapping wall on right side.
+	else if(Tic_Tac_Actor_Area_Box_ID == 3)
+	{
+		Offset_Vector_To_Left_Or_Right = Move_Vector_Right(Offset_Vector_Down, Tic_Tac_Actor->GetActorRotation(), 30.f);
+	}
+
+	FVector Start{};
+
+	FVector End{};
+
+	int Index_1{};
+
+	FHitResult Validate_Lack_Of_Obstacles_Hit_Result{};
+
+	for(Index_1; Index_1 <= 4; Index_1++)
+	{
+		Start = Move_Vector_Up(Offset_Vector_To_Left_Or_Right, Index_1 * 35.f);
+
+		//Overlapping wall on left side.
+		if(Tic_Tac_Actor_Area_Box_ID == 2)
+		{
+			if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+			{
+				const FVector Offset_Vector_Up{Move_Vector_Up(Tic_Tac_Actor->Get_Tic_Tac_Front_Wall_Hit_Result().ImpactPoint, 35.f)};
+				End = Move_Vector_Up(Offset_Vector_Up, Index_1 * 35.f);
+			}
+
+			else if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))) || 
+			Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left"))))
+			{
+				const FVector Offset_Vector_Backward{Move_Vector_Backward(Start, Tic_Tac_Actor->GetActorRotation(), 200.f)};
+				const FVector Offset_Vector_Left{Move_Vector_Left(Offset_Vector_Backward, Tic_Tac_Actor->GetActorRotation(), 200.f)};
+				const FVector Offset_Vector_Up{Move_Vector_Up(Offset_Vector_Left, 70.f)};
+				
+				End = Move_Vector_Up(Offset_Vector_Up, Index_1 * 35.f);
+			}
+		}
+
+		//Overlapping wall on right side.
+		else if(Tic_Tac_Actor_Area_Box_ID == 3)
+		{
+			if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+			{
+				const FVector Offset_Vector_Up{Move_Vector_Up(Tic_Tac_Actor->Get_Tic_Tac_Front_Wall_Hit_Result().ImpactPoint, 35.f)};
+				End = Move_Vector_Up(Offset_Vector_Up, Index_1 * 35.f);
+			}
+
+			else if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))) || 
+			Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Right"))))
+			{
+				const FVector Offset_Vector_Backward{Move_Vector_Backward(Start, Tic_Tac_Actor->GetActorRotation(), 200.f)};
+				const FVector Offset_Vector_Right{Move_Vector_Right(Offset_Vector_Backward, Tic_Tac_Actor->GetActorRotation(), 200.f)};
+				const FVector Offset_Vector_Up{Move_Vector_Up(Offset_Vector_Right, 70.f)};
+				
+				End = Move_Vector_Up(Offset_Vector_Up, Index_1 * 35.f);
+			}
+		}
+
+		UKismetSystemLibrary::LineTraceSingleForObjects(
+			this,
+			Start,
+			End,
+			Tic_Tac_Actors_Trace_Types,
+			false,
+			TArray<AActor*>(),
+			Debug_Action,
+			Validate_Lack_Of_Obstacles_Hit_Result,
+			false
+		);
+
+		if(!Validate_Lack_Of_Obstacles_Hit_Result.bBlockingHit)
+		{
+			if(Index_1 == 4)
+			{
+				Debug::Print("Validate_Tic_Tac_Lack_Of_Obstacles_SUCCEEDED", FColor::Green, 80);
+
+				//Check if there is enough room for charater to land after performing the "Tic_Tac" action.
+
+				FVector Inner_Loop_Start{};
+				FVector Inner_Loop_End{};
+
+				if(bCan_Tic_Tac_Over_Front_Wall)
+				{
+					//Overlapping wall on left side.
+					if(Tic_Tac_Actor_Area_Box_ID == 2)
+					{
+						if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+						{
+							const FVector Inner_Offset_Vector_Backward{Move_Vector_Backward(Tic_Tac_Actor->Get_Tic_Tac_Front_Wall_Hit_Result().ImpactPoint, Tic_Tac_Actor->GetActorRotation(), 90.f)};
+							const FVector Inner_Offset_Vector_Down{Move_Vector_Down(Inner_Offset_Vector_Backward, 55.f)};
+							
+							Inner_Loop_Start = Inner_Offset_Vector_Down;
+							Inner_Loop_End = Inner_Loop_Start;
+						}
+
+						else if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))) || 
+						Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left"))))
+						{
+							const FVector Offset_Vector_Backward{Move_Vector_Backward(Wall_Top_Result.ImpactPoint, Tic_Tac_Actor->GetActorRotation(), 200.f)};
+							const FVector Inner_Offset_Vector_Left{Move_Vector_Left(Offset_Vector_Backward, Tic_Tac_Actor->GetActorRotation(), 370.f)};
+							const FVector Inner_Offset_Vector_Down{Move_Vector_Down(Inner_Offset_Vector_Left, 80.f)};
+
+							Inner_Loop_Start = Inner_Offset_Vector_Down;
+							Inner_Loop_End = Inner_Loop_Start;
+						}
+					}
+
+					//Overlapping wall on right side.
+					if(Tic_Tac_Actor_Area_Box_ID == 3)
+					{
+						if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+						{
+							const FVector Inner_Offset_Vector_Backward{Move_Vector_Backward(Tic_Tac_Actor->Get_Tic_Tac_Front_Wall_Hit_Result().ImpactPoint, Tic_Tac_Actor->GetActorRotation(), 90.f)};
+							const FVector Inner_Offset_Vector_Down{Move_Vector_Down(Inner_Offset_Vector_Backward, 55.f)};
+							
+							Inner_Loop_Start = Inner_Offset_Vector_Down;
+							Inner_Loop_End = Inner_Loop_Start;
+						}
+
+						else if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))) || 
+						Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Right"))))
+						{
+							const FVector Offset_Vector_Backward{Move_Vector_Backward(Wall_Top_Result.ImpactPoint, Tic_Tac_Actor->GetActorRotation(), 200.f)};
+							const FVector Inner_Offset_Vector_Right{Move_Vector_Right(Offset_Vector_Backward, Tic_Tac_Actor->GetActorRotation(), 370.f)};
+							const FVector Inner_Offset_Vector_Down{Move_Vector_Down(Inner_Offset_Vector_Right, 80.f)};
+
+							Inner_Loop_Start = Inner_Offset_Vector_Down;
+							Inner_Loop_End = Inner_Loop_Start;
+						}
+					}
+				}
+
+				else
+				{	
+					//Overlapping wall on left side.
+					if(Tic_Tac_Actor_Area_Box_ID == 2)
+					{
+						if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+						{
+							const FVector Inner_Offset_Vector_Up{Move_Vector_Up(Tic_Tac_Actor->Get_Tic_Tac_Front_Wall_Hit_Result().ImpactPoint, 110.f)};
+							
+							Inner_Loop_Start = Inner_Offset_Vector_Up;
+							Inner_Loop_End = Inner_Loop_Start;
+						}
+
+						else if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))) || 
+						Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left"))))
+						{
+							const FVector Offset_Vector_Backward{Move_Vector_Backward(Wall_Top_Result.ImpactPoint, Tic_Tac_Actor->GetActorRotation(), 200.f)};
+							const FVector Inner_Offset_Vector_Left{Move_Vector_Left(Offset_Vector_Backward, Tic_Tac_Actor->GetActorRotation(), 370.f)};
+							const FVector Inner_Offset_Vector_Down{Move_Vector_Down(Inner_Offset_Vector_Left, 80.f)};
+
+							Inner_Loop_Start = Inner_Offset_Vector_Down;
+							Inner_Loop_End = Inner_Loop_Start;
+						}
+					}
+
+					//Overlapping wall on right side.
+					if(Tic_Tac_Actor_Area_Box_ID == 3)
+					{
+						if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+						{
+							const FVector Inner_Offset_Vector_Up{Move_Vector_Up(Tic_Tac_Actor->Get_Tic_Tac_Front_Wall_Hit_Result().ImpactPoint, 110.f)};
+							
+							Inner_Loop_Start = Inner_Offset_Vector_Up;
+							Inner_Loop_End = Inner_Loop_Start;
+						}
+
+						else if(Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))) || 
+						Direction_To_Tic_Tac == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Right"))))
+						{
+							const FVector Offset_Vector_Backward{Move_Vector_Backward(Wall_Top_Result.ImpactPoint, Tic_Tac_Actor->GetActorRotation(), 200.f)};
+							const FVector Inner_Offset_Vector_Right{Move_Vector_Right(Offset_Vector_Backward, Tic_Tac_Actor->GetActorRotation(), 370.f)};
+							const FVector Inner_Offset_Vector_Down{Move_Vector_Down(Inner_Offset_Vector_Right, 80.f)};
+
+							Inner_Loop_Start = Inner_Offset_Vector_Down;
+							Inner_Loop_End = Inner_Loop_Start;
+						}
+					}
+				}
+
+				FHitResult Validate_Enough_Space_For_Character_Hit_Result{};
+
+				UKismetSystemLibrary::CapsuleTraceSingleForObjects(
+					this,
+					Inner_Loop_Start,
+					Inner_Loop_End,
+					48.f,
+					100.f,
+					Tic_Tac_Actors_Trace_Types,
+					false,
+					TArray<AActor*>(),
+					Debug_Action,
+					Validate_Enough_Space_For_Character_Hit_Result,
+					false
+				);
+
+				if(!Validate_Enough_Space_For_Character_Hit_Result.bStartPenetrating && !Validate_Enough_Space_For_Character_Hit_Result.bBlockingHit)
+				{
+					
+					Debug::Print("Validate_Enough_Space_For_Character_To_Tic_Tac_SUCCEEDED", FColor::Green, 81);
+					return true;
+				}
+
+				else
+				{
+					
+					Debug::Print("Validate_Enough_Space_For_Character_To_Tic_Tac_FAILED", FColor::Red, 81);
+					return false;
+				}
+			}
+
+			else
+			{
+				continue;
+			}
+		}
+
+		else
+		{
+			Debug::Print("Validate_Tic_Tac_Lack_Of_Obstacles_FAILED", FColor::Red, 80);
+			return false;
+		}
+	}
+	
+	//The following line of code is to meet the return requirement of this function type.
+	return false;
+}
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -7306,6 +7585,9 @@ void UCustom_Movement_Component::Set_Parkour_State_Attributes(const FGameplayTag
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
 	Parkour_State_Settings(ECollisionEnabled::QueryOnly, EMovementMode::MOVE_Flying, true, false);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Tic.Tac"))))
+	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Flying, true, true);
 		
 	Server_Set_Parkour_State_Attributes(Current_Parkour_State);
 		
@@ -7962,6 +8244,7 @@ void UCustom_Movement_Component::Set_Parkour_Action(const FGameplayTag& New_Park
 		/* Execute_Random_Montage(Drop_Ledge_Array); */
 		
 		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
+
 	}
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Accelerating.Drop"))))
@@ -8533,7 +8816,7 @@ void UCustom_Movement_Component::Set_Parkour_Action(const FGameplayTag& New_Park
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.Over.180.Shimmy")))))
 	{
-		/*Execute_Random_Montage(Running_Wall_Vault_Over_180_Shimmy);*/
+		/*Execute_Random_Montage(Running_Wall_Vault_Over_180_Shimmy_Array);*/
 
 		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 2);
 
@@ -8552,6 +8835,123 @@ void UCustom_Movement_Component::Set_Parkour_Action(const FGameplayTag& New_Park
 		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
 	}
 
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Idle"))))
+	{
+		/*Execute_Random_Montage(Tic_Tac_L_On_Front_Wall_To_Idle_Array);*/
+
+		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 2);
+
+		//Via a while loop check to see if the random integer which is selected from the line of code above is the same as the integer which was selected the last time this Parkour_Action was 
+		//activated (stored within the global int variable "Last_Random_Montage_Played"). If this is the case the while loop should continue to select a random integer until the integer which 
+		//is selected is different from the integer stored within the global int variable "Last_Random_Montage_Played". On the other hand if the integer which was selected in the line of code above 
+		//is different from the integer stored in the global int variable "Last_Random_Montage_Played", this loop will never activate.
+		while(Last_Random_Montage_Played == Random_Montage_To_Play)
+		{
+			Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 2);
+		}
+
+		//Assign the integer which was selected to the global int variable "Last_Random_Montage_Played".
+		Last_Random_Montage_Played = Random_Montage_To_Play;
+		
+		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Idle"))))
+	{
+		/*Execute_Random_Montage(Tic_Tac_R_On_Front_Wall_To_Idle_Array);*/
+
+		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 2);
+
+		//Via a while loop check to see if the random integer which is selected from the line of code above is the same as the integer which was selected the last time this Parkour_Action was 
+		//activated (stored within the global int variable "Last_Random_Montage_Played"). If this is the case the while loop should continue to select a random integer until the integer which 
+		//is selected is different from the integer stored within the global int variable "Last_Random_Montage_Played". On the other hand if the integer which was selected in the line of code above 
+		//is different from the integer stored in the global int variable "Last_Random_Montage_Played", this loop will never activate.
+		while(Last_Random_Montage_Played == Random_Montage_To_Play)
+		{
+			Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 2);
+		}
+
+		//Assign the integer which was selected to the global int variable "Last_Random_Montage_Played".
+		Last_Random_Montage_Played = Random_Montage_To_Play;
+		
+		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Run"))))
+	{
+		/*Play_Parkour_Montage(Tic_Tac_L_Jump_On_Run);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Run"))))
+	{
+		/*Play_Parkour_Montage(Tic_Tac_R_Jump_On_Run);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+	
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Front.Wall"))))
+	{
+		/*Execute_Random_Montage(Tic_Tac_L_Over_Front_Wall_Array);*/
+
+		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 3);
+
+		//Via a while loop check to see if the random integer which is selected from the line of code above is the same as the integer which was selected the last time this Parkour_Action was 
+		//activated (stored within the global int variable "Last_Random_Montage_Played"). If this is the case the while loop should continue to select a random integer until the integer which 
+		//is selected is different from the integer stored within the global int variable "Last_Random_Montage_Played". On the other hand if the integer which was selected in the line of code above 
+		//is different from the integer stored in the global int variable "Last_Random_Montage_Played", this loop will never activate.
+		while(Last_Random_Montage_Played == Random_Montage_To_Play)
+		{
+			Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 3);
+		}
+
+		//Assign the integer which was selected to the global int variable "Last_Random_Montage_Played".
+		Last_Random_Montage_Played = Random_Montage_To_Play;
+		
+		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Front.Wall"))))
+	{
+		/*Execute_Random_Montage(Tic_Tac_R_Over_Front_Wall_Array);*/
+
+		Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 3);
+
+		//Via a while loop check to see if the random integer which is selected from the line of code above is the same as the integer which was selected the last time this Parkour_Action was 
+		//activated (stored within the global int variable "Last_Random_Montage_Played"). If this is the case the while loop should continue to select a random integer until the integer which 
+		//is selected is different from the integer stored within the global int variable "Last_Random_Montage_Played". On the other hand if the integer which was selected in the line of code above 
+		//is different from the integer stored in the global int variable "Last_Random_Montage_Played", this loop will never activate.
+		while(Last_Random_Montage_Played == Random_Montage_To_Play)
+		{
+			Random_Montage_To_Play = UKismetMathLibrary::RandomIntegerInRange(1, 3);
+		}
+
+		//Assign the integer which was selected to the global int variable "Last_Random_Montage_Played".
+		Last_Random_Montage_Played = Random_Montage_To_Play;
+		
+		Server_Set_Parkour_Action(New_Parkour_Action, Random_Montage_To_Play);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Right.Wall"))))
+	{
+		/*Play_Parkour_Montage(Tic_Tac_L_Jump_Side_Over);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Left.Wall"))))
+	{
+		/*Play_Parkour_Montage(Tic_Tac_R_Jump_Side_Over);*/
+		
+		int Not_Needed_Here{};
+		Server_Set_Parkour_Action(New_Parkour_Action, Not_Needed_Here);
+	}
+
+	
 }
 
 float UCustom_Movement_Component::Select_Value_Based_On_Climb_Style(const FGameplayTag& Climb_Style, const float& Braced_Value, const float& Free_Hang_Value) const
@@ -10560,31 +10960,57 @@ void UCustom_Movement_Component::Execute_Random_Montage(TArray<UParkour_Action_D
 
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.On"))))
 		{
-			Running_Wall_Vault_On.Emplace(Wall_Monkey_On);
-			Running_Wall_Vault_On.Emplace(Wall_Two_Hand_L_On);
-			Running_Wall_Vault_On.Emplace(Wall_Two_Hand_R_On);
+			Running_Wall_Vault_On_Array.Emplace(Wall_Monkey_On);
+			Running_Wall_Vault_On_Array.Emplace(Wall_Two_Hand_L_On);
+			Running_Wall_Vault_On_Array.Emplace(Wall_Two_Hand_R_On);
 			
 		}
 
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.Over"))))
 		{
-			Running_Wall_Vault_Over.Emplace(Wall_Monkey_Vault);
-			Running_Wall_Vault_Over.Emplace(Wall_Reverse_L_Vault);
-			Running_Wall_Vault_Over.Emplace(Wall_Reverse_R_Vault);
-			Running_Wall_Vault_Over.Emplace(Wall_Safety_L_Vault);
-			Running_Wall_Vault_Over.Emplace(Wall_Safety_R_Vault);
-			Running_Wall_Vault_Over.Emplace(Wall_Thief_L_Vault);
-			Running_Wall_Vault_Over.Emplace(Wall_Thief_R_Vault);
-			Running_Wall_Vault_Over.Emplace(Wall_Two_Hand_L_Vault);
-			Running_Wall_Vault_Over.Emplace(Wall_Two_Hand_R_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Monkey_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Reverse_L_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Reverse_R_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Safety_L_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Safety_R_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Thief_L_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Thief_R_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Two_Hand_L_Vault);
+			Running_Wall_Vault_Over_Array.Emplace(Wall_Two_Hand_R_Vault);
 			
 		}
 
 		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Running.Wall.Vault.Over.180.Shimmy"))))
 		{
-			Running_Wall_Vault_Over_180_Shimmy.Emplace(Wall_L_Turn);												   
-			Running_Wall_Vault_Over_180_Shimmy.Emplace(Wall_R_Turn);
+			Running_Wall_Vault_Over_180_Shimmy_Array.Emplace(Wall_L_Turn);												   
+			Running_Wall_Vault_Over_180_Shimmy_Array.Emplace(Wall_R_Turn);
 			
+		}
+
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Idle"))))
+		{
+			Tic_Tac_L_On_Front_Wall_To_Idle_Array.Emplace(Tic_Tac_L_Jump_On);
+			Tic_Tac_L_On_Front_Wall_To_Idle_Array.Emplace(Tic_Tac_L_Vault_On);
+		}
+
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Idle"))))
+		{
+			Tic_Tac_R_On_Front_Wall_To_Idle_Array.Emplace(Tic_Tac_R_Jump_On);
+			Tic_Tac_R_On_Front_Wall_To_Idle_Array.Emplace(Tic_Tac_R_Vault_On);
+		}
+
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Front.Wall"))))
+		{
+			Tic_Tac_L_Over_Front_Wall_Array.Emplace(Tic_Tac_L_Jump_Over);
+			Tic_Tac_L_Over_Front_Wall_Array.Emplace(Tic_Tac_L_Reverse_Over);
+			Tic_Tac_L_Over_Front_Wall_Array.Emplace(Tic_Tac_L_Speed_Over);
+		}
+
+		else if(Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Front.Wall"))))
+		{
+			Tic_Tac_R_Over_Front_Wall_Array.Emplace(Tic_Tac_R_Jump_Over);
+			Tic_Tac_R_Over_Front_Wall_Array.Emplace(Tic_Tac_R_Reverse_Over);
+			Tic_Tac_R_Over_Front_Wall_Array.Emplace(Tic_Tac_R_Speed_Over);
 		}
 
 	}
@@ -11181,22 +11607,28 @@ void UCustom_Movement_Component::Execute_Parkour_Action()
 	Measure_Wall();
 
 	//Check to see if the global pointer "Wall_Vault_Actor" is valid. If it is indeed valid then this means the player is overlapping with a "AWall_Vault_Actor" and the 
-	//appropriate action should be executed within "&UCustom_Movement_Component::Decide_Wall_Vault_Parkour_Action". Otherwise call "&UCustom_Movement_Component::Decide_Parkour_Action" 
-	//to execute the actions which are enabled by default to the character.
+	//appropriate action should be executed within "&UCustom_Movement_Component::Decide_Wall_Vault_Parkour_Action". 
 	
 	if(Wall_Vault_Actor)
 	{
-		//Decide the Parkour Action to execute based on the current value of the global gameplaytag "Parkour_State" as well as the values stored in the global double variables
-		//"Wall_Height", "Wall_Depth" and "Vault_Height".
 		Decide_Wall_Vault_Parkour_Action();
 	}
+
+	//Check to see if the global pointer "Tic_Tac_Actor" is valid. If it is indeed valid then this means the player is overlapping with a "ATic_Tac_Actor" and the 
+	//appropriate action should be executed within "&UCustom_Movement_Component::Decide_Tic_Tac_Parkour_Action".
+	else if(Tic_Tac_Actor)
+	{
+		Decide_Tic_Tac_Parkour_Action();
+	}
 	
+	//Otherwise call "&UCustom_Movement_Component::Decide_Parkour_Action" to execute the actions which are enabled by default to the character.
 	else
 	{
 		//Decide the Parkour Action to execute based on the current value of the global gameplaytag "Parkour_State" as well as the values stored in the global double variables
 		//"Wall_Height", "Wall_Depth" and "Vault_Height".
 		Decide_Parkour_Action();
 	}
+
 }
 
 void UCustom_Movement_Component::Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam()
@@ -12428,6 +12860,7 @@ void UCustom_Movement_Component::Execute_Balance_Traversal(ABalance_Traversal_Ac
 	{
 		Debug::Print("Balance_Traversal_Possible", FColor::Green, 70);
 
+		//Make sure the character is attempting to Execute_Balance_Traversal from the approprate angle.
 		const double Dot_Product{FVector::DotProduct(Owning_Player_Character->GetActorForwardVector(),
 		Balance_Traversal_Actor->GetActorForwardVector())};
 
@@ -12487,6 +12920,7 @@ void UCustom_Movement_Component::Execute_Balance_Traversal(ABalance_Traversal_Ac
 		Debug::Print("Balance_Traversal_Not_Possible", FColor::Red, 70);
 		return;
 	} */
+
 }
 
 void UCustom_Movement_Component::Parkour_Balance_Walk_Handle_Balance_Walking_Movement()
@@ -12940,16 +13374,19 @@ void UCustom_Movement_Component::Execute_Free_Hang_To_Balanced_Walk()
 
 void UCustom_Movement_Component::Execute_Wall_Vault(AWall_Vault_Actor* Wall_Vault_Actor_Reference)
 {
-	Wall_Vault_Actor = Wall_Vault_Actor_Reference;
-
-	if(Wall_Vault_Actor)
+	if(Wall_Vault_Actor_Reference)
 	{
+		/*Setting the global pointer of type AWall_Vault_Actor "Wall_Vault_Actor" to equal the save value address of the pointer of input argument "Wall_Vault_Actor_Reference" will allow the character to perform
+		Wall_Vault actions. This pointer is checked to see if it is valid within &UCustom_Movement_Component::Execute_Parkour_Action. If it is valid, &UCustom_Movement_Component::Decide_Wall_Vault_Parkour_Action
+		will be called which will ultimately decide which "Wall_Vault" action the character should execute.*/
+		
+		Wall_Vault_Actor = Wall_Vault_Actor_Reference;
 		Debug::Print("Wall_Vault_Actor_Is_Valid_Proceeding_To_Execute_Wall_Vault", FColor::Green, 75);
-
 	}
 
 	else
 	{
+		Wall_Vault_Actor = nullptr;
 		Debug::Print("Wall_Vault_Actor_Is_Not_Valid", FColor::Red, 75);
 	}
 }
@@ -13193,6 +13630,452 @@ void UCustom_Movement_Component::Decide_Wall_Vault_Parkour_Action()
 
 }
 
+void UCustom_Movement_Component::Execute_Tic_Tac(ATic_Tac_Actor* Tic_Tac_Actor_Reference, const int& Tic_Tac_Area_Box_ID)
+{
+	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	return;
+	
+	//While facing the "Tic_Tac" actor from it's operational side "Tic_Tac_Area_Box_ID == 2" is the left Area_Box and "Tic_Tac_Area_Box_ID == 3" is the right Area_Box.
+	if(Tic_Tac_Actor_Reference && (Tic_Tac_Area_Box_ID == 2 || Tic_Tac_Area_Box_ID == 3))
+	{
+		//Make sure the character is attempting to perform a Tic_Tac action from the approprate angle.
+		const double Dot_Product{FVector::DotProduct(-Owning_Player_Character->GetActorForwardVector(),
+		Tic_Tac_Actor_Reference->GetActorForwardVector())};
+
+		if(Dot_Product > 0.3f)
+		{
+			/* Setting the global pointer of type ATic_Tac_Actor "Tic_Tac_Actor" to equal the save value address of the pointer of input argument "Tic_Tac_Actor_Reference" will allow the character to perform
+			Tic_Tac actions. This pointer is checked to see if it is valid within &UCustom_Movement_Component::Execute_Parkour_Action. If it is valid, &UCustom_Movement_Component::Decide_Tic_Tac_Parkour_Action
+			will be called which will ultimately decide which "Tic_Tac" action the character should execute. */
+
+			Tic_Tac_Actor = Tic_Tac_Actor_Reference;
+			Tic_Tac_Actor_Area_Box_ID = Tic_Tac_Area_Box_ID;
+			Debug::Print("Tic_Tac_Actor & Character DOT Product: " + FString::SanitizeFloat(Dot_Product), FColor::Green, 74);
+			Debug::Print("Tic_Tac_Actor_Is_Valid_Proceeding_To_Execute_Tic_Tac, ID: " + FString::FromInt(Tic_Tac_Actor_Area_Box_ID), FColor::Green, 75);
+		}
+		
+		else
+		{
+			Tic_Tac_Actor = nullptr;
+			Tic_Tac_Actor_Area_Box_ID = 0;
+			Debug::Print("Tic_Tac_Actor & Character DOT Product: " + FString::SanitizeFloat(Dot_Product), FColor::Red, 74);
+		}
+
+	}
+
+	else
+	{
+		
+		Tic_Tac_Actor = nullptr;
+		Tic_Tac_Actor_Area_Box_ID = 0;
+		Debug::Print("Tic_Tac_Actor_Is_Not_Valid " + FString::FromInt(Tic_Tac_Actor_Area_Box_ID), FColor::Red, 75);
+	}
+}
+
+void UCustom_Movement_Component::Decide_Tic_Tac_Parkour_Action()
+{
+	Debug::Print("Decide_Tic_Tac_Parkour_Action_Called", FColor::Green, 77);
+	
+	if(!Tic_Tac_Actor)
+	{
+		return;
+	}
+	
+	else if(Wall_Top_Result.bBlockingHit)
+	{
+		if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+		{
+			if(bIs_On_Ground)
+			{
+				const bool bCan_Tic_Tac_Over_Front_Wall{Tic_Tac_Actor->Get_bCan_Tic_Tac_Over_Front_Wall()};
+				
+				//Character can perform "Tic_Tac" action which goes over the front facing "Tic_Tac_Actor" wall.
+				if(bCan_Tic_Tac_Over_Front_Wall)
+				{
+					//Overlapping wall on left side.
+					if(Tic_Tac_Actor_Area_Box_ID == 2) 
+					{
+						if(Ground_Speed > 250.f)
+						{
+							if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 180.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump over front wall from left side.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Front.Wall")))); 
+								}
+							}
+
+							else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))) || 
+							Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(Get_Controller_Direction(), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 90.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump over right wall from left wall.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Right.Wall")))); 
+								}	
+							}
+						}
+					}
+
+					//Overlapping wall on right side.
+					else if(Tic_Tac_Actor_Area_Box_ID == 3)
+					{
+						if(Ground_Speed > 250.f)
+						{
+							if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 180.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump over front wall from right side.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Front.Wall")))); 
+								}	
+							}
+
+							else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))) || 
+							Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Right"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(Get_Controller_Direction(), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw + 90.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump over left wall from right wall.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Left.Wall")))); 
+								}	
+							}
+						}
+					}
+				}
+
+				//Character can no perform "Tic_Tac" action which goes over the front facing "Tic_Tac_Actor" wall and in result the charater has to perform a "Tic_Tac" action which lands on the front
+				//facing "Tic_Tac_Actor" wall.
+				else if(!bCan_Tic_Tac_Over_Front_Wall)
+				{
+					//Overlapping wall on left side.
+					if(Tic_Tac_Actor_Area_Box_ID == 2) 
+					{
+						if(Ground_Speed < 250.f)
+						{
+							if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 180.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									//Jump on front wall from left side and transition into idle.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Idle")))); 
+								}
+							}
+
+							else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))) || 
+							Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(Get_Controller_Direction(), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 90.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump over right wall from left wall.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Right.Wall"))));
+								}
+							}
+						}
+
+						else if(Ground_Speed >= 250.f)
+						{
+							if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 180.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump on front wall from left side and transition into running.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Run")))); 
+								}
+							}
+
+							else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))) || 
+							Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(Get_Controller_Direction(), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 90.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump over right wall from left wall
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Right.Wall"))));
+								}
+							}
+						}
+					}
+
+					//Overlapping wall on right side.
+					else if(Tic_Tac_Actor_Area_Box_ID == 3)
+					{
+						if(Ground_Speed < 250.f)
+						{
+							if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 180.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump on front wall from right side and transition into idle.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Idle")))); 
+								}
+							}
+
+							else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left"))) || 
+							Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Left"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(Get_Controller_Direction(), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw + 90.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump over left wall from right wall.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Right.Wall"))));
+								}
+							}
+						}
+						
+						else if(Ground_Speed >= 250.f)
+						{
+							if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw - 180.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump on front wall from right side and transition into running.
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Run")))); 
+								}
+							}
+
+							else if(Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))) || 
+							Get_Controller_Direction() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Right"))))
+							{
+								if(Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(Get_Controller_Direction(), bCan_Tic_Tac_Over_Front_Wall))
+								{
+									const FRotator Direction_For_Character_To_Face{FRotator(Tic_Tac_Actor->GetActorRotation().Pitch, Tic_Tac_Actor->GetActorRotation().Yaw + 90.f, Tic_Tac_Actor->GetActorRotation().Roll)};
+									
+									Reversed_Front_Wall_Normal_Z = Direction_For_Character_To_Face;
+									
+									//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+									//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+									//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+									const FHitResult Not_Needed_Here{};
+									Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+									
+									
+									//Jump over left wall from right wall
+									Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Left.Wall")))); 
+								}
+							}
+						}
+					}
+				}
+			}
+
+			else
+			{
+				if(Wall_Height >= 140 && Wall_Height <= 280 && Validate_Can_Start_Shimmying_While_Airborne())
+				{								
+												// negative value in "Air_Speed" means character is falling  //Ground_Speed >= 700.f || Air_Speed <= -1000.f || Air_Speed <= 20.f
+					if(Owning_Player_Character->Get_Is_Jogging() && (Air_Speed >= -200.f || Air_Speed <= 200.f))
+					{
+						Debug::Print("Parkour_Dynamic_Airorne_Climb", FColor::MakeRandomColor(), 7);
+
+						// The FHitResult stored in the global FHitResult variable "Wall_Top_Result" is copied to the the global 
+						// FHitResult variable Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result so that when the function "Reset_Parkour_Variables()" is called within
+						// "&UCustom_Movement_Component::Parkour_Call_In_Tick" and "&UCustom_Movement_Component::Set_Parkour_Action"
+						// after each Parkour Action is complete within "&UCustom_Movement_Component::Play_Parkour_Montage" there will still be 
+						// a location to begin the next sequence of ray casts.
+						Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result;
+						
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+						Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+
+						if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))))
+						{
+							if(Air_Speed <= -500.f)
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb.Slipped"))));
+							}
+
+							else if(Air_Speed >= -499.f)
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb"))));
+							}
+						}
+						
+						if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.FreeHang"))))
+						{
+							if(Validate_Can_Fly_Hanging_Jump())
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Falling.Climb.Hanging.Jump"))));
+							}
+							
+							else
+							{
+								Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Falling.Climb"))));
+							}
+						}
+					}
+
+					else
+					{
+						Debug::Print("Parkour_Airorne_Climb", FColor::MakeRandomColor(), 7);
+						Decide_Climb_Style(Wall_Top_Result.ImpactPoint, Reversed_Front_Wall_Normal_Z);
+					
+						// The FHitResult stored in the global FHitResult variable "Wall_Top_Result" is copied to the the global 
+						// FHitResult variable Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result so that when the function "Reset_Parkour_Variables()" is called within
+						// "&UCustom_Movement_Component::Parkour_Call_In_Tick" and "&UCustom_Movement_Component::Set_Parkour_Action"
+						// after each Parkour Action is complete within "&UCustom_Movement_Component::Play_Parkour_Montage" there will still be 
+						// a location to begin the next sequence of ray casts.
+						Initialize_Parkour_IK_Limbs_Hit_Result = Wall_Top_Result;
+						
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+						if(Parkour_Climb_Style == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.Braced.Climb"))))
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Braced.Climb.Falling.Climb"))));
+
+						else
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.FreeHang.Falling.Climb"))));
+					}
+
+				}
+
+				else
+				{
+					Debug::Print("No_Action", FColor::MakeRandomColor(), 7);
+					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))));
+				}
+
+			}
+
+		}
+	}
+
+	else
+	{
+		
+		return;
+	}
+
+}
+
+
 #pragma region Set_Network_Variables
 
 void UCustom_Movement_Component::Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height)
@@ -13418,6 +14301,9 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_State_Attributes_Implemen
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
 	Parkour_State_Settings(ECollisionEnabled::QueryOnly, EMovementMode::MOVE_Flying, true, false);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Tic.Tac"))))
+	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Flying, true, true);
 
 }
 
@@ -14523,6 +15409,106 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_Action_Implementation(con
 			default:
 			Debug::Print("Parkour_Running_Wall_Vault_Over_180_Shimmy_ERROR_SELECTING_RANDOM_MONTAGE_TO_PLAY", FColor::Red, 21);
 		}
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Idle")))))
+	{
+		//Execute a switch statement to play the random montage.
+		switch(Network_Random_Montage_To_Play)
+		{
+			case 1:
+			Play_Parkour_Montage(Tic_Tac_L_Jump_On);
+			break;
+
+			case 2:
+			Play_Parkour_Montage(Tic_Tac_L_Vault_On);
+			break;
+
+			default:
+			Debug::Print("Parkour_Tic_Tac_L_On_Front_Wall_To_Idle_ERROR_SELECTING_RANDOM_MONTAGE_TO_PLAY", FColor::Red, 21);
+		}
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Idle")))))
+	{
+		//Execute a switch statement to play the random montage.
+		switch(Network_Random_Montage_To_Play)
+		{
+			case 1:
+			Play_Parkour_Montage(Tic_Tac_R_Jump_On);
+			break;
+
+			case 2:
+			Play_Parkour_Montage(Tic_Tac_R_Vault_On);
+			break;
+
+			default:
+			Debug::Print("Parkour_Tic_Tac_R_On_Front_Wall_To_Idle_ERROR_SELECTING_RANDOM_MONTAGE_TO_PLAY", FColor::Red, 21);
+		}
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Run"))))
+	{
+		Play_Parkour_Montage(Tic_Tac_L_Jump_On_Run);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Run"))))
+	{
+		Play_Parkour_Montage(Tic_Tac_R_Jump_On_Run);
+	}
+	
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Front.Wall")))))
+	{
+		//Execute a switch statement to play the random montage.
+		switch(Network_Random_Montage_To_Play)
+		{
+			case 1:
+			Play_Parkour_Montage(Tic_Tac_L_Jump_Over);
+			break;
+
+			case 2:
+			Play_Parkour_Montage(Tic_Tac_L_Reverse_Over);
+			break;
+
+			case 3:
+			Play_Parkour_Montage(Tic_Tac_L_Speed_Over);
+			break;
+
+			default:
+			Debug::Print("Tic_Tac_L_Over_Front_Wall_ERROR_SELECTING_RANDOM_MONTAGE_TO_PLAY", FColor::Red, 21);
+		}
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Front.Wall")))))
+	{
+		//Execute a switch statement to play the random montage.
+		switch(Network_Random_Montage_To_Play)
+		{
+			case 1:
+			Play_Parkour_Montage(Tic_Tac_R_Jump_Over);
+			break;
+
+			case 2:
+			Play_Parkour_Montage(Tic_Tac_R_Reverse_Over);
+			break;
+
+			case 3:
+			Play_Parkour_Montage(Tic_Tac_R_Speed_Over);
+			break;
+
+			default:
+			Debug::Print("Tic_Tac_R_Over_Front_Wall_ERROR_SELECTING_RANDOM_MONTAGE_TO_PLAY", FColor::Red, 21);
+		}
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.L.Over.Right.Wall"))))
+	{
+		Play_Parkour_Montage(Tic_Tac_L_Jump_Side_Over);
+	}
+
+	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Tic.Tac.R.Over.Left.Wall"))))
+	{
+		Play_Parkour_Montage(Tic_Tac_R_Jump_Side_Over);
 	}
 
 }

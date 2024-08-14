@@ -22,6 +22,7 @@
 #include "World_Actors/Wall_Pipe_Actor.h"
 #include "World_Actors/Balance_Traversal_Actor.h"
 #include "World_Actors/Wall_Vault_Actor.h"
+#include "World_Actors/Tic_Tac_Actor.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -45,25 +46,21 @@ ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitia
 	bUseControllerRotationRoll = false;
 
 	Custom_Movement_Component = Cast<UCustom_Movement_Component>(GetCharacterMovement());
-	//Set this component to replicate for network compatibility.
-	Custom_Movement_Component->SetIsReplicated(true);
-
-	// Configure character movement
-	GetCharacterMovement()->SetIsReplicated(true);
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
-	GetCharacterMovement()->RotationRate = FRotator(0.0f, 270.0f, 0.0f); // ...at this rotation rate
-
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint.
-	// instead of recompiling to adjust them
-	GetCharacterMovement()->JumpZVelocity = 700.f;
-	GetCharacterMovement()->AirControl = 0.35f;
-	GetCharacterMovement()->MaxWalkSpeed = 240.f;
-	GetCharacterMovement()->MaxAcceleration = 400.f;
-	GetCharacterMovement()->BrakingFrictionFactor = .5f;
-	GetCharacterMovement()->GroundFriction = 5.f;
-	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
-	GetCharacterMovement()->BrakingDecelerationWalking = 1000.f;
-	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
+	// instead of recompiling to adjust them.
+	Custom_Movement_Component->SetIsReplicated(true);
+	Custom_Movement_Component->bOrientRotationToMovement = true; // Character moves in the direction of input...	
+	Custom_Movement_Component->RotationRate = FRotator(0.0f, 270.0f, 0.0f); // ...at this rotation rate
+	Custom_Movement_Component->JumpZVelocity = 700.f;
+	Custom_Movement_Component->AirControl = 0.35f;
+	Custom_Movement_Component->MaxWalkSpeed = 240.f;
+	Custom_Movement_Component->MaxAcceleration = 400.f;
+	Custom_Movement_Component->BrakingFrictionFactor = .5f;
+	Custom_Movement_Component->bUseSeparateBrakingFriction = false;
+	Custom_Movement_Component->GroundFriction = 5.f;
+	Custom_Movement_Component->MinAnalogWalkSpeed = 20.f;
+	Custom_Movement_Component->BrakingDecelerationWalking = 1000.f;
+	Custom_Movement_Component->BrakingDecelerationFalling = 1500.0f;
 	
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	Camera_Boom = CreateDefaultSubobject<USpringArmComponent>(TEXT("Camera_Boom"));
@@ -157,6 +154,10 @@ void ATechnical_Animator_Character::GetLifetimeReplicatedProps(TArray<FLifetimeP
 	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Balance_Traversal_Actor, COND_OwnerOnly);
 
 	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Wall_Vault_Actor, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Tic_Tac_Actor, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Tic_Tac_Actor_Area_Box_ID, COND_OwnerOnly);
 }
 
 void ATechnical_Animator_Character::Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority)
@@ -694,6 +695,42 @@ void ATechnical_Animator_Character::On_Replication_Wall_Vault_Actor(AWall_Vault_
 		}
 	}
 	
+}
+
+void ATechnical_Animator_Character::Set_Overlapping_Tic_Tac_Actor(ATic_Tac_Actor* Overlapping_Tic_Tac_Actor, const int& Tic_Tac_Area_Box_ID)
+{
+	if(Tic_Tac_Actor && Custom_Movement_Component)
+	{
+		Tic_Tac_Actor->Show_Display_Widget(false);
+		Custom_Movement_Component->Execute_Tic_Tac(nullptr, 0);
+	}
+	
+	Tic_Tac_Actor_Area_Box_ID = Tic_Tac_Area_Box_ID;
+	Tic_Tac_Actor = Overlapping_Tic_Tac_Actor;
+
+	if(IsLocallyControlled())
+	{
+		if(Tic_Tac_Actor && Custom_Movement_Component)
+		{
+			Tic_Tac_Actor->Show_Display_Widget(true);
+			Custom_Movement_Component->Execute_Tic_Tac(Tic_Tac_Actor, Tic_Tac_Actor_Area_Box_ID);
+		}
+	}
+}
+
+void ATechnical_Animator_Character::On_Replication_Tic_Tac_Actor(ATic_Tac_Actor* Previous_Tic_Tac_Actor)
+{
+	if(Tic_Tac_Actor && Custom_Movement_Component)
+	{
+		Tic_Tac_Actor->Show_Display_Widget(true);
+		Custom_Movement_Component->Execute_Tic_Tac(Tic_Tac_Actor, Tic_Tac_Actor_Area_Box_ID);
+	}
+
+	else if(Previous_Tic_Tac_Actor)
+	{
+		Previous_Tic_Tac_Actor->Show_Display_Widget(false);
+		Custom_Movement_Component->Execute_Tic_Tac(nullptr, 0);
+	}
 }
 
 #pragma endregion

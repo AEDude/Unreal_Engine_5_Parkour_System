@@ -30,6 +30,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Initialize_Balance_Walk, "Parkour.State
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Balance_Walk, "Parkour.State.Balance.Walk");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Tic_Tac, "Parkour.State.Tic.Tac");
+
 #pragma endregion
 
 
@@ -189,6 +191,23 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Wall_Vault_Under_Bar, "Parkour
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Wall_Vault_Over_180_Shimmy, "Parkour.Action.Running.Wall.Vault.Over.180.Shimmy");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_L_Over_Front_Wall, "Parkour.Action.Tic.Tac.L.Over.Front.Wall");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_R_Over_Front_Wall, "Parkour.Action.Tic.Tac.R.Over.Front.Wall");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_L_On_Front_Wall_To_Idle, "Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Idle");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_L_On_Front_Wall_To_Run, "Parkour.Action.Tic.Tac.L.On.Front.Wall.To.Run");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_R_On_Front_Wall_To_Idle, "Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Idle");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_R_On_Front_Wall_To_Run, "Parkour.Action.Tic.Tac.R.On.Front.Wall.To.Run");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_L_Over_Right_Wall, "Parkour.Action.Tic.Tac.L.Over.Right.Wall");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_R_Over_Left_Wall, "Parkour.Action.Tic.Tac.R.Over.Left.Wall");
+
+
 #pragma endregion
 
 
@@ -247,6 +266,43 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Landing_Down_Impact, "Parkour.Landing.Down.Im
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Landing_Down_Front_L, "Parkour.Landing.Down.Front");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Landing_Down_Roll, "Parkour.Landing.Down.Roll");
+
+#pragma endregion
+
+
+#pragma region Parkour_Tic_Tac
+
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_L_Jump_On, "Parkour.Tic.Tac.L.Jump.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_L_Jump_On_Run, "Parkour.Tic.Tac.L.Jump.On.Run");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_L_Vault_On, "Parkour.Tic.Tac.L.Vault.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_R_Jump_On, "Parkour.Tic.Tac.R.Jump.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_R_Jump_On_Run, "Parkour.Tic.Tac.R.Jump.On.Run");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_R_Vault_On, "Parkour.Tic.Tac.R.Vault.On");
+
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_L_Jump_Over, "Parkour.Tic.Tac.L.Jump.Over");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_L_Reverse_Over, "Parkour.Tic.Tac.L.Reverse.Over");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_L_Speed_Over, "Parkour.Tic.Tac.L.Speed.Over");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_R_Jump_Over, "Parkour.Tic.Tac.R.Jump.Over");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_R_Reverse_Over, "Parkour.Tic.Tac.R.Reverse.Over");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_R_Speed_Over, "Parkour.Tic.Tac.R.Speed.Over");
+
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_L_Jump_Side_Over, "Parkour.Tic.Tac.L.Jump.Side.Over");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_R_Jump_Side_Over, "Parkour.Tic.Tac.R.Jump.Side.Over");
+
 
 #pragma endregion
 
