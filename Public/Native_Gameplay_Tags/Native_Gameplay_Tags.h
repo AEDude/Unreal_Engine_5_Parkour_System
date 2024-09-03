@@ -33,6 +33,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Balance_Walk);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Tic_Tac);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Stairs);
+
 
 #pragma endregion
 
@@ -233,6 +235,17 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_Backward_Left);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Direction_Backward_Right);
 
+
+#pragma endregion
+
+
+#pragma region Parkour_Direction
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Stairs_Direction_None);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Stairs_Direction_Up);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Stairs_Direction_Down);
 
 #pragma endregion
 

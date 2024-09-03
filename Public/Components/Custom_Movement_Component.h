@@ -30,6 +30,7 @@ class AWall_Pipe_Actor;
 class ABalance_Traversal_Actor;
 class AWall_Vault_Actor;
 class ATic_Tac_Actor;
+class AStairs_Actor;
 
 UENUM(BlueprintType)
 namespace E_Custom_Movement_Mode
@@ -401,6 +402,9 @@ private:
 	UPROPERTY()
 	ATic_Tac_Actor* Tic_Tac_Actor{};
 
+	UPROPERTY()
+	AStairs_Actor* Stairs_Actor{};
+
 #pragma endregion
 
 #pragma region Initialize_Parkour
@@ -551,6 +555,8 @@ private:
 
 	bool Validate_Tic_Tac_Destination_And_Lack_Of_Obstacles(const FGameplayTag& Direction_To_Tic_Tac, const bool& bCan_Tic_Tac_Over_Front_Wall);
 
+	bool Validate_Parkour_State_Stairs(const bool& bIs_Left_Foot);
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -566,6 +572,8 @@ private:
 	void Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
 
 	void Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
+
+	void Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
 
 	void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
 
@@ -681,6 +689,10 @@ private:
 
 	void Decide_Tic_Tac_Parkour_Action();
 
+	void Execute_Parkour_Stairs();
+
+	void Determine_Parkour_Stairs_Direction(AStairs_Actor* Stairs_Actor_Reference);
+
 	#pragma region Set_Network_Variables
 
 	void Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
@@ -710,6 +722,9 @@ private:
 
 	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Direction)
 	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
+
+	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Stairs_Direction)
+	FGameplayTag Parkour_Stairs_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.None")))};
 
 	UPROPERTY(Replicated)
 	FGameplayTag Parkour_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))};
@@ -771,6 +786,8 @@ private:
 	FHitResult Balance_Traversal_Actors_Best_Hit{};
 
 	FHitResult Balance_Walk_Automatic_Hop_Top_Result{};
+
+	FHitResult Validate_Parkour_State_Stairs_Hit_Result{};
 	
 	#pragma endregion
 
@@ -1146,6 +1163,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Tic_Tac_Actors_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Parkour_State_Stairs_Trace_Types{};
 	
 
 	#pragma endregion
@@ -1758,6 +1778,15 @@ void On_Replication_Parkour_Direction();
 
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
+
+UFUNCTION()
+void On_Replication_Parkour_Stairs_Direction();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
 
 UFUNCTION(Server, Reliable)
 void Server_Handle_Release_From_Shimmying(const FGameplayTag& Network_Parkour_Climb_Style, const FGameplayTag& Network_Parkour_Direction, const double& Network_Forward_Backward_Movement_Value_Absolute_Value);

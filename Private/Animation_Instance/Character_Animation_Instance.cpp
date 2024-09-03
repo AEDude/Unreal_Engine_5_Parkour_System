@@ -34,8 +34,9 @@ void UCharacter_Animation_Instance::NativeThreadSafeUpdateAnimation(float DeltaS
 
 void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
 {
-    if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
-    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
+    if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) &&
+    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))) 
     return;
     
     Super::NativeUpdateAnimation(DeltaSeconds);
@@ -66,8 +67,9 @@ void UCharacter_Animation_Instance::NativePostEvaluateAnimation()
 {
     Super::NativePostEvaluateAnimation();
 
-    if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
-    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
+    if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) &&
+    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))) 
     return;
 
     Update_Character_Rotation();
@@ -568,14 +570,15 @@ void UCharacter_Animation_Instance::Get_Predicted_Stop_Distance_Variables()
 
 void UCharacter_Animation_Instance::Get_Dynamic_Look_Offset_Values(const float& DeltaSeconds)
 {
-    if(Custom_Movement_Component == nullptr || Technical_Animator_Character == nullptr)
+    if(!Custom_Movement_Component || !Technical_Animator_Character)
     return;
    
     else
     {
-        if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
-        Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))) || 
-        (UKismetMathLibrary::Abs(Forward_Backward_Movement_Value) == 0 && UKismetMathLibrary::Abs(Right_Left_Movement_Value) == 0))
+        if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	    Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) ||
+        (Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))) ||
+        (UKismetMathLibrary::Abs(Forward_Backward_Movement_Value) == 0 && UKismetMathLibrary::Abs(Right_Left_Movement_Value) == 0)))
         {
             Left_Right_Look_Value = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 3);
         }
@@ -658,16 +661,22 @@ void UCharacter_Animation_Instance::Get_Dynamic_Look_Offset_Values(const float& 
 
 void UCharacter_Animation_Instance::Dynamic_Look_Offset_Weight(const float& DeltaSeconds)
 {
-    if(Technical_Animator_Character == nullptr)
+    if(!Technical_Animator_Character)
     return;
     
-    else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) && 
-    Parkour_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))) && 
-    !Technical_Animator_Character->Get_Is_Jogging())
-    Dynamic_Look_Weight = 25.f;
-
+    else if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) &&
+    (Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))) || 
+    !Technical_Animator_Character->Get_Is_Jogging()))
+    {
+       Dynamic_Look_Weight = 25.f; 
+    } 
+    
     else
-    Dynamic_Look_Weight = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 3.f);;
+    {
+        Dynamic_Look_Weight = UKismetMathLibrary::FInterpTo(Look_At_Value_Final_Interpolation, 0, DeltaSeconds, 3.f);
+    }
+
 }
 
 void UCharacter_Animation_Instance::Calculate_Dynamic_Lean_Angle()
@@ -725,9 +734,9 @@ void UCharacter_Animation_Instance::Set_Parkour_Wall_Run_Side_Implementation(con
     Parkour_Wall_Run_Side = New_Wall_Run_Side;
 }
 
-void UCharacter_Animation_Instance::Set_Parkour_Direction_Implementation(const FGameplayTag &New_Climb_Direction)
+void UCharacter_Animation_Instance::Set_Parkour_Direction_Implementation(const FGameplayTag& New_Parkour_Direction)
 {
-    Parkour_Direction = New_Climb_Direction;
+    Parkour_Direction = New_Parkour_Direction;
 
     if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward"))) || 
        Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Forward.Right"))) ||
@@ -761,6 +770,12 @@ void UCharacter_Animation_Instance::Set_Parkour_Direction_Implementation(const F
 
     if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))))
     Debug::Print("Parkour_Direction_None", FColor::MakeRandomColor(), 1);
+}
+
+void UCharacter_Animation_Instance::Set_Parkour_Stairs_Direction_Implementation(const FGameplayTag& New_Parkour_Stairs_Direction)
+{
+    Parkour_Stairs_Direction = New_Parkour_Stairs_Direction;
+    
 }
 
 #pragma endregion

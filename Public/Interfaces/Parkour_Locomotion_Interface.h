@@ -31,7 +31,7 @@ public:
     void Set_Parkour_State(const FGameplayTag& New_Parkour_State);
 
 
-    //Used to set new Parkour State within the Animation Blueprint. This function will be called from UCustom_Movemement_Component using
+    //Used to set new Parkour Action within the Animation Blueprint. This function will be called from UCustom_Movemement_Component using
     //the interface pointer "Parkour_Interface". Said pointer will be initialized with a cast from the pointer of the "Anim_Instance" 
     //(the class which will use this interface) to "IParkour_Locomotion_Interface". Instead of calling this function directly via the pointer 
     //previously mentioned, a version of this function prefixed with "Execute_" will be called.
@@ -68,17 +68,29 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
 
-    //Used to set new Parkour State within the Animation Blueprint. This function will be called from UCustom_Movemement_Component using
+    //Used to set new Parkour Direction within the Animation Blueprint. This function will be called from UCustom_Movemement_Component using
     //the interface pointer "Parkour_Interface". Said pointer will be initialized with a cast from the pointer of the "Anim_Instance" 
     //(the class which will use this interface) to "IParkour_Locomotion_Interface". Instead of calling this function directly via the pointer 
     //previously mentioned, a version of this function prefixed with "Execute_" will be called.
 
     //The function will be declared (just as it is here) in the animation instance followed by a declaration of its implementable version 
-    //"virtual bool Set_Climb_Direction(const FGameplayTag& New_Climb_Direction) override;". The implementable version will be defined 
+    //"virtual bool Set_Parkour_Direction(const FGameplayTag& New_Climb_Direction) override;". The implementable version will be defined 
     //in the animation instance cpp file, however, the version of the function with the "UFUNCTION(BlueprintCallable, BlueprintNativeEvent)" macro
     //will only be defined within the animation blueprint within the editor.
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    void Set_Parkour_Direction(const FGameplayTag& New_Climb_Direction);
+    void Set_Parkour_Direction(const FGameplayTag& Parkour_Direction);
+
+    //Used to set new Parkour Direction within the Animation Blueprint. This function will be called from UCustom_Movemement_Component using
+    //the interface pointer "Parkour_Interface". Said pointer will be initialized with a cast from the pointer of the "Anim_Instance" 
+    //(the class which will use this interface) to "IParkour_Locomotion_Interface". Instead of calling this function directly via the pointer 
+    //previously mentioned, a version of this function prefixed with "Execute_" will be called.
+
+    //The function will be declared (just as it is here) in the animation instance followed by a declaration of its implementable version 
+    //"virtual bool Set_Parkour_Direction(const FGameplayTag& New_Climb_Direction) override;". The implementable version will be defined 
+    //in the animation instance cpp file, however, the version of the function with the "UFUNCTION(BlueprintCallable, BlueprintNativeEvent)" macro
+    //will only be defined within the animation blueprint within the editor.
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
 
     #pragma endregion
 

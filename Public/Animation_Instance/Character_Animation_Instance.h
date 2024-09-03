@@ -299,7 +299,7 @@ protected:
 	virtual void Set_Parkour_State_Implementation(const FGameplayTag& New_Parkour_State) override;
 
 
-	/*Used to set new Parkour State within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Parkour Action within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
@@ -310,7 +310,7 @@ protected:
 	virtual void Set_Parkour_Action_Implementation(const FGameplayTag& New_Parkour_Action) override;
 
 
-	/*Used to set new Parkour State within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Parkour Climb Style within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void Set_Parkour_Climb_Style(const FGameplayTag& New_Climb_Style);
@@ -321,7 +321,7 @@ protected:
 	virtual void Set_Parkour_Climb_Style_Implementation(const FGameplayTag& New_Climb_Style) override;
     
 
-	/*Used to set new Parkour State within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Parkour Wall Run Side within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
@@ -332,15 +332,26 @@ protected:
 	virtual void Set_Parkour_Wall_Run_Side_Implementation(const FGameplayTag& New_Wall_Run_Side) override;
     
 
-	/*Used to set new Parkour State within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Parkour Direction within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    void Set_Parkour_Direction(const FGameplayTag& New_Climb_Direction);
+    void Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
 
 	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
 	interface class declared above "public IParkour_Locomotion_Interface". This is how calls to the interface functions are able 
 	to interact with this class.*/
-	virtual void Set_Parkour_Direction_Implementation(const FGameplayTag& New_Climb_Direction) override;
+	virtual void Set_Parkour_Direction_Implementation(const FGameplayTag& New_Parkour_Direction) override;
+
+
+	/*Used to set new Parkour Stairs Direction within the Animation Blueprint in the editor. This line tells this animation instance class
+	that this function can both be called and overriden from Blueprints.*/
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
+
+	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
+	interface class declared above "public IParkour_Locomotion_Interface". This is how calls to the interface functions are able 
+	to interact with this class.*/
+	virtual void Set_Parkour_Stairs_Direction_Implementation(const FGameplayTag& New_Parkour_Stairs_Direction) override;
 
 	#pragma endregion
 
@@ -461,6 +472,9 @@ protected:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Parkour_Stairs_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.None")))};
 	
 #pragma endregion
 

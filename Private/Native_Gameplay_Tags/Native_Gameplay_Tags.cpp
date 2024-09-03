@@ -32,6 +32,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Balance_Walk, "Parkour.State.Balance.Wa
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Tic_Tac, "Parkour.State.Tic.Tac");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Stairs, "Parkour.State.Stairs");
+
 #pragma endregion
 
 
@@ -231,6 +233,17 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_Backward_Left, "Parkour.Direction.B
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Direction_Backward_Right, "Parkour.Direction.Backward.Right");
 
+
+#pragma endregion
+
+
+#pragma region Parkour_Direction
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Stairs_Direction_None, "Parkour.Stairs.Direction.None");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Stairs_Direction_Up, "Parkour.Stairs.Direction.Up");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Stairs_Direction_Down, "Parkour.Stairs.Direction.Down");
 
 #pragma endregion
 

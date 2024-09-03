@@ -20,6 +20,7 @@
 #include "World_Actors/Balance_Traversal_Actor.h"
 #include "World_Actors/Wall_Vault_Actor.h"
 #include "World_Actors/Tic_Tac_Actor.h"
+#include "World_Actors/Stairs_Actor.h"
 
 UCustom_Movement_Component::UCustom_Movement_Component()
 {
@@ -2201,12 +2202,8 @@ void UCustom_Movement_Component::Validate_bIs_On_Ground()
 		bIs_On_Ground = false;
 	} */
 
-	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
-	{
-		bIs_On_Ground = false;
-	}
-
-	else
+	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) ||
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))))
 	{
 		FHitResult Out_Hit{};
 
@@ -2228,6 +2225,12 @@ void UCustom_Movement_Component::Validate_bIs_On_Ground()
 		bIs_On_Ground = true;
 
 		else
+		bIs_On_Ground = false;
+		
+	}
+
+	else
+	{
 		bIs_On_Ground = false;
 	}
 
@@ -7531,6 +7534,55 @@ bool UCustom_Movement_Component::Validate_Tic_Tac_Destination_And_Lack_Of_Obstac
 	return false;
 }
 
+bool UCustom_Movement_Component::Validate_Parkour_State_Stairs(const bool& bIs_Left_Foot)
+{
+	if(!Mesh)
+	{
+		return false;
+	}
+	
+	//Get the location of both feet.
+	FVector Foot_Location{};
+
+	if(bIs_Left_Foot)
+	{
+		Foot_Location = Mesh->GetSocketLocation(FName(TEXT("foot_l")));
+	}
+
+	else
+	{
+		Foot_Location = Mesh->GetSocketLocation(FName(TEXT("foot_r")));
+	}
+
+	const FVector Start{Foot_Location};
+	
+	const FVector End{Move_Vector_Down(Start, 40.f)};
+
+	UKismetSystemLibrary::SphereTraceSingleForObjects(
+		this,
+		Start,
+		End,
+		5.f,
+		Validate_Parkour_State_Stairs_Trace_Types,
+		false,
+		TArray<AActor*>(),
+		Debug_Action,
+		Validate_Parkour_State_Stairs_Hit_Result,
+		false
+	);
+
+	if(Validate_Parkour_State_Stairs_Hit_Result.bBlockingHit && Validate_Parkour_State_Stairs_Hit_Result.GetComponent()->ComponentHasTag(FName(TEXT("Stairs"))))
+	{
+		return true;
+	}
+
+	else
+	{
+		return false;
+	}
+
+}
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -7588,6 +7640,9 @@ void UCustom_Movement_Component::Set_Parkour_State_Attributes(const FGameplayTag
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Tic.Tac"))))
 	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Flying, true, true);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))))
+	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, false, false);
 		
 	Server_Set_Parkour_State_Attributes(Current_Parkour_State);
 		
@@ -7603,7 +7658,7 @@ void UCustom_Movement_Component::Set_Parkour_State(const FGameplayTag& New_Parko
 		Parkour_State = New_Parkour_State;
 		Parkour_Interface->Execute_Set_Parkour_State(Anim_Instance, Parkour_State);
 		Set_Parkour_State_Attributes(Parkour_State);
-		Server_Set_Parkour_State(New_Parkour_State);
+		Server_Set_Parkour_State(Parkour_State);
 	}
 
 	else return;
@@ -7618,7 +7673,7 @@ void UCustom_Movement_Component::Set_Parkour_Climb_Style(const FGameplayTag& New
 	{
 		Parkour_Climb_Style = New_Parkour_Climb_Style;
 		Parkour_Interface->Execute_Set_Parkour_Climb_Style(Anim_Instance, Parkour_Climb_Style);
-		Server_Set_Parkour_Climb_Style(New_Parkour_Climb_Style);
+		Server_Set_Parkour_Climb_Style(Parkour_Climb_Style);
 	}
 	
 	else return;
@@ -7633,7 +7688,7 @@ void UCustom_Movement_Component::Set_Parkour_Wall_Run_Side(const FGameplayTag& N
 	{
 		Parkour_Wall_Run_Side = New_Wall_Run_Side;
 		Parkour_Interface->Execute_Set_Parkour_Wall_Run_Side(Anim_Instance, Parkour_Wall_Run_Side);
-		Server_Set_Parkour_Wall_Run_Side(New_Wall_Run_Side);
+		Server_Set_Parkour_Wall_Run_Side(Parkour_Wall_Run_Side);
 	}
 
 	else return;
@@ -7648,7 +7703,22 @@ void UCustom_Movement_Component::Set_Parkour_Direction(const FGameplayTag& New_P
 	{
 		Parkour_Direction = New_Parkour_Direction;
 		Parkour_Interface->Execute_Set_Parkour_Direction(Anim_Instance, Parkour_Direction);
-		Server_Set_Parkour_Direction(New_Parkour_Direction);
+		Server_Set_Parkour_Direction(Parkour_Direction);
+	}
+
+	else return;
+}
+
+void UCustom_Movement_Component::Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction)
+{
+	if(!Parkour_Interface)
+	return;
+
+	if(Parkour_Stairs_Direction != New_Parkour_Stairs_Direction)
+	{
+		Parkour_Stairs_Direction = New_Parkour_Stairs_Direction;
+		Parkour_Interface->Execute_Set_Parkour_Stairs_Direction(Anim_Instance, Parkour_Stairs_Direction);
+		Server_Set_Parkour_Stairs_Direction(Parkour_Stairs_Direction);
 	}
 
 	else return;
@@ -9338,7 +9408,8 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 
 	Validate_bIs_On_Ground();
 
-	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))))
 	{
 		Stabilize_Movement_While_Free_Roaming();
 
@@ -9354,6 +9425,21 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 		//Set_Parkour_Wall_Run_Side(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.None"))));
 
 		Execute_Accelerating_Drop_Free_Roam();
+
+		if(Validate_Parkour_State_Stairs(true) || Validate_Parkour_State_Stairs(false))
+		{
+			Execute_Parkour_Stairs();
+		}
+
+		else if(!Validate_Parkour_State_Stairs(true) && !Validate_Parkour_State_Stairs(false))
+		{
+			Stairs_Actor = nullptr;
+			
+			MaxWalkSpeed = 240.f;
+			MaxAcceleration = 270.f;
+
+			Set_Parkour_State(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))));
+		}
 
 	}
 	
@@ -9635,7 +9721,8 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 	//If the "Parkour_State" is set to "Parkour.State.Climb" then a call to handle "Parkour_Climb_Handle_Shimmying_Movement()" should be made if the value set in the global FGameplayTag "Parkour_State"
 	//is set to "Parkour.State.Climb" and a further nested check to see if there is an animation montage playing returns false. If there is an animation playing call the funtion 
 	//"Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables".
-	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))))
 	{
 		//This variable is set within the character class in one of the calls to this function. One call sets this variable to true the other sets this variable to false. In each respective call to this function the global double variables
 		//Forward_Backward_Movement_Value" and "Right_Left_Movement_Value" is set with the correct "Y" and "X" values from the "FInputAction Value"from the character class so the gound locomotion may work as expected. (The "FInputAction Value" is converted to
@@ -9754,7 +9841,8 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 
 void UCustom_Movement_Component::Stabilize_Movement_While_Free_Roaming()
 {
-	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) &&
     Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))) 
     return;
 	
@@ -11551,7 +11639,8 @@ void UCustom_Movement_Component::Execute_Parkour_Action()
 	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Wall.Pipe.Climb"))) ||
 	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Wall.Pipe.Climb"))) || 
 	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Balance.Walk"))) ||
-	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))))
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Balance.Walk"))) || 
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))))
 	return;
 
 	Parkour_Detect_Wall();
@@ -12653,7 +12742,9 @@ void UCustom_Movement_Component::Execute_Parkour_Wall_Pipe_Climb_Action()
 
 void UCustom_Movement_Component::Execute_Start_Running()
 {
-	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || !Owning_Player_Character)
+	if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) && 
+	!Owning_Player_Character)
 	return;
 
 	/* MaxWalkSpeed = 500.f;
@@ -12674,178 +12765,185 @@ void UCustom_Movement_Component::Execute_Stop_Running()
 
 void UCustom_Movement_Component::Execute_Parkour_Jump()
 {
-	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || !Owning_Player_Character)
-	return;
-
-	//Check to see if the character is on the ground.
-	if(bIs_On_Ground)
+	if((Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) &&
+	Owning_Player_Character)
 	{
-		//Check to see if the character is stationary.
-		if(Ground_Speed == 0.f)
+		//Check to see if the character is on the ground.
+		if(bIs_On_Ground)
 		{
-			//Check to make sure both feet have contact with the ground.
-			if(Validate_Foot_Contact_With_Ground(true) && Validate_Foot_Contact_With_Ground(false))
+			//Check to see if the character is stationary.
+			if(Ground_Speed == 0.f)
 			{
-				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Up"))));
-			}
-		}
-
-		//Check to see if the character is walking.
-		else if(Ground_Speed > 0.f && !Owning_Player_Character->Get_Is_Jogging())
-		{
-			//Check to see if the left foot has contact with the gorund.
-			if(Validate_Foot_Contact_With_Ground(true))
-			{
-				//Check to see if there is a valid location for the character to land when jumping. The result of this check will determine how the character lands when jumping.
-				if(Validate_Jumping_Destination_Ground_Surface(true))
+				//Check to make sure both feet have contact with the ground.
+				if(Validate_Foot_Contact_With_Ground(true) && Validate_Foot_Contact_With_Ground(false))
 				{
-					bAccurate_Jump_Destination_Found = true;
-					bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Up"))));
 				}
-				
-				else
-				{
-					/* bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = true; */
-
-					bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = false;
-				}
-
-				
-				if(!Wall_Top_Result.bBlockingHit)
-				{
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.L"))));
-				}
-				
-				else
-				{
-					//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
-					//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
-					//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
-					const FHitResult Not_Needed_Here{};
-					Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
-
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.L.Warp"))));
-				}
-
 			}
 
-			//Check to see if the right foot has contact with the gorund.
-			else if(Validate_Foot_Contact_With_Ground(false))
+			//Check to see if the character is walking.
+			else if(Ground_Speed > 0.f && !Owning_Player_Character->Get_Is_Jogging())
 			{
-				//Check to see if there is a valid location for the character to land when jumping. The result of this check will determine how the character lands when jumping.
-				if(Validate_Jumping_Destination_Ground_Surface(true))
+				//Check to see if the left foot has contact with the gorund.
+				if(Validate_Foot_Contact_With_Ground(true))
 				{
-					bAccurate_Jump_Destination_Found = true;
+					//Check to see if there is a valid location for the character to land when jumping. The result of this check will determine how the character lands when jumping.
+					if(Validate_Jumping_Destination_Ground_Surface(true))
+					{
+						bAccurate_Jump_Destination_Found = true;
 					bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					}
+				
+					else
+					{
+						/* bAccurate_Jump_Destination_Found = false;
+						bParkour_Action_Jump_Finish_On_Blending_Out = true; */
+
+						bAccurate_Jump_Destination_Found = false;
+						bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					}
+
+				
+					if(!Wall_Top_Result.bBlockingHit)
+					{
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.L"))));
+					}
+				
+					else
+					{
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.L.Warp"))));
+					}
+
 				}
+
+				//Check to see if the right foot has contact with the gorund.
+				else if(Validate_Foot_Contact_With_Ground(false))
+				{
+					//Check to see if there is a valid location for the character to land when jumping. The result of this check will determine how the character lands when jumping.
+					if(Validate_Jumping_Destination_Ground_Surface(true))
+					{
+						bAccurate_Jump_Destination_Found = true;
+						bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					}
 			
-				else
-				{
-					/* bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = true; */
+					else
+					{
+						/* bAccurate_Jump_Destination_Found = false;
+						bParkour_Action_Jump_Finish_On_Blending_Out = true; */
 
-					bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = false;
-				}
+						bAccurate_Jump_Destination_Found = false;
+						bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					}
 
 				
-				if(!Wall_Top_Result.bBlockingHit)
-				{
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.R"))));
-				}
+					if(!Wall_Top_Result.bBlockingHit)
+					{
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.R"))));
+					}
 				
-				else
-				{
-					//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
-					//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
-					//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
-					const FHitResult Not_Needed_Here{};
-					Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+					else
+					{
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
 					
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.R.Warp"))));
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Accurate.Jump.Start.R.Warp"))));
+					}
+				}
+			}
+
+			//Check to see if the character is running.
+			else if(Owning_Player_Character->Get_Is_Jogging())
+			{
+				//Check to see if the left foot has contact with the gorund.
+				if(Validate_Foot_Contact_With_Ground(true))
+				{
+					//Check to see if there is a valid location for the character to land when jumping. The result of this check will determine how the character lands when jumping.
+					if(Validate_Jumping_Destination_Ground_Surface(false))
+					{
+						bAccurate_Jump_Destination_Found = true;
+						bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					}
+				
+					else
+					{
+						/* bAccurate_Jump_Destination_Found = false;
+						bParkour_Action_Jump_Finish_On_Blending_Out = true; */
+
+						bAccurate_Jump_Destination_Found = false;
+						bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					}
+				
+
+					if(!Wall_Top_Result.bBlockingHit)
+					{
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.L.Start"))));
+					}
+				
+					else
+					{
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+					
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.L.Start.Warp"))));
+					}
+				
+				}
+
+				//Check to see if the right foot has contact with the gorund.
+				else if(Validate_Foot_Contact_With_Ground(false))
+				{
+					if(Validate_Jumping_Destination_Ground_Surface(false))
+					{
+						bAccurate_Jump_Destination_Found = true;
+						bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					}
+				
+					else
+					{
+						/* bAccurate_Jump_Destination_Found = false;
+						bParkour_Action_Jump_Finish_On_Blending_Out = true; */
+
+						bAccurate_Jump_Destination_Found = false;
+						bParkour_Action_Jump_Finish_On_Blending_Out = false;
+					}
+				
+				
+					if(!Wall_Top_Result.bBlockingHit)
+					{
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.R.Start"))));
+					}
+				
+					else
+					{
+						//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
+						//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
+						//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
+						const FHitResult Not_Needed_Here{};
+						Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
+					
+						Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.R.Start.Warp"))));
+					}
 				}
 			}
 		}
+	}
 
-		//Check to see if the character is running.
-		else if(Owning_Player_Character->Get_Is_Jogging())
-		{
-			//Check to see if the left foot has contact with the gorund.
-			if(Validate_Foot_Contact_With_Ground(true))
-			{
-				//Check to see if there is a valid location for the character to land when jumping. The result of this check will determine how the character lands when jumping.
-				if(Validate_Jumping_Destination_Ground_Surface(false))
-				{
-					bAccurate_Jump_Destination_Found = true;
-					bParkour_Action_Jump_Finish_On_Blending_Out = false;
-				}
-				
-				else
-				{
-					/* bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = true; */
-
-					bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = false;
-				}
-				
-
-				if(!Wall_Top_Result.bBlockingHit)
-				{
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.L.Start"))));
-				}
-				
-				else
-				{
-					//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
-					//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
-					//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
-					const FHitResult Not_Needed_Here{};
-					Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
-					
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.L.Start.Warp"))));
-				}
-				
-			}
-
-			//Check to see if the right foot has contact with the gorund.
-			else if(Validate_Foot_Contact_With_Ground(false))
-			{
-				if(Validate_Jumping_Destination_Ground_Surface(false))
-				{
-					bAccurate_Jump_Destination_Found = true;
-					bParkour_Action_Jump_Finish_On_Blending_Out = false;
-				}
-				
-				else
-				{
-					/* bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = true; */
-
-					bAccurate_Jump_Destination_Found = false;
-					bParkour_Action_Jump_Finish_On_Blending_Out = false;
-				}
-				
-				
-				if(!Wall_Top_Result.bBlockingHit)
-				{
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.R.Start"))));
-				}
-				
-				else
-				{
-					//Set the global FHitResult Wall_Top_Result and the global FRotator Reversed_Fron_Wall_Normal_Z on the server and on all clients using the function &UCustom_Movement_Component::Set_Network_Variables.
-					//Said function takes the variables which need to be set for network replication via the input arguments. If a variable is not needed for replication when this function is called a local variable which matches 
-					//the repsective variable type (that's not needed) is declared with the name "Not_Needed_Here" and is called in in the appropriate location in the input field.
-					const FHitResult Not_Needed_Here{};
-					Set_Network_Variables(Wall_Top_Result, Reversed_Front_Wall_Normal_Z, Not_Needed_Here);
-					
-					Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.Jump.Front.R.Start.Warp"))));
-				}
-			}
-		}
+	else
+	{
+		return;
 	}
 }
 
@@ -14075,6 +14173,86 @@ void UCustom_Movement_Component::Decide_Tic_Tac_Parkour_Action()
 
 }
 
+void UCustom_Movement_Component::Execute_Parkour_Stairs()
+{	
+	if(Stairs_Actor)
+	{
+		Debug::Print("Executing_Parkour_Stairs_Without_Cast", FColor::Green, 90);
+		
+		MaxWalkSpeed = 70.f;
+		MaxAcceleration = 140.f;
+		
+		Set_Parkour_State(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))));
+
+		Determine_Parkour_Stairs_Direction(Stairs_Actor);
+	}
+
+	else
+	{
+		Debug::Print("Executing_Parkour_Stairs_With_Cast", FColor::Yellow, 90);
+		
+		Stairs_Actor = Cast<AStairs_Actor>(Validate_Parkour_State_Stairs_Hit_Result.GetActor());
+
+		if(Stairs_Actor)
+		{
+			MaxWalkSpeed = 70.f;
+			MaxAcceleration = 140.f;
+		
+			Set_Parkour_State(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))));
+
+			Determine_Parkour_Stairs_Direction(Stairs_Actor);
+		}
+
+		else
+		{
+			Stairs_Actor = nullptr;
+			Set_Parkour_Stairs_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.None"))));
+		}
+	}
+	
+}
+
+void UCustom_Movement_Component::Determine_Parkour_Stairs_Direction(AStairs_Actor* Stairs_Actor_Reference)
+{
+	if(!Stairs_Actor_Reference || !Owning_Player_Character)
+	{
+		return;
+	}
+
+
+	const FVector Owning_Player_Character_Forward_Vector{Owning_Player_Character->GetActorForwardVector()};
+
+	const FVector Stairs_Actor_Forward_Vector{Stairs_Actor_Reference->GetActorForwardVector()};
+
+	const double Dot_Product_Between_Owning_Player_Character_Forward_Vector_And_Stairs_Actor_Forward_Vector{FVector::DotProduct(Owning_Player_Character_Forward_Vector, Stairs_Actor_Forward_Vector)};
+
+	Debug::Print("Dot_Product_Between_Owning_Player_Character_Forward_Vector_And_Stairs_Actor_Forward_Vector: " + FString::SanitizeFloat(Dot_Product_Between_Owning_Player_Character_Forward_Vector_And_Stairs_Actor_Forward_Vector), FColor::MakeRandomColor(), 200);
+
+	if(Dot_Product_Between_Owning_Player_Character_Forward_Vector_And_Stairs_Actor_Forward_Vector > .57)
+	{
+		Set_Parkour_Stairs_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.Up"))));
+
+		Debug::Print("Parkour_Stairs_Direction: " + Parkour_Stairs_Direction.ToString(), FColor::MakeRandomColor(), 201);
+	}
+
+	else if(Dot_Product_Between_Owning_Player_Character_Forward_Vector_And_Stairs_Actor_Forward_Vector < -.57)
+	{
+		Set_Parkour_Stairs_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.Down"))));
+
+		Debug::Print("Parkour_Stairs_Direction: " + Parkour_Stairs_Direction.ToString(), FColor::MakeRandomColor(), 201);
+	}
+
+	else
+	{
+		Set_Parkour_Stairs_Direction(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.None"))));
+
+		Debug::Print("Parkour_Stairs_Direction: " + Parkour_Stairs_Direction.ToString(), FColor::MakeRandomColor(), 201);
+
+		Set_Parkour_State(FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))));
+	}
+
+}
+
 
 #pragma region Set_Network_Variables
 
@@ -14200,6 +14378,8 @@ void UCustom_Movement_Component::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 
 	DOREPLIFETIME(UCustom_Movement_Component, Parkour_Direction);
 
+	DOREPLIFETIME(UCustom_Movement_Component, Parkour_Stairs_Direction);
+
 	DOREPLIFETIME(UCustom_Movement_Component, Parkour_Action);
 
 	
@@ -14236,12 +14416,25 @@ void UCustom_Movement_Component::Server_Execute_Start_Running_Implementation()
 
 void UCustom_Movement_Component::Multicast_Execute_Start_Running_Implementation()
 {
-	if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || !Owning_Player_Character)
+	if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) && 
+	!Owning_Player_Character)
 	return;
 
-	MaxWalkSpeed = 500.f;
-	MaxAcceleration = 1000.f;
-	Owning_Player_Character->Set_Is_Jogging(true);
+	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	{
+		MaxWalkSpeed = 500.f;
+		MaxAcceleration = 1000.f;
+		Owning_Player_Character->Set_Is_Jogging(true);
+	}
+
+	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))))
+	{
+		MaxWalkSpeed = 135.f;
+		MaxAcceleration = 270.f;
+		Owning_Player_Character->Set_Is_Jogging(true);
+	}
+	
 }
 
 void UCustom_Movement_Component::Server_Execute_Stop_Running_Implementation()
@@ -14254,9 +14447,19 @@ void UCustom_Movement_Component::Multicast_Execute_Stop_Running_Implementation()
 	if(!Owning_Player_Character)
 	return;
 
-	MaxWalkSpeed = 240.f;
-	MaxAcceleration = 270.f;
-	Owning_Player_Character->Set_Is_Jogging(false);
+	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	{
+		MaxWalkSpeed = 240.f;
+		MaxAcceleration = 270.f;
+		Owning_Player_Character->Set_Is_Jogging(false);
+	}
+
+	else if(Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))))
+	{
+		MaxWalkSpeed = 70.f;
+		MaxAcceleration = 140.f;
+		Owning_Player_Character->Set_Is_Jogging(false);
+	}
 }
 
 void UCustom_Movement_Component::Server_Set_Parkour_State_Attributes_Implementation(const FGameplayTag& Current_Parkour_State)
@@ -14304,6 +14507,9 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_State_Attributes_Implemen
 
 	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Tic.Tac"))))
 	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Flying, true, true);
+
+	else if(Current_Parkour_State == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs"))))
+	Parkour_State_Settings(ECollisionEnabled::QueryAndPhysics, EMovementMode::MOVE_Walking, false, false);
 
 }
 
@@ -14458,6 +14664,44 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_Direction_Implementation(
 	{
 		Parkour_Direction = New_Parkour_Direction;
 		Parkour_Interface->Execute_Set_Parkour_Direction(Anim_Instance, Parkour_Direction);
+	}
+
+	else return;
+}
+
+void UCustom_Movement_Component::Server_Set_Parkour_Stairs_Direction_Implementation(const FGameplayTag& New_Parkour_Stairs_Direction)
+{
+	if(!Parkour_Interface)
+	return;
+
+	if(Parkour_Stairs_Direction != New_Parkour_Stairs_Direction)
+	{
+		Parkour_Stairs_Direction = New_Parkour_Stairs_Direction;
+		Parkour_Interface->Execute_Set_Parkour_Stairs_Direction(Anim_Instance, Parkour_Stairs_Direction);
+	}
+
+	else return;
+	
+	//Multicast_Set_Parkour_Stairs_Direction(New_Parkour_Stairs_Direction);
+}
+
+void UCustom_Movement_Component::On_Replication_Parkour_Stairs_Direction()
+{
+	if(!Parkour_Interface)
+	return;
+
+	Parkour_Interface->Execute_Set_Parkour_Direction(Anim_Instance, Parkour_Stairs_Direction);
+}
+
+void UCustom_Movement_Component::Multicast_Set_Parkour_Stairs_Direction_Implementation(const FGameplayTag& New_Parkour_Stairs_Direction)
+{
+	if(!Parkour_Interface)
+	return;
+
+	if(Parkour_Stairs_Direction != New_Parkour_Stairs_Direction)
+	{
+		Parkour_Stairs_Direction = New_Parkour_Stairs_Direction;
+		Parkour_Interface->Execute_Set_Parkour_Stairs_Direction(Anim_Instance, Parkour_Stairs_Direction);
 	}
 
 	else return;
@@ -15395,6 +15639,8 @@ void UCustom_Movement_Component::Multicast_Set_Parkour_Action_Implementation(con
 
 	else if(New_Parkour_Action == FGameplayTag::RequestGameplayTag((FName(TEXT("Parkour.Action.Running.Wall.Vault.Over.180.Shimmy")))))
 	{
+		CharacterOwner->GetCapsuleComponent()->SetCapsuleHalfHeight(48.f);
+		
 		//Execute a switch statement to play the random montage.
 		switch(Network_Random_Montage_To_Play)
 		{
