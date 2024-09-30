@@ -20,6 +20,7 @@ class AWall_Pipe_Actor;
 class ABalance_Traversal_Actor;
 class AWall_Vault_Actor;
 class ATic_Tac_Actor;
+class AStairs_Actor;
 
 struct FInputActionValue;
 
@@ -39,27 +40,30 @@ private:
 #pragma region Components
 
 	UPROPERTY()
-	ATechnical_Animator_Character* Character_Reference;
+	ATechnical_Animator_Character* Character_Reference{};
 
 	/** Camera boom positioning the camera behind the character */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	USpringArmComponent* Camera_Boom;
+	USpringArmComponent* Camera_Boom{};
 
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
-	UCameraComponent* Follow_Camera;
+	UCameraComponent* Follow_Camera{};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	UCustom_Movement_Component* Custom_Movement_Component;
+	UCustom_Movement_Component* Custom_Movement_Component{};
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement, meta = (AllowPrivateAccess = "true"))
-	UMotionWarpingComponent* Motion_Warping_Component;
+	UMotionWarpingComponent* Motion_Warping_Component{};
 
 	UPROPERTY()
-	UCharacter_Animation_Instance* Character_Animation_Instance;
+	UCharacter_Animation_Instance* Character_Animation_Instance{};
 	
 	UPROPERTY()
-	ACharacter_Direction_Arrow* Character_Direction_Arrow;
+	ACharacter_Direction_Arrow* Character_Direction_Arrow{};
+
+	UPROPERTY()
+	USkeletalMeshComponent* Character_Mesh{};
 
 
 #pragma endregion
@@ -112,10 +116,16 @@ private:
 	UInputAction* Parkour_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Parkour_Action_Double_Tap{};
+	UInputAction* Parkour_Double_Tap_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Exit_Parkour_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Crouch_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Parkour_Slide_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Wall_Run_Action{};
@@ -125,6 +135,9 @@ private:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Debug_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Time_Dilation_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Climb_Action{};
@@ -147,6 +160,10 @@ private:
 	void Handle_Climb_Movement_Input(const FInputActionValue& Value);
 
 	void Handle_Take_Cover_Movement_Input(const FInputActionValue& Value);
+
+	void On_Crouch(const FInputActionValue& Value);
+
+	void On_Parkour_Slide_Started(const FInputActionValue& Value);
 	
 	void On_Jogging_Started(const FInputActionValue& Value);
 
@@ -166,6 +183,10 @@ private:
 
 	void On_Debug_Action(const FInputActionValue& Value);
 
+	void On_Time_Dilation_Started(const FInputActionValue& Value);
+
+	void On_Time_Dilation_Ended(const FInputActionValue& Value);
+
 	void On_Climb_Action_Started(const FInputActionValue& Value);
 
 	void On_Climb_Hop_Action_Started(const FInputActionValue& Value);
@@ -180,17 +201,17 @@ private:
 
 #pragma region Variables
 
-double Up_Down_Look_Value{};
+	double Up_Down_Look_Value{};
 
-double Left_Right_Look_Value{};
+	double Left_Right_Look_Value{};
 
-UPROPERTY(Replicated)
-bool bIs_Jogging{false};
+	UPROPERTY(Replicated)
+	bool bIs_Jogging{false};
 
-int Debug_Selector{};
+	int Debug_Selector{};
 
-UPROPERTY(Replicated)
-bool bDrop_To_Shimmy{false};
+	UPROPERTY(Replicated)
+	bool bDrop_To_Shimmy{false};
 
 #pragma endregion
 
@@ -235,6 +256,12 @@ void On_Replication_Tic_Tac_Actor(ATic_Tac_Actor* Previous_Tic_Tac_Actor);
 
 UPROPERTY(Replicated)
 int Tic_Tac_Actor_Area_Box_ID{};
+
+UPROPERTY(ReplicatedUsing = On_Replication_Stairs_Actor)
+AStairs_Actor* Stairs_Actor{};
+
+UFUNCTION()
+void On_Replication_Stairs_Actor();
 
 
 #pragma endregion
@@ -283,6 +310,8 @@ public:
 	void Set_Overlapping_Wall_Vault_Actor(AWall_Vault_Actor* Overlapping_Wall_Vault_Actor);
 
 	void Set_Overlapping_Tic_Tac_Actor(ATic_Tac_Actor* Overlapping_Tic_Tac_Actor, const int& Tic_Tac_Area_Box_ID);
+
+	void Set_Overlapping_Stairs_Actor(AStairs_Actor* Overlapping_Stairs_Actor);
 
 };
 

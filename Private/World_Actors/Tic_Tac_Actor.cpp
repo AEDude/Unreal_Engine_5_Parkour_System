@@ -14,6 +14,9 @@ ATic_Tac_Actor::ATic_Tac_Actor()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
 
+	//Set this actor to replicate. This will give the server authority.
+	bReplicates = true;
+
 	Root_Component = CreateDefaultSubobject<USceneComponent>(FName(TEXT("Scene Root")));
 	SetRootComponent(Root_Component);
 

@@ -13,6 +13,9 @@ ABalance_Traversal_Actor::ABalance_Traversal_Actor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = false;
+	
+	//Set this actor to replicate. This will give the server authority.
+	bReplicates = true;
 
 	Default_Scene_Root = CreateDefaultSubobject<USceneComponent>(FName(TEXT("Default_Scene_Root")));
 	SetRootComponent(Default_Scene_Root);

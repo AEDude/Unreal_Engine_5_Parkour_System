@@ -52,6 +52,8 @@ protected:
 	
 	#pragma region Helper_Functions
 
+	FVector Move_Vector_Down(const FVector& Initial_Location, const float& Move_Value) const;
+	
 	FVector Move_Vector_Forward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value);
 
 	#pragma endregion

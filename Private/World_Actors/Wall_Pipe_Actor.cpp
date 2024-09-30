@@ -16,6 +16,8 @@ AWall_Pipe_Actor::AWall_Pipe_Actor()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
+	//Set this actor to replicate. This will give the server authority.
 	bReplicates = true;
 
 	//Create the scene component which will be the root component.
@@ -52,18 +54,27 @@ void AWall_Pipe_Actor::BeginPlay()
 	{
 		Display_Widget->SetVisibility(false);
 	}
+
+	Generate_Custom_Wall_Pipe_Actor_Forward_Vector();
+
 }
 
 // Called every frame
 void AWall_Pipe_Actor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	Generate_Custom_Wall_Pipe_Actor_Forward_Vector();
 }
 
 
 #pragma region Helper_Functions
+
+FVector AWall_Pipe_Actor::Move_Vector_Down(const FVector& Initial_Location, const float& Move_Value) const
+{
+	const FVector Move_Direction{-UKismetMathLibrary::GetUpVector(GetActorRotation())};
+	const FVector Destination{Initial_Location + (Move_Direction * Move_Value)};
+	
+	return Destination;
+}
 
 FVector AWall_Pipe_Actor::Move_Vector_Forward(const FVector& Initial_Location, const FRotator& Rotation, const float& Move_Value)
 {
@@ -76,16 +87,20 @@ FVector AWall_Pipe_Actor::Move_Vector_Forward(const FVector& Initial_Location, c
 #pragma endregion
 
 
-#pragma region Traces
+#pragma region Ray_Casts
 
 void AWall_Pipe_Actor::Generate_Custom_Wall_Pipe_Actor_Forward_Vector()
 {
 	const FVector Actor_Location{GetActorLocation()};
-	const FVector Actor_Forward_Vector{GetActorForwardVector()};
+
 	const FRotator Actor_Rotation{GetActorRotation()};
 
-	const FVector Start{Actor_Location};
-	const FVector End{Move_Vector_Forward(Start, Actor_Rotation, 70.f)};
+
+	const FVector Offset_Vector_Down{Move_Vector_Down(Actor_Location, 7.f)};
+
+	const FVector Start{Offset_Vector_Down};
+	
+	const FVector End{Move_Vector_Forward(Start, Actor_Rotation, 75.f)};
 	
 	UKismetSystemLibrary::LineTraceSingleForObjects(
 		this,
@@ -94,7 +109,7 @@ void AWall_Pipe_Actor::Generate_Custom_Wall_Pipe_Actor_Forward_Vector()
 		Wall_Pipe_Forward_Vector_Trace_Types,
 		false,
 		TArray<AActor*>(),
-		EDrawDebugTrace::None,
+		EDrawDebugTrace::ForOneFrame,
 		Custom_Wall_Pipe_Actor_Forward_Vector_Hit_Result,
 		false
 	);

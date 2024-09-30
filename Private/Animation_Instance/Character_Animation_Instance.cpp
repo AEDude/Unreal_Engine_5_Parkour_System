@@ -34,12 +34,15 @@ void UCharacter_Animation_Instance::NativeThreadSafeUpdateAnimation(float DeltaS
 
 void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
 {
-    if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
+    if((!Technical_Animator_Character || Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
 	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) &&
-    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))) 
-    return;
-    
+    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
+    {
+        return;
+    } 
+   
     Super::NativeUpdateAnimation(DeltaSeconds);
+
 
     Get_Dynamic_Look_Offset_Values(DeltaSeconds);
 
@@ -61,6 +64,8 @@ void UCharacter_Animation_Instance::NativeUpdateAnimation(float DeltaSeconds)
     Debug::Print("Jogging_Locomotion_Start_Angle: " + FString::FromInt(Locomotion_Start_Angle), FColor::Yellow, 7);
 
     Calculate_Dynamic_Lean_Angle();
+    
+
 }
 
 void UCharacter_Animation_Instance::NativePostEvaluateAnimation()
@@ -69,46 +74,74 @@ void UCharacter_Animation_Instance::NativePostEvaluateAnimation()
 
     if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
 	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) &&
-    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))) 
-    return;
-
+    Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
+    {
+       return; 
+    } 
+    
     Update_Character_Rotation();
 }
 
 void UCharacter_Animation_Instance::Update_Variables_On_Secondary_Thread(const float& DeltaSeconds)
 {
-    if(!Technical_Animator_Character || !Custom_Movement_Component) return;
-
+    if(!Technical_Animator_Character || !Custom_Movement_Component)
+    {
+        return;
+    }
+    
+    Get_Is_Crouching();
+    
     Get_Input_Vector();
+
     Get_Acceleration();
+
     Get_Ground_Speed();
+
     Get_Air_Speed();
+
     Get_Velocity();
+
     Get_Is_Jogging();
+
     Calculate_Direction();
+
     Get_Predicted_Stop_Distance_Variables();
+
     Get_Should_Move();
+
     Get_Is_Falling();
-    // Get_Is_Climbing();
-    // Get_Climb_Velocity();
-    // Get_Is_Taking_Cover();
-    // Get_Take_Cover_Velocity();
 
     if(Custom_Movement_Component)
     {
         Forward_Backward_Movement_Value = Custom_Movement_Component->Forward_Backward_Movement_Value;
         Right_Left_Movement_Value = Custom_Movement_Component->Right_Left_Movement_Value; 
     }
+
+    // Get_Is_Climbing();
+
+    // Get_Climb_Velocity();
+
+    // Get_Is_Taking_Cover();
+
+    // Get_Take_Cover_Velocity();
 }
 
 
 #pragma region Custom_Locomotion_Helper
 
+void UCharacter_Animation_Instance::Get_Is_Crouching()
+{
+    if(Technical_Animator_Character)
+    {
+        bIs_Crouching = Technical_Animator_Character->bIsCrouched;
+    }
+}
+
 void UCharacter_Animation_Instance::Get_Input_Vector()
 {
    if(Custom_Movement_Component)
    {
-    Input_Vector = Custom_Movement_Component->GetLastInputVector();
+        Input_Vector = Custom_Movement_Component->GetLastInputVector();
    }
 }
 
@@ -135,7 +168,10 @@ void UCharacter_Animation_Instance::Get_Ground_Speed()
 void UCharacter_Animation_Instance::Get_Air_Speed()
 {
    if(Technical_Animator_Character)
-   Air_Speed = Technical_Animator_Character->GetVelocity().Z;
+   {
+        Air_Speed = Technical_Animator_Character->GetVelocity().Z;
+   }
+   
 }
 
 void UCharacter_Animation_Instance::Get_Velocity()
@@ -212,9 +248,11 @@ void UCharacter_Animation_Instance::Get_Take_Cover_Velocity()
 
 void UCharacter_Animation_Instance::Find_Ground_Locomotion_State()
 {
-    if(Technical_Animator_Character == nullptr)
-    return;
-
+    if(!Technical_Animator_Character)
+    {
+       return; 
+    }
+    
     //Get the dot product between the acceleration and the velocity. This is used to determine whether the character should pivot or not (change direction abruptly).
     //When the acceleration value is equal to 0 (the input from the controller is commanding the character to go in a different direction than the direction of the velocity).
     //Therefore the character will begin braking and in result the dot product will be -1.
@@ -251,7 +289,12 @@ void UCharacter_Animation_Instance::Find_Ground_Locomotion_State()
 
 void UCharacter_Animation_Instance::Idle_Turn_In_Place()
 {
-    Turn_In_Place_Starting_Rotation = TryGetPawnOwner()->GetActorRotation();
+    if(!Technical_Animator_Character)
+    {
+        return;
+    }
+    
+    Turn_In_Place_Starting_Rotation = Technical_Animator_Character->GetActorRotation();
     Turn_In_Place_Delta = UKismetMathLibrary::NormalizedDeltaRotator(Primary_Rotation, Turn_In_Place_Starting_Rotation).Yaw;
     
     if(UKismetMathLibrary::Abs(Turn_In_Place_Delta) > Turn_In_Place_Minimum_Threshold)
@@ -265,14 +308,12 @@ void UCharacter_Animation_Instance::Idle_Turn_In_Place()
         {
             bTurn_In_Place_Flip_Flop = false;
             bDisable_Turn_In_Place = true;
-            return; 
         }
 
         else if(!bTurn_In_Place_Flip_Flop)
         {
             bTurn_In_Place_Flip_Flop = true;
             bDisable_Turn_In_Place = true;
-            return;
         }
     }
 
@@ -280,21 +321,26 @@ void UCharacter_Animation_Instance::Idle_Turn_In_Place()
     {
         bCan_Turn_In_Place = false;
         bDisable_Turn_In_Place = true;
-        return;
     }
 }
 
 void UCharacter_Animation_Instance::Update_Rotation_Turn_In_Place()
 {
-    if(bCan_Turn_In_Place && GetCurveValue(FName(TEXT("Turn_In_Place"))) > 0.f)
+    if(!Technical_Animator_Character)
     {
+        return;
+    }
+
+    else if(bCan_Turn_In_Place && GetCurveValue(FName(TEXT("Turn_In_Place"))) > 0.f)
+    {
+        Turn_In_Place_Starting_Rotation = Technical_Animator_Character->GetActorRotation();
+
         const double Characters_Rotation_After_Turning_In_Place{
-            (GetCurveValue(FName(TEXT("Rotation_Turn_In_Place"))) * Turn_In_Place_Target_Angle) + 
-            Turn_In_Place_Starting_Rotation.Yaw};
+            ((GetCurveValue(FName(TEXT("Rotation_Turn_In_Place"))) * Turn_In_Place_Target_Angle / 17.f) + 
+            Turn_In_Place_Starting_Rotation.Yaw)};
 
         Technical_Animator_Character->SetActorRotation(FRotator(0.f, Characters_Rotation_After_Turning_In_Place, 0.f));
 
-        Turn_In_Place_Starting_Rotation = TryGetPawnOwner()->GetActorRotation();
         Turn_In_Place_Delta = UKismetMathLibrary::NormalizedDeltaRotator(Primary_Rotation, Turn_In_Place_Starting_Rotation).Yaw; 
     }
 
@@ -302,6 +348,7 @@ void UCharacter_Animation_Instance::Update_Rotation_Turn_In_Place()
     {
         bCan_Turn_In_Place = false;
     }
+
 }
 
 void UCharacter_Animation_Instance::Track_Ground_Locomotion_State_Idle(const EGround_Locomotion_State& Ground_Locomotion_State_Reference)
@@ -315,7 +362,7 @@ void UCharacter_Animation_Instance::Track_Ground_Locomotion_State_Idle(const EGr
 
             //On_Enter
             Debug::Print("Update_On_Idle_Enter", FColor::Yellow, 5);
-            //Idle_Turn_In_Place();
+            Idle_Turn_In_Place();
 
             Do_Once_1 = false;
         }
@@ -446,19 +493,16 @@ void UCharacter_Animation_Instance::Find_Locomotion_Start_Direction(const float&
     if(UKismetMathLibrary::InRange_FloatFloat(Starting_Angle, -70.f, 70.f, true, true))
     {
         Ground_Locomotion_Starting_Direction = EGround_Locomotion_Starting_Direction::EGLSD_Forward;
-        return;
     }
 
     else if(UKismetMathLibrary::InRange_FloatFloat(Starting_Angle, 70, 130.f, true, true))
     {
        Ground_Locomotion_Starting_Direction = EGround_Locomotion_Starting_Direction::EGLSD_Right;
-       return;
     }
     
     else if(UKismetMathLibrary::InRange_FloatFloat(Starting_Angle, -130.f, -70.f, true, true))
     {
         Ground_Locomotion_Starting_Direction = EGround_Locomotion_Starting_Direction::EGLSD_Left;
-        return;
     }
 
     else
@@ -466,20 +510,23 @@ void UCharacter_Animation_Instance::Find_Locomotion_Start_Direction(const float&
         if(UKismetMathLibrary::InRange_FloatFloat(Starting_Angle, 130.f, 180.f, true, true))
         {
             Ground_Locomotion_Starting_Direction = EGround_Locomotion_Starting_Direction::EGLSD_Backward_Right;
-            return;
         }
 
         else
         {
             Ground_Locomotion_Starting_Direction = EGround_Locomotion_Starting_Direction::EGLSD_Backward_Left;
-            return;
         }
     }
 }
 
 void UCharacter_Animation_Instance::Update_On_Movement_Enter()
 {
-    Starting_Rotation = TryGetPawnOwner()->GetActorRotation();
+    if(!Technical_Animator_Character)
+    {
+        return;
+    }
+    
+    Starting_Rotation = Technical_Animator_Character->GetActorRotation();
 
     Primary_Rotation = UKismetMathLibrary::MakeRotFromX(Input_Vector); 
 
@@ -512,7 +559,8 @@ void UCharacter_Animation_Instance::Update_Character_Rotation()
 
 void UCharacter_Animation_Instance::Update_Character_Rotation_While_Moving()
 {
-    if(Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) && 
+    if(Technical_Animator_Character && 
+    Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) && 
     Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))))
     {
         const double Delta_Time{UGameplayStatics::GetWorldDeltaSeconds(this)};
@@ -550,29 +598,44 @@ void UCharacter_Animation_Instance::Update_Locomotion_Play_Rate()
 
 void UCharacter_Animation_Instance::Get_Predicted_Stop_Distance_Variables()
 {
-    bUse_Seperate_Braking_Friction = Custom_Movement_Component->bUseSeparateBrakingFriction;
-    Braking_Friction = Custom_Movement_Component->BrakingFriction;
-    Ground_Friction = Custom_Movement_Component->GroundFriction;
-    Braking_Friction_Factor = Custom_Movement_Component->BrakingFrictionFactor;
-    Braking_Deceleration_Walking = Custom_Movement_Component->BrakingDecelerationWalking;
-
-    if(Ground_Locomotion_State == EGround_Locomotion_State::EGLS_Idle)
+    if(!Custom_Movement_Component)
     {
-        Distance_To_Match = UAnimCharacterMovementLibrary::PredictGroundMovementStopLocation(Velocity, bUse_Seperate_Braking_Friction, Braking_Friction, 
-                                                                                             Ground_Friction, Braking_Friction_Factor, Braking_Deceleration_Walking).Length(); 
+        return;
     }
 
     else
     {
-        Distance_To_Match = 0.f;
+        bUse_Seperate_Braking_Friction = Custom_Movement_Component->bUseSeparateBrakingFriction;
+
+        Braking_Friction = Custom_Movement_Component->BrakingFriction;
+
+        Ground_Friction = Custom_Movement_Component->GroundFriction;
+
+        Braking_Friction_Factor = Custom_Movement_Component->BrakingFrictionFactor;
+
+        Braking_Deceleration_Walking = Custom_Movement_Component->BrakingDecelerationWalking;
+    
+        if(Ground_Locomotion_State == EGround_Locomotion_State::EGLS_Idle)
+        {
+            Distance_To_Match = UAnimCharacterMovementLibrary::PredictGroundMovementStopLocation(Velocity, bUse_Seperate_Braking_Friction, Braking_Friction, 
+                                                                                                 Ground_Friction, Braking_Friction_Factor, Braking_Deceleration_Walking).Length(); 
+        }
+
+        else
+        {
+            Distance_To_Match = 0.f;
+        }
     }
+
 }
 
 void UCharacter_Animation_Instance::Get_Dynamic_Look_Offset_Values(const float& DeltaSeconds)
 {
     if(!Custom_Movement_Component || !Technical_Animator_Character)
-    return;
-   
+    {
+        return;
+    }
+    
     else
     {
         if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
@@ -638,7 +701,7 @@ void UCharacter_Animation_Instance::Get_Dynamic_Look_Offset_Values(const float& 
     
         const double Look_At_Value_Clamped{UKismetMathLibrary::ClampAngle(Left_Right_Look_Value, -1, 1)};
 
-        Look_At_Value_Final_Interpolation = UKismetMathLibrary::FInterpTo(Initial_Left_Right_Look_Value_Raw, Look_At_Value_Clamped, DeltaSeconds, 100);
+        Look_At_Value_Final_Interpolation = UKismetMathLibrary::FInterpTo(Initial_Left_Right_Look_Value_Raw, Look_At_Value_Clamped, DeltaSeconds, 10);
 
         Left_Right_Look_Value = Look_At_Value_Final_Interpolation;
 	
@@ -662,8 +725,10 @@ void UCharacter_Animation_Instance::Get_Dynamic_Look_Offset_Values(const float& 
 void UCharacter_Animation_Instance::Dynamic_Look_Offset_Weight(const float& DeltaSeconds)
 {
     if(!Technical_Animator_Character)
-    return;
-    
+    {
+        return;
+    }
+   
     else if((Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))) || 
 	Parkour_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Stairs")))) &&
     (Parkour_Action != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action"))) || 
@@ -682,8 +747,10 @@ void UCharacter_Animation_Instance::Dynamic_Look_Offset_Weight(const float& Delt
 void UCharacter_Animation_Instance::Calculate_Dynamic_Lean_Angle()
 {
     if(!Technical_Animator_Character)
-    return;
-
+    {
+       return; 
+    }
+    
     //Set the value for the character yaw during the previous frame with the value that is set within the global float variable "Character_Yaw". 
     //This will be subtracted from the yaw of the current frame to get the delta between the two variables which will then be used to get the rate of change.. 
     const float Character_Yaw_During_Last_Tick{Character_Yaw};
@@ -762,14 +829,7 @@ void UCharacter_Animation_Instance::Set_Parkour_Direction_Implementation(const F
     }
             
 
-    if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Right"))))
-    Debug::Print("Parkour_Direction_Right", FColor::MakeRandomColor(), 1);
-
-    else if((Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.Left")))))
-    Debug::Print("Parkour_Direction_Left", FColor::MakeRandomColor(), 1);
-
-    if(Parkour_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None"))))
-    Debug::Print("Parkour_Direction_None", FColor::MakeRandomColor(), 1);
+    Debug::Print("Parkour_Direction: " + Parkour_Direction.ToString(), FColor::MakeRandomColor(), 2000);
 }
 
 void UCharacter_Animation_Instance::Set_Parkour_Stairs_Direction_Implementation(const FGameplayTag& New_Parkour_Stairs_Direction)
@@ -778,10 +838,15 @@ void UCharacter_Animation_Instance::Set_Parkour_Stairs_Direction_Implementation(
     
 }
 
+void UCharacter_Animation_Instance::Set_Parkour_Slide_Side_Implementation(const FGameplayTag& New_Parkour_Slide_Side)
+{
+    Parkour_Slide_Side = New_Parkour_Slide_Side;
+}
+
 #pragma endregion
 
-
 #pragma region Limbs_Location_And_Rotations
+
 
 #pragma region Left_Limbs
 
@@ -873,7 +938,6 @@ void UCharacter_Animation_Instance::Set_Left_Foot_Shimmy_Rotation_Implementation
 }
 
 #pragma endregion
-
 
 #pragma region Right_Limbs
 

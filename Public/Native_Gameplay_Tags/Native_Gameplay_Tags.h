@@ -35,6 +35,10 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Tic_Tac);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Stairs);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Initialize_Slide);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_State_Slide);
+
 
 #pragma endregion
 
@@ -211,6 +215,40 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_L_Over_Right_Wall);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Tic_Tac_R_Over_Left_Wall);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Slide_L_Start);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Slide_R_Start);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Slide_L_Finish);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Slide_R_Finish);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Slide_L_To_R);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Slide_R_To_L);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Unarmed_Crouch_Entry);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Unarmed_Crouch_Exit);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Vertical_Wall_Run_L_Small_Failed);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Vertical_Wall_Run_R_Small_Failed);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Vertical_Wall_Run_L_Large_Failed);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Vertical_Wall_Run_R_Large_Failed);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Vertical_Wall_Run_L_Large);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Vertical_Wall_Run_L_Small);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Vertical_Wall_Run_R_Large);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Action_Vertical_Wall_Run_R_Small);
+
+
+
 
 #pragma endregion
 
@@ -288,7 +326,6 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Landing_Down_Roll);
 
 #pragma region Parkour_Tic_Tac
 
-
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Jump_On);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Jump_On_Run);
@@ -319,6 +356,16 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_L_Jump_Side_Over);
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Tic_Tac_R_Jump_Side_Over);
 
+#pragma endregion
+
+
+#pragma region Parkour_Slide
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Slide_Side_None);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Slide_Side_Left);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Parkour_Slide_Side_Right);
 
 #pragma endregion
 

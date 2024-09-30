@@ -34,6 +34,10 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Tic_Tac, "Parkour.State.Tic.Tac");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Stairs, "Parkour.State.Stairs");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Initialize_Slide, "Parkour.State.Initialize.Slide");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Slide, "Parkour.State.Slide");
+
 #pragma endregion
 
 
@@ -209,6 +213,38 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_L_Over_Right_Wall, "Parkour.Ac
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Tic_Tac_R_Over_Left_Wall, "Parkour.Action.Tic.Tac.R.Over.Left.Wall");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Slide_L_Start, "Parkour.Action.Slide.L.Start");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Slide_R_Start, "Parkour.Action.Slide.R.Start");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Slide_L_Finish, "Parkour.Action.Slide.L.Finish");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Slide_R_Finish, "Parkour.Action.Slide.R.Finish");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Slide_L_To_R, "Parkour.Action.Slide.L.To.R");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Slide_R_To_L, "Parkour.Action.Slide.R.To.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Unarmed_Crouch_Entry, "Parkour.Action.Unarmed.Crouch.Entry");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Unarmed_Crouch_Exit, "Parkour.Action.Unarmed.Crouch.Exit");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_L_Small_Failed, "Parkour.Action.Vertical.Wall.Run.L.Small.Failed");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_R_Small_Failed, "Parkour.Action.Vertical.Wall.Run.R.Small.Failed");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_L_Large_Failed, "Parkour.Action.Vertical.Wall.Run.L.Large.Failed");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_R_Large_Failed, "Parkour.Action.Vertical.Wall.Run.R.Large.Failed");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_L_Large, "Parkour.Action.Vertical.Wall.Run.L.Large");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_L_Small, "Parkour.Action.Vertical.Wall.Run.L.Small");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_R_Large, "Parkour.Action.Vertical.Wall.Run.R.Large");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_R_Small, "Parkour.Action.Vertical.Wall.Run.L.Small");
+
 
 #pragma endregion
 
@@ -316,6 +352,17 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_L_Jump_Side_Over, "Parkour.Tic.Tac.L.
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Tic_Tac_R_Jump_Side_Over, "Parkour.Tic.Tac.R.Jump.Side.Over");
 
+
+#pragma endregion
+
+
+#pragma region Parkour_Slide
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Slide_Side_None, "Parkour.Slide.Side.None");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Slide_Side_Left, "Parkour.Slide.Side.Left");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Slide_Side_Right, "Parkour.Slide.Side.Right");
 
 #pragma endregion
 

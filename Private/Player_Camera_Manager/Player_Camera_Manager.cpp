@@ -44,4 +44,5 @@ void APlayer_Camera_Manager::UpdateViewTargetInternal(FTViewTarget& OutVT, float
     OutVT.POV.Rotation = New_Camera_Rotation;
 
     OutVT.POV.FOV = New_Camera_FOV;
+    
 }

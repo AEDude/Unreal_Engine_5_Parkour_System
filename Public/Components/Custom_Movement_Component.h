@@ -421,7 +421,7 @@ private:
 
 #pragma endregion
 
-#pragma region Parkour_Traces
+#pragma region Parkour_Ray_Casts
 
 	void Parkour_Detect_Wall();
 
@@ -557,6 +557,10 @@ private:
 
 	bool Validate_Parkour_State_Stairs(const bool& bIs_Left_Foot);
 
+	FHitResult Obtain_Parkour_Slide_Location();
+
+	bool Validate_Enough_Room_For_Character_To_Stand_After_Parkour_Slide();
+
 #pragma endregion
 
 #pragma region Parkour_Core
@@ -574,6 +578,8 @@ private:
 	void Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
 
 	void Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
+
+	void Set_Parkour_Slide_Side(const FGameplayTag& New_Parkour_Slide_Side);
 
 	void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
 
@@ -619,9 +625,9 @@ private:
 
 	FGameplayTag Get_Controller_Direction() const;
 
-	void Parkour_Shimmy_Handle_Corner_Movement();
+	void Parkour_Shimmy_Decide_Corner_Movement();
 
-	void Parkour_Shimmy_Corner_Movement(const FHitResult& New_Corner_Detect_Wall_Hit_Result, const FHitResult& New_Corner_Wall_Top_Result);
+	void Parkour_Shimmy_Handle_Corner_Movement(const FHitResult& New_Corner_Detect_Wall_Hit_Result, const FHitResult& New_Corner_Wall_Top_Result);
 
 	void Set_bOut_Corner_Movement_To_False();
 
@@ -689,13 +695,21 @@ private:
 
 	void Decide_Tic_Tac_Parkour_Action();
 
-	void Execute_Parkour_Stairs();
-
 	void Determine_Parkour_Stairs_Direction(AStairs_Actor* Stairs_Actor_Reference);
 
-	#pragma region Set_Network_Variables
+	void Decide_Parkour_Slide_Side();
 
-	void Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
+	void Parkour_Slide_Handle_Slide_Movement();
+
+	FVector Calculate_Momentum_For_Parkour_Slide(const FVector& Dynamic_Current_Floor_Impact_Normal_Reference);
+
+	void Update_Charater_Rotation_While_Sliding(const FVector& Dynamic_Current_Floor_Impact_Normal_Reference);
+
+	void Validate_If_Parkour_Slide_Should_Continue();
+
+	void Exit_Out_Of_Parkour_Slide();
+
+	#pragma region Set_Network_Variables
 
 	void Set_Network_Variables(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector);
 
@@ -726,6 +740,9 @@ private:
 	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Stairs_Direction)
 	FGameplayTag Parkour_Stairs_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.None")))};
 
+	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Slide_Side)
+	FGameplayTag Parkour_Slide_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Slide.Side.None")))};
+
 	UPROPERTY(Replicated)
 	FGameplayTag Parkour_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))};
 
@@ -741,17 +758,14 @@ private:
 
 	FHitResult Front_Wall_Top_Edge_Best_Hit{};
 
-	UPROPERTY(Replicated)
 	FRotator Reversed_Front_Wall_Normal_Z{};
 
-	UPROPERTY(Replicated)
 	FHitResult Wall_Top_Result{};
 
 	FHitResult Wall_Depth_Result{};
 
 	FHitResult Wall_Vault_Result{};
 
-	UPROPERTY(Replicated)
 	FHitResult Initialize_Parkour_IK_Limbs_Hit_Result{};
 
 	FHitResult Parkour_Shimmying_Detect_Out_Corner_Wall_Hit_Result{};
@@ -778,7 +792,6 @@ private:
 
 	FHitResult Realize_Wall_Pipe_Hit_Result{};
 
-	UPROPERTY(Replicated)
 	FHitResult Custom_Wall_Pipe_Actor_Forward_Vector_Hit_Result{};
 
 	TArray<FHitResult> Detect_Balance_Traversal_Actors_Hit_Traces{};
@@ -786,17 +799,14 @@ private:
 	FHitResult Balance_Traversal_Actors_Best_Hit{};
 
 	FHitResult Balance_Walk_Automatic_Hop_Top_Result{};
-
-	FHitResult Validate_Parkour_State_Stairs_Hit_Result{};
+	
 	
 	#pragma endregion
 
 	#pragma region Others
 
-	UPROPERTY(Replicated)
 	float Ground_Speed{};
 
-	UPROPERTY(Replicated)
 	float Air_Speed{};
 
 	double Distance_In_Grid_Scan_For_Hit_Results_Current_Iteration{};
@@ -826,7 +836,7 @@ private:
 	const float Set_bCan_Jump_From_Free_Hang_Timer_Duration{1.f};
 
 	FLatentActionInfo Corner_Movement_Latent_Action_Info{};
-
+	
 	bool bOut_Corner_Movement{false};
 
 	FTimerHandle Set_bOut_Corner_Movement_To_False_Timer_Handle{};
@@ -847,10 +857,8 @@ private:
 
 	float Vertical_Hop_Distance{};
 
-	UPROPERTY(Replicated)
 	int Random_Montage_To_Play{};
 
-	UPROPERTY(Replicated)
 	int Last_Random_Montage_Played{};
 
 	FVector Direction_To_Wall_Run{};
@@ -877,23 +885,32 @@ private:
 
 	FVector Wall_Pipe_Forward_Vector{};
 
+	FLatentActionInfo Move_Character_To_Front_Of_PipeLatent_Info{};
+
 	bool bAccurate_Jump_Destination_Found{false};
 
 	bool bParkour_Action_Jump_Finish_On_Blending_Out{false};
 
 	int Tic_Tac_Actor_Area_Box_ID{};
+
+	float Parkour_Sliding_Capsule_Component_Half_Height_Interpolated{98.f};
+
+	FVector Parkour_Slide_Location{};
+
+	FRotator Parkour_Slide_Rotation{};
+
+	FVector Parkour_Sliding_Momentum{};
+
+	bool bCan_Blend_Out_Of_Parkour_Slide_Exit{false};
 	
 	#pragma endregion
 
 	#pragma region Measure_Wall
 
-	UPROPERTY(Replicated)
 	double Wall_Height{};
 
-	UPROPERTY(Replicated)
 	double Wall_Depth{};
 
-	UPROPERTY(Replicated)
 	double Vault_Height{};
 
 	#pragma endregion
@@ -1166,6 +1183,9 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Parkour_State_Stairs_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Slide_Trace_Types{};
 	
 
 	#pragma endregion
@@ -1715,6 +1735,58 @@ private:
 	UParkour_Action_Data* Tic_Tac_R_Jump_Side_Over{};
 
 
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_L_Start{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_R_Start{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_L_Finish{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_R_Finish{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_L_To_R{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_R_To_L{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Unarmed_Crouch_Entry{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Unarmed_Crouch_Exit{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Vertical_Wall_Run_L_Small_Failed{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Vertical_Wall_Run_R_Small_Failed{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Vertical_Wall_Run_L_Large_Failed{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Vertical_Wall_Run_R_Large_Failed{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Vertical_Wall_Run_L_Large{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Vertical_Wall_Run_L_Small{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Vertical_Wall_Run_R_Large{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Vertical_Wall_Run_R_Small{};
+
+
 	#pragma endregion
 
 #pragma endregion
@@ -1789,6 +1861,15 @@ UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
 
 UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_Slide_Side(const FGameplayTag& New_Parkour_Slide_Side);
+
+UFUNCTION()
+void On_Replication_Parkour_Slide_Side();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_Slide_Side(const FGameplayTag& New_Parkour_Slide_Side);
+
+UFUNCTION(Server, Reliable)
 void Server_Handle_Release_From_Shimmying(const FGameplayTag& Network_Parkour_Climb_Style, const FGameplayTag& Network_Parkour_Direction, const double& Network_Forward_Backward_Movement_Value_Absolute_Value);
 
 UFUNCTION(NetMulticast, Reliable)
@@ -1819,6 +1900,12 @@ UFUNCTION(NetMulticast, Reliable)
 void Multicast_Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(Server, Reliable)
+void Server_Move_Character_To_New_Parkour_Shimmy_Handle_Corner_Movement(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face, const float& Climb_Style_Interpolation_Speed);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Move_Character_To_New_Parkour_Shimmy_Handle_Corner_Movement(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face, const float& Climb_Style_Interpolation_Speed);
+
+UFUNCTION(Server, Reliable)
 void Server_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(NetMulticast, Reliable)
@@ -1836,18 +1923,24 @@ void Server_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(c
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
+UFUNCTION(Server, Reliable)
+void Server_Move_Character_To_New_Parkour_Slide_Position(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Move_Character_To_New_Parkour_Slide_Position(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+
+UFUNCTION(Server, Reliable)
+void Server_Exit_Out_Of_Parkour_Slide();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Exit_Out_Of_Parkour_Slide();
+
 #pragma endregion
 
 #pragma region Set_Network_Variables
 
 UFUNCTION()
 void On_Replication_Set_Add_Movement_Input_Variables();
-
-UFUNCTION(Server, Reliable)
-void Server_Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
-
-UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Network_Wall_Calculations(const double& Network_Wall_Height, const double& Network_Wall_Depth, const double& Network_Vault_Height);
 
 UFUNCTION(Server, Reliable)
 void Server_Set_Network_Variables(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector);
@@ -1860,6 +1953,24 @@ void Server_Set_bIs_Falling_To_True();
 
 UFUNCTION(Server, Reliable)
 void Server_Set_bIs_Falling_To_False();
+
+UFUNCTION(Server, Reliable)
+void Server_Set_bOut_Corner_Movement(const int& Network_bOut_Corner_Movement);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_bOut_Corner_Movement(const int& Network_bOut_Corner_Movement);
+
+UFUNCTION(Server, Reliable)
+void Server_Set_bIn_Corner_Movement(const int& Network_bIn_Corner_Movement);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_bIn_Corner_Movement(const int& Network_bIn_Corner_Movement);
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Parkour_Sliding_Network_Variables(const float& Network_Braking_Deceleration_Walking, const float& Network_Ground_Friction, const FVector& Network_Velocity, const float& Network_Parkour_Sliding_Capsule_Component_Half_Height_Interpolated);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Set_Parkour_Sliding_Network_Variables(const float& Network_Braking_Deceleration_Walking, const float& Network_Ground_Friction, const FVector& Network_Velocity, const float& Network_Parkour_Sliding_Capsule_Component_Half_Height_Interpolated);
 
 
 #pragma endregion
@@ -1937,6 +2048,12 @@ public:
 	void Execute_Wall_Vault(AWall_Vault_Actor* Wall_Vault_Actor_Reference);
 
 	void Execute_Tic_Tac(ATic_Tac_Actor* Tic_Tac_Actor_Reference, const int& Tic_Tac_Area_Box_ID);
+
+	void Execute_Parkour_Stairs(AStairs_Actor* Stairs_Actor_Reference);
+
+	void Execute_Parkour_Sliding();
+
+	void Execute_Crouching();
 
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 

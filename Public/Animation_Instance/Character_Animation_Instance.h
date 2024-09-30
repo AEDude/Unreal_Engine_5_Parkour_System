@@ -41,6 +41,8 @@ private:
 
 #pragma region Custom_Locomotion_Helper
 
+	void Get_Is_Crouching();
+
 	void Get_Input_Vector();
 	
 	void Get_Acceleration();
@@ -186,6 +188,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
 	float Dynamic_Lean_Angle{};
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
+	bool bIs_Crouching{};
 
 #pragma endregion
 	
@@ -353,6 +358,17 @@ protected:
 	to interact with this class.*/
 	virtual void Set_Parkour_Stairs_Direction_Implementation(const FGameplayTag& New_Parkour_Stairs_Direction) override;
 
+
+	/*Used to set new Parkour Slide Side within the Animation Blueprint in the editor. This line tells this animation instance class
+	that this function can both be called and overriden from Blueprints.*/
+    UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
+    void Set_Parkour_Slide_Side(const FGameplayTag& New_Parkour_Slide_Side);
+
+	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
+	interface class declared above "public IParkour_Locomotion_Interface". This is how calls to the interface functions are able 
+	to interact with this class.*/
+	virtual void Set_Parkour_Slide_Side_Implementation(const FGameplayTag& New_Parkour_Slide_Side) override;
+
 	#pragma endregion
 
 
@@ -475,6 +491,9 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
 	FGameplayTag Parkour_Stairs_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.None")))};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Parkour_Slide_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Slide.Side.None")))};
 	
 #pragma endregion
 
@@ -505,6 +524,5 @@ public:
 	FORCEINLINE float Anim_Get_Ground_Speed() const {return Ground_Speed;}
 	FORCEINLINE void Set_bLook_Left_Right_Debug_Visibility(const bool& bVisible) {bLook_Left_Right_Debug_Visibility = bVisible;}
 
-
-
 };	
+

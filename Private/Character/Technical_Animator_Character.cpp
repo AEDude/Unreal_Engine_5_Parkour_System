@@ -4,6 +4,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Animation/AnimationAsset.h"
 #include "Components/Custom_Movement_Component.h"
 //#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
@@ -23,6 +24,7 @@
 #include "World_Actors/Balance_Traversal_Actor.h"
 #include "World_Actors/Wall_Vault_Actor.h"
 #include "World_Actors/Tic_Tac_Actor.h"
+#include "World_Actors/Stairs_Actor.h"
 
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
@@ -33,7 +35,7 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 ATechnical_Animator_Character::ATechnical_Animator_Character(const FObjectInitializer& ObjectInitializer)
 	:	Super(ObjectInitializer.SetDefaultSubobjectClass<UCustom_Movement_Component>(ACharacter::CharacterMovementComponentName))
 {
-	//Set this actor to replicate for network compatibility.
+	//Set this actor to replicate. This will give the server authority.
 	bReplicates = true;
 
 	// Set size for collision capsule
@@ -141,25 +143,6 @@ void ATechnical_Animator_Character::Tick(float Deltatime)
 
 }
 
-void ATechnical_Animator_Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, bIs_Jogging, COND_OwnerOnly);
-
-	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, bDrop_To_Shimmy, COND_OwnerOnly);
-
-	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Wall_Pipe_Actor, COND_OwnerOnly);
-
-	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Balance_Traversal_Actor, COND_OwnerOnly);
-
-	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Wall_Vault_Actor, COND_OwnerOnly);
-
-	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Tic_Tac_Actor, COND_OwnerOnly);
-
-	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Tic_Tac_Actor_Area_Box_ID, COND_OwnerOnly);
-}
-
 void ATechnical_Animator_Character::Add_Input_Mapping_Context(UInputMappingContext* Context_To_Add, int32 In_Priority)
 {
 	if(!Context_To_Add) return;
@@ -194,43 +177,51 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) 
 	{
 		
-	// Jumping
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATechnical_Animator_Character::Jump);
-	EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		// Jumping
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATechnical_Animator_Character::Jump);
+		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
-	// Moving
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered);
-	EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed);
-	EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Climb_Movement_Input);
-	EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input);
+		// Moving
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed);
+		EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Climb_Movement_Input);
+		EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input);
 
-	// Looking
-	EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Look);
+		// Looking
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Look);
 
-	//Custom
-	EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Jogging_Started);
+		//Custom
+		EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Jogging_Started);
 
-	EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Jogging_Ended);
+		EnhancedInputComponent->BindAction(Jog_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Jogging_Ended);
 
-	EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
+		EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
 
-	EnhancedInputComponent->BindAction(Parkour_Action_Double_Tap, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Started_Double_Tap);
+		EnhancedInputComponent->BindAction(Parkour_Double_Tap_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Started_Double_Tap);
 
-	EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
+		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
 
-	EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::None, this, &ATechnical_Animator_Character::On_Parkour_Ended_Completed);
+		EnhancedInputComponent->BindAction(Crouch_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Crouch);
 
-	EnhancedInputComponent->BindAction(Wall_Run_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Run_Started);
+		EnhancedInputComponent->BindAction(Parkour_Slide_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Slide_Started);
 
-	EnhancedInputComponent->BindAction(Wall_Pipe_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Pipe_Climb_Started);
+		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::None, this, &ATechnical_Animator_Character::On_Parkour_Ended_Completed);
 
-	EnhancedInputComponent->BindAction(Debug_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Debug_Action);
+		EnhancedInputComponent->BindAction(Wall_Run_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Run_Started);
 
-	EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Action_Started);
+		EnhancedInputComponent->BindAction(Wall_Pipe_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Wall_Pipe_Climb_Started);
 
-	EnhancedInputComponent->BindAction(Climb_Hop_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Hop_Action_Started);
+		EnhancedInputComponent->BindAction(Debug_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Debug_Action);
 
-	EnhancedInputComponent->BindAction(Take_Cover_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Take_Cover_Action_Started);
+		EnhancedInputComponent->BindAction(Time_Dilation_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Time_Dilation_Started);
+
+		EnhancedInputComponent->BindAction(Time_Dilation_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Time_Dilation_Ended);
+
+		EnhancedInputComponent->BindAction(Climb_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Action_Started);
+
+		EnhancedInputComponent->BindAction(Climb_Hop_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Climb_Hop_Action_Started);
+
+		EnhancedInputComponent->BindAction(Take_Cover_Action, ETriggerEvent::Started, this, &ATechnical_Animator_Character::On_Take_Cover_Action_Started);
 
 	}
 
@@ -238,13 +229,19 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 	{
 		UE_LOG(LogTemplateCharacter, Error, TEXT("'%s' Failed to find an Enhanced Input component! This template is built to use the Enhanced Input system. If you intend to use the legacy system, then you will need to update this C++ file."), *GetNameSafe(this));
 	}
+
 }
 
 void ATechnical_Animator_Character::Jump()
 {
 	Super::Jump();
 
-	if(Custom_Movement_Component)
+	if(bIsCrouched)
+	{
+		UnCrouch();
+	}
+	
+	else if(Custom_Movement_Component)
 	{
 		Custom_Movement_Component->Execute_Jump_Out_Of_Shimmy();
 		Custom_Movement_Component->Execute_Exit_Wall_Run_With_Jump_Forward();
@@ -380,11 +377,65 @@ void ATechnical_Animator_Character::Look(const FInputActionValue& Value)
 	}
 }
 
+void ATechnical_Animator_Character::On_Crouch(const FInputActionValue& Value)
+{
+	if(!Custom_Movement_Component || Custom_Movement_Component->Get_Parkour_State() != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	{
+		return;
+	}
+	
+	//This would usually would be set in the constructor however, the settings don't get applied within the character blueprint when using the constructor
+	//so they are set here. They may still be set in the character blueprint if desired.
+	else if(!Custom_Movement_Component->NavAgentProps.bCanCrouch)
+	{
+		Custom_Movement_Component->NavAgentProps.bCanCrouch = true;
+		Custom_Movement_Component->bCanWalkOffLedgesWhenCrouching = true;
+		Custom_Movement_Component->SetCrouchedHalfHeight(48.f);
+		Custom_Movement_Component->MaxWalkSpeedCrouched = 170.f;
+	}
+	
+	//If the character is not jogging set the inherited variable "bIsCrouched" appropriately.
+	if(!bIs_Jogging)
+	{
+		Custom_Movement_Component->Execute_Crouching();
+		
+		if(!bIsCrouched)
+		{
+			Crouch(true);
+		}
+
+		else if(bIsCrouched)
+		{
+			UnCrouch(true);
+		}
+	}
+}
+
+void ATechnical_Animator_Character::On_Parkour_Slide_Started(const FInputActionValue& Value)
+{
+	//If the character is jogging when this function is called call the function &UCustom_Movement_Component::Execute_Parkour_Sliding.
+	if(Custom_Movement_Component && bIs_Jogging)
+	{
+		Custom_Movement_Component->Execute_Parkour_Sliding();
+	}
+}
+
 void ATechnical_Animator_Character::On_Jogging_Started(const FInputActionValue& Value)
 {
-	if(Custom_Movement_Component)
+	//If the character is currently crouching set the inherited variable bIsCrouched to false and the global int variable Crouching_Selector to 0 then return.
+	//This setup required the character to press the jogging button twice to be begin jogging while the character is currently crouching.
+	if(bIsCrouched)
 	{
-		Custom_Movement_Component->Execute_Start_Running();
+		UnCrouch();
+	}
+	
+	//If the character is not currently crouching call the function &UCustom_Movement_Component::Execute_Start_Running.
+	else if(!bIsCrouched)
+	{
+		if(Custom_Movement_Component)
+		{
+			Custom_Movement_Component->Execute_Start_Running();
+		}
 	}
 }
 
@@ -392,6 +443,7 @@ void ATechnical_Animator_Character::On_Jogging_Ended(const FInputActionValue& Va
 {
 	if(Custom_Movement_Component)
 	{
+		bIs_Jogging = false;
 		Custom_Movement_Component->Execute_Stop_Running();
 	}
 }
@@ -441,11 +493,6 @@ void ATechnical_Animator_Character::On_Parkour_Ended_Completed(const FInputActio
 {
 	bDrop_To_Shimmy = false;
 	Server_On_Parkour_Ended_Completed(Value);
-}
-
-void ATechnical_Animator_Character::Server_On_Parkour_Ended_Completed_Implementation(const FInputActionValue& Value)
-{
-	bDrop_To_Shimmy = false;
 }
 
 void ATechnical_Animator_Character::On_Wall_Run_Started(const FInputActionValue& Value)
@@ -502,6 +549,16 @@ void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Val
 			break;
 		}
 	}
+}
+
+void ATechnical_Animator_Character::On_Time_Dilation_Started(const FInputActionValue& Value)
+{
+	UGameplayStatics::SetGlobalTimeDilation(this, .07f);
+}
+
+void ATechnical_Animator_Character::On_Time_Dilation_Ended(const FInputActionValue& Value)
+{
+	UGameplayStatics::SetGlobalTimeDilation(this, 1.0f);
 }
 
 void ATechnical_Animator_Character::On_Climb_Action_Started(const FInputActionValue& Value)
@@ -568,13 +625,42 @@ void ATechnical_Animator_Character::On_Take_Cover_Action_Started(const FInputAct
 
 #pragma region Network
 
+void ATechnical_Animator_Character::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ATechnical_Animator_Character, bIs_Jogging);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, bDrop_To_Shimmy, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Wall_Pipe_Actor, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Balance_Traversal_Actor, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Wall_Vault_Actor, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Tic_Tac_Actor, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Tic_Tac_Actor_Area_Box_ID, COND_OwnerOnly);
+
+	DOREPLIFETIME_CONDITION(ATechnical_Animator_Character, Stairs_Actor, COND_OwnerOnly);
+
+}
+
+void ATechnical_Animator_Character::Server_On_Parkour_Ended_Completed_Implementation(const FInputActionValue& Value)
+{
+	bDrop_To_Shimmy = false;
+}
+
 void ATechnical_Animator_Character::Set_Overlapping_Wall_Pipe_Actor(AWall_Pipe_Actor* Overlapping_Wall_Pipe_Actor)
 {
 	/*This function is only called from the server. Therefore when the first "if" check successfully passes this means the Server is calling this function locally 
 	(a client isn't calling this funtion from from the server).*/
 	
 	if(Wall_Pipe_Actor)
-	Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(false);
+	{
+		Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(false);
+	}
 	
 	Wall_Pipe_Actor = Overlapping_Wall_Pipe_Actor;
 
@@ -593,10 +679,15 @@ void ATechnical_Animator_Character::On_Replication_Wall_Pipe_Actor(AWall_Pipe_Ac
 	from being vaild then the input argument will be hold the valid data that "Wall_Pipe_Actor" was storing before it became a nullptr.*/
 	
 	if(Wall_Pipe_Actor)
-	Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(true);
+	{
+		Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(true);
+	}
+	
 
 	else if(Previous_Wall_Pipe_Actor)
-	Previous_Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(false);
+	{
+		Previous_Wall_Pipe_Actor->Set_Wall_Pipe_Actor_Widget_Visibility(false);
+	}
 }
 
 void ATechnical_Animator_Character::Set_Overlapping_Balance_Traversal_Actor(ABalance_Traversal_Actor* Overlapping_Balance_Traversal_Actor)
@@ -731,6 +822,46 @@ void ATechnical_Animator_Character::On_Replication_Tic_Tac_Actor(ATic_Tac_Actor*
 		Previous_Tic_Tac_Actor->Show_Display_Widget(false);
 		Custom_Movement_Component->Execute_Tic_Tac(nullptr, 0);
 	}
+}
+
+void ATechnical_Animator_Character::Set_Overlapping_Stairs_Actor(AStairs_Actor* Overlapping_Stairs_Actor)
+{
+	Stairs_Actor = Overlapping_Stairs_Actor;
+
+	if(IsLocallyControlled())
+	{
+		if(Custom_Movement_Component)
+		{
+			if(Stairs_Actor)
+			{
+				Custom_Movement_Component->Execute_Parkour_Stairs(Stairs_Actor);
+			}
+			
+			else if(!Stairs_Actor)
+			{
+				Custom_Movement_Component->Execute_Parkour_Stairs(nullptr);
+			}
+		}
+	}
+
+}
+
+void ATechnical_Animator_Character::On_Replication_Stairs_Actor()
+{
+	if(Custom_Movement_Component)
+	{
+		if(Stairs_Actor)
+		{
+			Custom_Movement_Component->Execute_Parkour_Stairs(Stairs_Actor);
+		}
+			
+		else if(!Stairs_Actor)
+		{
+			Custom_Movement_Component->Execute_Parkour_Stairs(nullptr);
+		}
+
+	}
+
 }
 
 #pragma endregion
