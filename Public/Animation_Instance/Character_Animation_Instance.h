@@ -192,6 +192,9 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
 	bool bIs_Crouching{};
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
+	bool bCan_Initialize_Running_Start{};
+
 #pragma endregion
 	
 #pragma region Custom_Locomotion_Core_Variables

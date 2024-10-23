@@ -179,12 +179,16 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 		
 		// Jumping
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ATechnical_Animator_Character::Jump);
+
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered);
+
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed);
+
 		EnhancedInputComponent->BindAction(Climbing_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Climb_Movement_Input);
+		
 		EnhancedInputComponent->BindAction(Take_Cover_Move_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::Handle_Take_Cover_Movement_Input);
 
 		// Looking
@@ -197,13 +201,15 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 
 		EnhancedInputComponent->BindAction(Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Started);
 
-		EnhancedInputComponent->BindAction(Parkour_Double_Tap_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Started_Double_Tap);
+		EnhancedInputComponent->BindAction(Free_Hang_To_Balanced_Walk_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Free_Hang_To_Balanced_Walk);
 
 		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::Triggered, this, &ATechnical_Animator_Character::On_Parkour_Ended);
 
 		EnhancedInputComponent->BindAction(Crouch_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Crouch);
 
 		EnhancedInputComponent->BindAction(Parkour_Slide_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Slide_Started);
+
+		EnhancedInputComponent->BindAction(Parkour_Roll_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Roll_Started);
 
 		EnhancedInputComponent->BindAction(Exit_Parkour_Action, ETriggerEvent::None, this, &ATechnical_Animator_Character::On_Parkour_Ended_Completed);
 
@@ -234,7 +240,7 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 
 void ATechnical_Animator_Character::Jump()
 {
-	Super::Jump();
+	/* Super::Jump(); */
 
 	if(bIsCrouched)
 	{
@@ -420,6 +426,14 @@ void ATechnical_Animator_Character::On_Parkour_Slide_Started(const FInputActionV
 	}
 }
 
+void ATechnical_Animator_Character::On_Parkour_Roll_Started(const FInputActionValue& Value)
+{
+	if(Custom_Movement_Component)
+	{
+		Custom_Movement_Component->Execute_Parkour_Roll();
+	}
+}
+
 void ATechnical_Animator_Character::On_Jogging_Started(const FInputActionValue& Value)
 {
 	//If the character is currently crouching set the inherited variable bIsCrouched to false and the global int variable Crouching_Selector to 0 then return.
@@ -468,12 +482,12 @@ void ATechnical_Animator_Character::On_Parkour_Started(const FInputActionValue& 
 	}
 }
 
-void ATechnical_Animator_Character::On_Parkour_Started_Double_Tap(const FInputActionValue& Value)
+void ATechnical_Animator_Character::On_Free_Hang_To_Balanced_Walk(const FInputActionValue& Value)
 {
 	if(Custom_Movement_Component)
 	{
-		Debug::Print(TEXT("Parkour_Double_Tap_Is_Working"), FColor::MakeRandomColor(), 8);
 		Custom_Movement_Component->Execute_Free_Hang_To_Balanced_Walk();
+		
 	}
 }
 

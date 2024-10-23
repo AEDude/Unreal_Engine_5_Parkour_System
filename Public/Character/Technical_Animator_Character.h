@@ -93,6 +93,9 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* JumpAction{};
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Parkour_Roll_Action{};
+
 	/** Move Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction{};
@@ -116,7 +119,7 @@ private:
 	UInputAction* Parkour_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
-	UInputAction* Parkour_Double_Tap_Action{};
+	UInputAction* Free_Hang_To_Balanced_Walk_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Exit_Parkour_Action{};
@@ -161,6 +164,8 @@ private:
 
 	void Handle_Take_Cover_Movement_Input(const FInputActionValue& Value);
 
+	void On_Parkour_Roll_Started(const FInputActionValue& Value);
+	
 	void On_Crouch(const FInputActionValue& Value);
 
 	void On_Parkour_Slide_Started(const FInputActionValue& Value);
@@ -171,7 +176,7 @@ private:
 
 	void On_Parkour_Started(const FInputActionValue& Value);
 
-	void On_Parkour_Started_Double_Tap(const FInputActionValue& Value);
+	void On_Free_Hang_To_Balanced_Walk(const FInputActionValue& Value);
 
 	void On_Parkour_Ended(const FInputActionValue& Value);
 

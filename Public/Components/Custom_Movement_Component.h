@@ -31,6 +31,7 @@ class ABalance_Traversal_Actor;
 class AWall_Vault_Actor;
 class ATic_Tac_Actor;
 class AStairs_Actor;
+class USoundBase;
 
 UENUM(BlueprintType)
 namespace E_Custom_Movement_Mode
@@ -53,6 +54,8 @@ class TECHNICAL_ANIMATOR_API UCustom_Movement_Component : public UCharacterMovem
 public:
 
 	UCustom_Movement_Component();
+
+	friend class UFoot_Steps;
 
 	F_On_Enter_Climb_State On_Enter_Climb_State_Delegate;
 
@@ -559,7 +562,13 @@ private:
 
 	FHitResult Obtain_Parkour_Slide_Location();
 
-	bool Validate_Enough_Room_For_Character_To_Stand_After_Parkour_Slide();
+	FHitResult Validate_Enough_Room_For_Character_To_Stand_After_Parkour_Slide();
+
+	bool Validate_Foot_Placement_For_Character_Vertical_Wall_Run();
+
+	bool Validate_Parkour_Vault(const bool& bCharacter_Settles_On_Object, const float& Distance_To_Check_For_Obstacles = 50.f);
+
+	FHitResult Obtain_Parkour_Roll_Location();
 
 #pragma endregion
 
@@ -902,6 +911,11 @@ private:
 	FVector Parkour_Sliding_Momentum{};
 
 	bool bCan_Blend_Out_Of_Parkour_Slide_Exit{false};
+
+	bool bCan_Initialize_Running_Start{true};
+
+	UPROPERTY(ReplicatedUsing = On_Replication_Foot_Step_Sound_To_Play_On_Network)
+	FVector_NetQuantize Location_To_Play_Foot_Steps{};
 	
 	#pragma endregion
 
@@ -1036,6 +1050,118 @@ private:
 	TArray<UParkour_Action_Data*> Tic_Tac_R_On_Front_Wall_To_Idle_Array{/* Tic_Tac_R_Jump_On,
 	 																	   Tic_Tac_R_Vault_On*/};
 
+	
+	TArray<UParkour_Action_Data*> Idle_Vault_L_To_Ground_Array{/* Idle_Safety_L_Vault_To_Ground,
+																  Idle_Two_Hand_L_To_Ground,
+																  Thin_Vault_To_Ground*/};
+
+	TArray<UParkour_Action_Data*> Idle_Vault_R_To_Ground_Array{/* Idle_Safety_R_Vault_To_Ground,
+																  Idle_Two_Hand_R_To_Ground,
+																  Thin_Vault_To_Ground */};
+
+	TArray<UParkour_Action_Data*> Medium_Vault_L_To_Ground_Array{/* Dash_Vault_To_Ground,
+															  		Monkey_Vault_To_Ground,
+															  		Reverse_L_Vault_To_Ground,
+															  		Safety_L_Vault_To_Ground,
+															  		Speed_L_Vault_To_Ground,
+															  		Thief_L_Vault_To_Ground,
+															  		Two_Hand_L_Vault_To_Ground,
+																	Medium_Vault_To_Ground */};
+
+	TArray<UParkour_Action_Data*> Medium_Vault_R_To_Ground_Array{/* Dash_Vault_To_Ground,
+															  		Monkey_Vault_To_Ground,
+															  		Reverse_R_Vault_To_Ground,
+															  		Safety_R_Vault_To_Ground,
+															  		Speed_R_Vault_To_Ground,
+															  		Thief_R_Vault_To_Ground,
+															  		Two_Hand_R_Vault_To_Ground,
+																	Medium_Vault_To_Ground */};
+
+	TArray<UParkour_Action_Data*> High_Vault_L_To_Ground_Array{/* Dive_Roll_360_L_Vault_To_Ground,
+																  Dive_Roll_L_Vault_To_Ground,
+																  Jump_L_Vault_To_Ground, 
+																  High_Vault_To_Ground*/};
+
+	TArray<UParkour_Action_Data*> High_Vault_R_To_Ground_Array{/* Dive_Roll_360_R_Vault_To_Ground,
+																  Dive_Roll_R_Vault_To_Ground,
+																  Jump_R_Vault_To_Ground, 
+																  High_Vault_To_Ground*/};
+
+	TArray<UParkour_Action_Data*> Long_Vault_L_To_Ground_Array{/* Kash_Vault_To_Ground,
+																  Kong_360_L_Vault_To_Ground,
+																  Kong_Double_Vault_To_Ground,
+															      Kong_Vault_To_Ground,
+																  Roll_L_Vault_To_Ground,
+																  Slide_L_Vault_To_Ground */};
+
+	TArray<UParkour_Action_Data*> Long_Vault_R_To_Ground_Array{/* Kash_Vault_To_Ground,
+																  Kong_360_R_Vault_To_Ground,
+																  Kong_Double_Vault_To_Ground,
+																  Kong_Vault_To_Ground,
+																  Roll_R_Vault_To_Ground,
+																  Slide_R_Vault_To_Ground */};
+
+
+	TArray<UParkour_Action_Data*> Idle_Vault_L_To_Airborne_Array{/* Idle_Safety_L_Vault_To_Airborne,
+																  	Idle_Two_Hand_L_To_Airborne,
+																	Thin_Vault_To_Airborne */};
+
+	TArray<UParkour_Action_Data*> Idle_Vault_R_To_Airborne_Array{/*Idle_Safety_R_Vault_To_Airborne,
+																   Idle_Two_Hand_R_To_Airborne, 
+																   Thin_Vault_To_Airborne*/};
+
+	TArray<UParkour_Action_Data*> Medium_Vault_L_To_Airborne_Array{/* Dash_Vault_To_Airborne,
+															  	  	  Monkey_Vault_To_Airborne,
+															  		  Reverse_L_Vault_To_Airborne,
+															  		  Safety_L_Vault_To_Airborne,
+															  		  Speed_L_Vault_To_Airborne,
+															  		  Thief_L_Vault_To_Airborne,
+															  		  Two_Hand_L_Vault_To_Airborne,
+																	  Medium_Vault_To_Airborne */};
+
+	TArray<UParkour_Action_Data*> Medium_Vault_R_To_Airborne_Array{/* Dash_Vault_To_Airborne,
+															  		  Monkey_Vault_To_Airborne,
+															  		  Reverse_R_Vault_To_Airborne,
+															  		  Safety_R_Vault_To_Airborne,
+															  		  Speed_R_Vault_To_Airborne,
+															  		  Thief_R_Vault_To_Airborne,
+															  		  Two_Hand_R_Vault_To_Airborne,
+																	  Medium_Vault_To_Airborne */};
+
+	TArray<UParkour_Action_Data*> High_Vault_L_To_Airborne_Array{/* Dive_Roll_360_L_Vault_To_Airborne,
+																	Dive_Roll_L_Vault_To_Airborne,
+																	Jump_L_Vault_To_Airborne,
+																	High_Vault_To_Airborne */};
+
+	TArray<UParkour_Action_Data*> High_Vault_R_To_Airborne_Array{/* Dive_Roll_360_R_Vault_To_Airborne,
+																	Dive_Roll_R_Vault_To_Airborne,
+															  		Jump_R_Vault_To_Airborne,
+																	High_Vault_To_Airborne */};
+
+	TArray<UParkour_Action_Data*> Long_Vault_L_To_Airborne_Array{/* Kash_Vault_To_Airborne,
+																	Kong_360_L_Vault_To_Airborne,
+																	Kong_Double_Vault_To_Airborne,
+																	Kong_Vault_To_Airborne,
+																	Roll_L_Vault_To_Airborne,
+																	Slide_L_Vault_To_Airborne */};
+
+	TArray<UParkour_Action_Data*> Long_Vault_R_To_Airborne_Array{/* Kash_Vault_To_Airborne,
+																	Kong_360_R_Vault_To_Airborne,
+																	Kong_Double_Vault_To_Airborne,
+																	Kong_Vault_To_Airborne,
+																	Roll_R_Vault_To_Airborne,
+																	Slide_R_Vault_To_Airborne */};
+
+
+	TArray<UParkour_Action_Data*> Running_Jump_Step_On_L_Array{/* Running_Jump_L_On,
+															  Running_Monkey_On,
+															  Running_Roll_L_On,
+															  Running_Two_Hand_L_On */};
+
+	TArray<UParkour_Action_Data*> Running_Jump_Step_On_R_Array{/* Running_Jump_R_On,
+															  Running_Monkey_On,
+															  Running_Roll_R_On,
+															  Running_Two_Hand_R_On */};
 
 
 	#pragma endregion
@@ -1186,6 +1312,12 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Slide_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Validate_Parkour_Vault_Trace_Types{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Roll_Trace_Types{};
 	
 
 	#pragma endregion
@@ -1786,6 +1918,340 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Vertical_Wall_Run_R_Small{};
 
+	
+	
+	
+	
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Walking_Step_L_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Walking_Step_R_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Step_L_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Step_R_On{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Walking_Step_L_On_Off_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Walking_Step_R_On_Off_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Step_L_On_Off_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Step_R_On_Off_To_Ground{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Walking_Step_L_On_Off_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Walking_Step_R_On_Off_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Step_L_On_Off_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Step_R_On_Off_To_Airborne{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Safety_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Safety_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Two_Hand_L_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Two_Hand_R_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Thin_Vault_To_Ground{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dash_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Monkey_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Reverse_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Reverse_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Safety_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Safety_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Speed_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Speed_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Thief_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Thief_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Two_Hand_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Two_Hand_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Medium_Vault_To_Ground{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_360_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_360_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Jump_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Jump_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* High_Vault_To_Ground{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kash_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kong_360_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kong_360_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kong_Double_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kong_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Roll_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Roll_R_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_L_Vault_To_Ground{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_R_Vault_To_Ground{};
+
+
+
+
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Safety_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Safety_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Two_Hand_L_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Idle_Two_Hand_R_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Thin_Vault_To_Airborne{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dash_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Monkey_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Reverse_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Reverse_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Safety_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Safety_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Speed_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Speed_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Thief_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Thief_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Two_Hand_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Two_Hand_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Medium_Vault_To_Airborne{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_360_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_360_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Jump_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Jump_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* High_Vault_To_Airborne{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kash_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kong_360_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kong_360_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kong_Double_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Kong_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Roll_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Roll_R_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_L_Vault_To_Airborne{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Slide_R_Vault_To_Airborne{};
+
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Mantle{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Jump_L_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Jump_R_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Monkey_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Roll_L_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Roll_R_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Two_Hand_L_On{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Running_Two_Hand_R_On{};
+
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Roll_Forward_L{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Roll_Forward_R{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_Forward_L{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Dive_Roll_Forward_R{};
+
+
+
+	#pragma endregion
+
+	#pragma region Foot_Step_Sounds
+	
+	UPROPERTY(ReplicatedUsing = On_Replication_Foot_Step_Sound_To_Play_On_Network)
+	USoundBase* Foot_Step_Sound_To_Play_On_Network{};
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Concrete_Foot_Steps{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Creaky_Wood_Foot_Steps{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Dirt_Foot_Steps{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Grass_Foot_Steps{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Gravel_Foot_Steps{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Heel_Foot_Steps{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Leaves_Foot_Steps{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Low_Stone_Foot_Steps{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Foot Step Sounds", meta = (AllowPrivateAccess = "true"))
+	USoundBase* Water_Foot_Steps{};
 
 	#pragma endregion
 
@@ -1972,6 +2438,11 @@ void Server_Set_Parkour_Sliding_Network_Variables(const float& Network_Braking_D
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_Parkour_Sliding_Network_Variables(const float& Network_Braking_Deceleration_Walking, const float& Network_Ground_Friction, const FVector& Network_Velocity, const float& Network_Parkour_Sliding_Capsule_Component_Half_Height_Interpolated);
 
+UFUNCTION(Server, Reliable)
+void Server_Play_Foot_Steps(USoundBase* Network_Foot_Step_Sound, const FVector_NetQuantize& Network_Location_To_Play_Foot_Steps);
+
+UFUNCTION()
+void On_Replication_Foot_Step_Sound_To_Play_On_Network();
 
 #pragma endregion
 
@@ -2055,6 +2526,8 @@ public:
 
 	void Execute_Crouching();
 
+	void Execute_Parkour_Roll();
+
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot) {Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(bIs_Left_Foot);}
@@ -2082,10 +2555,29 @@ public:
 
 	double Interpolated_Right_Left_Movement_Value{};
 
+	FORCEINLINE bool Get_bCan_Initialize_Running_Start() const {return bCan_Initialize_Running_Start;}
+
 	FORCEINLINE FGameplayTag Get_Parkour_State() const {return Parkour_State;}
 
 	EDrawDebugTrace::Type Debug_Action{EDrawDebugTrace::None};
 
+	FORCEINLINE USoundBase* Get_Concrete_Foot_Step_Sound() const {return Concrete_Foot_Steps;}
+
+	FORCEINLINE USoundBase* Get_Creaky_Wood_Foot_Step_Sound() const {return Creaky_Wood_Foot_Steps;}
+
+	FORCEINLINE USoundBase* Get_Dirt_Foot_Step_Sound() const {return Dirt_Foot_Steps;}
+
+	FORCEINLINE USoundBase* Get_Grass_Foot_Step_Sound() const {return Grass_Foot_Steps;}
+
+	FORCEINLINE USoundBase* Get_Gravel_Foot_Step_Sound() const {return Gravel_Foot_Steps;}
+
+	FORCEINLINE USoundBase* Get_Heel_Foot_Step_Sound() const {return Heel_Foot_Steps;}
+
+	FORCEINLINE USoundBase* Get_Leaves_Foot_Step_Sound() const {return Leaves_Foot_Steps;}
+
+	FORCEINLINE USoundBase* Get_Low_Stone_Foot_Step_Sound() const {return Low_Stone_Foot_Steps;}
+
+	FORCEINLINE USoundBase* Get_Water_Foot_Step_Sound() const {return Water_Foot_Steps;}
 
 #pragma endregion
 

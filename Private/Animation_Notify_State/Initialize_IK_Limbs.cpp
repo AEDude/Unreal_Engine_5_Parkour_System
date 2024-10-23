@@ -9,7 +9,7 @@ UInitialize_IK_Limbs::UInitialize_IK_Limbs()
 {
 }
 
-void UInitialize_IK_Limbs::NotifyEnd(USkeletalMeshComponent *MeshComp, UAnimSequenceBase *Animation, const FAnimNotifyEventReference &EventReference)
+void UInitialize_IK_Limbs::NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBase * Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
    /*The object of this class is created within animation montages in the form of animation noifies. The notifies trigger and the function 
    "NotifyEnd(this function) will be called. Within this function the "MeshComp" pointer is used to access the the owner of the animation montage, 
@@ -21,6 +21,8 @@ void UInitialize_IK_Limbs::NotifyEnd(USkeletalMeshComponent *MeshComp, UAnimSequ
 
     if(MeshComp->GetOwner()->GetComponentByClass<UCustom_Movement_Component>()->Get_Parkour_State() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Ready.To.Climb"))))
     {
+       Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+       
         MeshComp->GetOwner()->GetComponentByClass<UCustom_Movement_Component>()->Set_Parkour_Climb_Initialize_IK_Hands(true);
 
         MeshComp->GetOwner()->GetComponentByClass<UCustom_Movement_Component>()->Set_Parkour_Climb_Initialize_IK_Hands(false);
@@ -32,6 +34,8 @@ void UInitialize_IK_Limbs::NotifyEnd(USkeletalMeshComponent *MeshComp, UAnimSequ
 
     else if(MeshComp->GetOwner()->GetComponentByClass<UCustom_Movement_Component>()->Get_Parkour_State() == FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Initialize.Wall.Pipe.Climb"))))
     {
+        Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+        
         MeshComp->GetOwner()->GetComponentByClass<UCustom_Movement_Component>()->Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(true);
 
         MeshComp->GetOwner()->GetComponentByClass<UCustom_Movement_Component>()->Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(false);

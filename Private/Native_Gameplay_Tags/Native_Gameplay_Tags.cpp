@@ -38,6 +38,8 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Initialize_Slide, "Parkour.State.Initia
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Slide, "Parkour.State.Slide");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_State_Roll, "Parkour.State.Roll");
+
 #pragma endregion
 
 
@@ -138,10 +140,6 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Fall_Down, "Parkour.Action.W
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Wall_Pipe_Climb_Up_2_Hand, "Parkour.Action.Wall.Pipe.Climb.Up.2.Hand");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Mantle, "Parkour.Action.Mantle");
-
-UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Low_Vault, "Parkour.Action.Low.Vault");
-
-UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_High_Vault, "Parkour.Action.High.Vault");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Jump_Up, "Parkour.Action.Jump.Up");
 
@@ -244,6 +242,75 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_L_Small, "Parkour.Ac
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_R_Large, "Parkour.Action.Vertical.Wall.Run.R.Large");
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Vertical_Wall_Run_R_Small, "Parkour.Action.Vertical.Wall.Run.L.Small");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Walking_Step_L_On, "Parkour.Action.Walking.Step.L.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Walking_Step_R_On, "Parkour.Action.Walking.Step.R.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Step_L_On, "Parkour.Action.Running.Step.L.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Step_R_On, "Parkour.Action.Running.Step.R.On");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Walking_Step_L_On_Off_To_Ground, "Parkour.Action.Walking.Step.L.On.Off.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Walking_Step_R_On_Off_To_Ground, "Parkour.Action.Walking.Step.R.On.Off.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Step_L_On_Off_To_Ground, "Parkour.Action.Running.Step.L.On.Off.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Step_R_On_Off_To_Ground, "Parkour.Action.Running.Step.R.On.Off.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Walking_Step_L_On_Off_To_Airborne, "Parkour.Action.Walking.Step.L.On.Off.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Walking_Step_R_On_Off_To_Airborne, "Parkour.Action.Walking.Step.R.On.Off.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Step_L_On_Off_To_Airborne, "Parkour.Action.Running.Step.L.On.Off.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Step_R_On_Off_To_Airborne, "Parkour.Action.Running.Step.R.On.Off.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Idle_Vault_L_To_Ground, "Parkour.Action.Idle.Vault.L.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Idle_Vault_R_To_Ground, "Parkour.Action.Idle.Vault.R.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Jump_Step_On_L, "Parkour.Action.Running.Jump.Step.On.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Running_Jump_Step_On_R, "Parkour.Action.Running.Jump.Step.On.R");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Medium_Vault_L_To_Ground, "Parkour.Action.Medium.Vault.L.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Medium_Vault_R_To_Ground, "Parkour.Action.Medium.Vault.R.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_High_Vault_L_To_Ground, "Parkour.Action.High.Vault.L.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_High_Vault_R_To_Ground, "Parkour.Action.High.Vault.R.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Long_Vault_L_To_Ground, "Parkour.Action.Long.Vault.L.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Long_Vault_R_To_Ground, "Parkour.Action.Long.Vault.R.To.Ground");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Idle_Vault_L_To_Airborne, "Parkour.Action.Idle.Vault.L.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Idle_Vault_R_To_Airborne, "Parkour.Action.Idle.Vault.R.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Medium_Vault_L_To_Airborne, "Parkour.Action.Medium.Vault.L.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Medium_Vault_R_To_Airborne, "Parkour.Action.Medium.Vault.R.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_High_Vault_L_To_Airborne, "Parkour.Action.High.Vault.L.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_High_Vault_R_To_Airborne, "Parkour.Action.High.Vault.R.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Long_Vault_L_To_Airborne, "Parkour.Action.Long.Vault.L.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Long_Vault_R_To_Airborne, "Parkour.Action.Long.Vault.R.To.Airborne");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Roll_Forward_L, "Parkour.Action.Roll.Forward.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Roll_Forward_R, "Parkour.Action.Roll.Forward.R");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Dive_Roll_Forward_L, "Parkour.Action.Dive.Roll.Forward.L");
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Parkour_Action_Dive_Roll_Forward_R, "Parkour.Action.Dive.Roll.Forward.R");
+
 
 
 #pragma endregion

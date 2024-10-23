@@ -22,6 +22,6 @@ private:
 	//setting the locations and rotations of the hands and feet when the character intitially starts shimmying. These locations and rotations are set
 	//by calling the respective "Parkour_Locomotion_Interface" functions passing in the location and rotation obtained by const&. Said rotations and locations
 	//are obtained via algoriths which perform ray traces.
-	void NotifyEnd(USkeletalMeshComponent * MeshComp, UAnimSequenceBase * Animation, const FAnimNotifyEventReference& EventReference) override;
+	virtual void NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBase * Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference) override;
 
 };

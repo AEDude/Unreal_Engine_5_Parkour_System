@@ -114,7 +114,10 @@ void UCharacter_Animation_Instance::Update_Variables_On_Secondary_Thread(const f
     if(Custom_Movement_Component)
     {
         Forward_Backward_Movement_Value = Custom_Movement_Component->Forward_Backward_Movement_Value;
-        Right_Left_Movement_Value = Custom_Movement_Component->Right_Left_Movement_Value; 
+
+        Right_Left_Movement_Value = Custom_Movement_Component->Right_Left_Movement_Value;
+
+        bCan_Initialize_Running_Start = Custom_Movement_Component->Get_bCan_Initialize_Running_Start();
     }
 
     // Get_Is_Climbing();
