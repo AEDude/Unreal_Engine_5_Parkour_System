@@ -128,6 +128,9 @@ private:
 	UInputAction* Crouch_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* Turn_In_Place_Action{};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* Parkour_Slide_Action{};
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -167,6 +170,8 @@ private:
 	void On_Parkour_Roll_Started(const FInputActionValue& Value);
 	
 	void On_Crouch(const FInputActionValue& Value);
+
+	void On_Turn_In_Place(const FInputActionValue& Value);
 
 	void On_Parkour_Slide_Started(const FInputActionValue& Value);
 	
@@ -217,6 +222,8 @@ private:
 
 	UPROPERTY(Replicated)
 	bool bDrop_To_Shimmy{false};
+
+	FGameplayTag Canceled_Controller_Direction{};
 
 #pragma endregion
 

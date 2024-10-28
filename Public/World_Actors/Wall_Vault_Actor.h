@@ -85,13 +85,13 @@ private:
 
 	#pragma region Ray_Casts
 
-	void Obtain_Wall_Top_Result();
+	void Obtain_Warp_Point_Hit_Result();
 
 	#pragma endregion
 
 	#pragma region FHitResults
 
-	FHitResult Wall_Vault_Actor_Wall_Top_Result{};
+	FHitResult Wall_Vault_Actor_Warp_Point_Hit_Result{};
 
 	#pragma endregion
 
@@ -105,6 +105,6 @@ public:
 
 	FORCEINLINE bool Get_bEnable_Over_Wall_180_Shimmy() const {return bEnable_Over_Wall_180_Shimmy;}
 
-	FORCEINLINE FHitResult Get_Wall_Vault_Actor_Wall_Top_Result() const {return Wall_Vault_Actor_Wall_Top_Result;}
+	FORCEINLINE FHitResult Get_Wall_Vault_Actor_Warp_Point_Hit_Result() const {return Wall_Vault_Actor_Warp_Point_Hit_Result;}
 
 };

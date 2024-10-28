@@ -13,7 +13,7 @@
 
 class ATechnical_Animator_Character;
 class UCustom_Movement_Component;
-class USkeletalMeshComponent;
+
 /**
  * 
  */
@@ -24,20 +24,27 @@ class TECHNICAL_ANIMATOR_API UCharacter_Animation_Instance : public UAnimInstanc
 	GENERATED_BODY()
 
 public:
+
 	virtual void NativeInitializeAnimation() override;
+
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
 	virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds) override;
+
 	virtual void NativePostEvaluateAnimation() override;
 
+	
+
 private:
+
 	UPROPERTY()
 	ATechnical_Animator_Character* Technical_Animator_Character;
 	
 	UPROPERTY()
 	UCustom_Movement_Component* Custom_Movement_Component;
 
-	UPROPERTY()
-	USkeletalMeshComponent* Mesh;
+
+#pragma region Custom_Locomotion_Region
 
 #pragma region Custom_Locomotion_Helper
 
@@ -55,12 +62,9 @@ private:
 
 	void Calculate_Direction();
 
-	void Get_Is_Jogging();
-
-	void Get_Should_Move();
-
 	void Get_Is_Falling();
 
+	void Get_Is_Jogging();
 
 #pragma endregion
 
@@ -68,36 +72,11 @@ private:
 
 	void Update_Variables_On_Secondary_Thread(const float& DeltaSeconds);
 	
-	void Find_Ground_Locomotion_State();
-
-	void Idle_Turn_In_Place();
-
-	void Update_Rotation_Turn_In_Place();
-
-	void Track_Ground_Locomotion_State_Idle(const EGround_Locomotion_State& Ground_Locomotion_State_Reference);
-
-	void Track_Ground_Locomotion_State_Walking(const EGround_Locomotion_State& Ground_Locomotion_State_Reference);
-
-	void Track_Ground_Locomotion_State_Jogging(const EGround_Locomotion_State& Ground_Locomotion_State_Reference);
+	/* void Update_Character_Rotation();
 	
-	void Find_Locomotion_Start_Direction(const float& Starting_Angle);
-	
-	void Update_Character_Rotation();
-
-	void Update_Character_Rotation_While_Moving();
-
-	void Update_On_Movement_Enter();
-
-	void Update_Locomotion_Play_Rate();
+	void Update_Rotation_Turn_In_Place(); */
 
 	void Get_Predicted_Stop_Distance_Variables();
-
-	void Get_Dynamic_Look_Offset_Values(const float& DeltaSeconds);
-
-	void Dynamic_Look_Offset_Weight(const float& DeltaSeconds);
-
-	void Calculate_Dynamic_Lean_Angle();
-
 #pragma endregion
 
 #pragma region Custom_Locomotion_Core_BP_Variables
@@ -142,13 +121,7 @@ private:
 	float Turn_In_Place_Delta{};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
-	float Turn_In_Place_Minimum_Threshold{45.f};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
 	float Turn_In_Place_Target_Angle{};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
-	float Locomotion_Start_Angle{};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
 	bool bCan_Turn_In_Place{false};
@@ -160,22 +133,7 @@ private:
 	bool bTurn_In_Place_Flip_Flop{};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
-	bool bUse_Seperate_Braking_Friction{};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
-	float Braking_Friction{};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
-	float Ground_Friction{};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
-	float Braking_Friction_Factor{};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
-	float Braking_Deceleration_Walking{};
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
-	float Direction_For_Orientation_Warping{};
+	float Velocity_Locomotion_Angle{};
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Reference", meta = (AllowPrivateAccess = "true"))
 	float Distance_To_Match{};
@@ -199,82 +157,31 @@ private:
 	
 #pragma region Custom_Locomotion_Core_Variables
 
-	bool Do_Once_1{true};
-
-	bool Do_Once_2{true};
-
-	FRotator Starting_Rotation{};
-
 	FRotator Primary_Rotation{};
-
-	FRotator Secondary_Rotation{};
-	
-
-	bool Do_Once_3{true};
-
-	bool Do_Once_4{true};
-	
-	FRotator Target_Input_Rotation{};
-
-	FVector Current_Input_Vector{};
-
-    FRotator Current_Input_Rotation{};
-
-	
-	
-	
-	FRotator Target_Input_Rotation_1{};
-
-	FRotator Target_Input_Rotation_2{};
-
-	FRotator Target_Input_Rotation_3{};
-
-	FRotator Target_Input_Rotation_4{};
-
-	FRotator Target_Input_Rotation_5{};
-
-	FRotator Target_Input_Rotation_5_5{};
-
-	FRotator Target_Input_Rotation_7{};
-
-	
-	
-	FVector Interpolated_Direction{};
-
-	FVector Interpolated_Direction_1{};
-
-	FVector Interpolated_Direction_2{};
-
-	FVector Interpolated_Direction_3{};
-
-	FVector Interpolated_Direction_4{};
-
-	FVector Interpolated_Direction_5{};
-
-	FVector Interpolated_Direction_5_5{};
-
-	FVector Interpolated_Direction_7{};
-
-	double Look_At_Value_Final_Interpolation{};
 
 	bool bLook_Left_Right_Debug_Visibility{true};
 
-	float Character_Yaw{};
+#pragma endregion
 
 #pragma endregion
-	
+
 
 #pragma region Climbing
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	bool bIs_Climbing;
+
 	void Get_Is_Climbing();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Reference, meta = (AllowPrivateAccess = "true"))
 	FVector Climb_Velocity;
+
 	void Get_Climb_Velocity();
 
+	void Get_Should_Move();
+
 #pragma endregion
+
 
 #pragma region Take_Cover
 
@@ -287,90 +194,92 @@ private:
 	void Get_Take_Cover_Velocity();
 #pragma endregion
 
+
+
 protected:
 
 #pragma region Parkour
 	
-#pragma region Parkour_Interface
+#pragma region Character_Interface
 
 
-#pragma region Parkour_Locomotion
+#pragma region Character_Locomotion
 
-	/*Used to set new Parkour State within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Character State within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    void Set_Parkour_State(const FGameplayTag& New_Parkour_State);
+    void Set_Parkour_State(const FGameplayTag& New_Character_State);
 
 	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
-	interface class declared above "public IParkour_Locomotion_Interface". This is how call to the interface functions are able 
+	interface class declared above "public ICharacter_Locomotion_Interface". This is how call to the interface functions are able 
 	to interact with this class.*/
-	virtual void Set_Parkour_State_Implementation(const FGameplayTag& New_Parkour_State) override;
+	virtual void Set_Parkour_State_Implementation(const FGameplayTag& New_Character_State) override;
 
 
-	/*Used to set new Parkour Action within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Character Action within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
+    void Set_Parkour_Action(const FGameplayTag& New_Character_Action);
 
 	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
-	interface class declared above "public IParkour_Locomotion_Interface". This is how call to the interface functions are able 
+	interface class declared above "public ICharacter_Locomotion_Interface". This is how call to the interface functions are able 
 	to interact with this class.*/
-	virtual void Set_Parkour_Action_Implementation(const FGameplayTag& New_Parkour_Action) override;
+	virtual void Set_Parkour_Action_Implementation(const FGameplayTag& New_Character_Action) override;
 
 
-	/*Used to set new Parkour Climb Style within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Character Climb Style within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void Set_Parkour_Climb_Style(const FGameplayTag& New_Climb_Style);
 
 	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
-	interface class declared above "public IParkour_Locomotion_Interface". This is how call to the interface functions are able 
+	interface class declared above "public ICharacter_Locomotion_Interface". This is how call to the interface functions are able 
 	to interact with this class.*/
 	virtual void Set_Parkour_Climb_Style_Implementation(const FGameplayTag& New_Climb_Style) override;
     
 
-	/*Used to set new Parkour Wall Run Side within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Character Wall Run Side within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
     void Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
 
 	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
-	interface class declared above "public IParkour_Locomotion_Interface". This is how call to the interface functions are able 
+	interface class declared above "public ICharacter_Locomotion_Interface". This is how call to the interface functions are able 
 	to interact with this class.*/
 	virtual void Set_Parkour_Wall_Run_Side_Implementation(const FGameplayTag& New_Wall_Run_Side) override;
     
 
-	/*Used to set new Parkour Direction within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Character Direction within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    void Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
+    void Set_Parkour_Direction(const FGameplayTag& New_Character_Direction);
 
 	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
-	interface class declared above "public IParkour_Locomotion_Interface". This is how calls to the interface functions are able 
+	interface class declared above "public ICharacter_Locomotion_Interface". This is how calls to the interface functions are able 
 	to interact with this class.*/
-	virtual void Set_Parkour_Direction_Implementation(const FGameplayTag& New_Parkour_Direction) override;
+	virtual void Set_Parkour_Direction_Implementation(const FGameplayTag& New_Character_Direction) override;
 
 
-	/*Used to set new Parkour Stairs Direction within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Character Stairs Direction within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    void Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
+    void Set_Parkour_Stairs_Direction(const FGameplayTag& New_Character_Stairs_Direction);
 
 	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
-	interface class declared above "public IParkour_Locomotion_Interface". This is how calls to the interface functions are able 
+	interface class declared above "public ICharacter_Locomotion_Interface". This is how calls to the interface functions are able 
 	to interact with this class.*/
-	virtual void Set_Parkour_Stairs_Direction_Implementation(const FGameplayTag& New_Parkour_Stairs_Direction) override;
+	virtual void Set_Parkour_Stairs_Direction_Implementation(const FGameplayTag& New_Character_Stairs_Direction) override;
 
 
-	/*Used to set new Parkour Slide Side within the Animation Blueprint in the editor. This line tells this animation instance class
+	/*Used to set new Character Slide Side within the Animation Blueprint in the editor. This line tells this animation instance class
 	that this function can both be called and overriden from Blueprints.*/
     UFUNCTION(BlueprintCallable, BlueprintNativeEvent)
-    void Set_Parkour_Slide_Side(const FGameplayTag& New_Parkour_Slide_Side);
+    void Set_Parkour_Slide_Side(const FGameplayTag& New_Character_Slide_Side);
 
 	/*This line tells the animation instance class that is has a function of this name and signature to inherit from the the 
-	interface class declared above "public IParkour_Locomotion_Interface". This is how calls to the interface functions are able 
+	interface class declared above "public ICharacter_Locomotion_Interface". This is how calls to the interface functions are able 
 	to interact with this class.*/
-	virtual void Set_Parkour_Slide_Side_Implementation(const FGameplayTag& New_Parkour_Slide_Side) override;
+	virtual void Set_Parkour_Slide_Side_Implementation(const FGameplayTag& New_Character_Slide_Side) override;
 
 	#pragma endregion
 
@@ -380,17 +289,17 @@ protected:
 
 #pragma region Left_Limbs
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess ="true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Limbs", meta = (AllowPrivateAccess ="true"))
 	FVector Left_Hand_Shimmy_Location{};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Limbs", meta = (AllowPrivateAccess = "true"))
 	FRotator Left_Hand_Shimmy_Rotation{};
 	
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Limbs", meta = (AllowPrivateAccess = "true"))
 	FVector Left_Foot_Shimmy_Location{};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Limbs", meta = (AllowPrivateAccess = "true"))
 	FRotator Left_Foot_Shimmy_Rotation{};
 
 
@@ -425,17 +334,17 @@ protected:
 
 #pragma region Right_Limbs
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Limbs", meta = (AllowPrivateAccess = "true"))
 	FVector Right_Hand_Shimmy_Location{};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Limbs", meta = (AllowPrivateAccess = "true"))
 	FRotator Right_Hand_Shimmy_Rotation{};
 	
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Limbs", meta = (AllowPrivateAccess = "true"))
 	FVector Right_Foot_Shimmy_Location{};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Limbs", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Limbs", meta = (AllowPrivateAccess = "true"))
 	FRotator Right_Foot_Shimmy_Rotation{};
 
 
@@ -475,44 +384,44 @@ protected:
 #pragma endregion
 
 
-#pragma region Parkour_Gameplay_Tags
+#pragma region Character_Gameplay_Tags
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag Parkour_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam")))};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Character_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.State.Free.Roam")))};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag Parkour_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Character_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Action.No.Action")))};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.None")))};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Character_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Climb.Style.None")))};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag Parkour_Wall_Run_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.None")))};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Character_Wall_Run_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Wall.Run.Side.None")))};
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Character_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.None")))};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag Parkour_Stairs_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.None")))};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Character_Stairs_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Stairs.Direction.None")))};
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Parkour_Locomotion", meta = (AllowPrivateAccess = "true"))
-	FGameplayTag Parkour_Slide_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Slide.Side.None")))};
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character_Locomotion", meta = (AllowPrivateAccess = "true"))
+	FGameplayTag Character_Slide_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Slide.Side.None")))};
 	
 #pragma endregion
 
 
 #pragma region Others
 
-	UPROPERTY(BlueprintReadOnly, Category = "Parkour_Shimmying", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = "Character_Shimmying", meta = (AllowPrivateAccess = "true"))
 	double Forward_Backward_Movement_Value{};
 
-	UPROPERTY(BlueprintReadOnly, Category = "Parkour_Shimmying", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = "Character_Shimmying", meta = (AllowPrivateAccess = "true"))
 	double Right_Left_Movement_Value{};
 
-	UPROPERTY(BlueprintReadOnly, Category = "Parkour_Shimmying", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = "Character_Shimmying", meta = (AllowPrivateAccess = "true"))
 	float Left_Hand_Curve_Alpha{};
 
-	UPROPERTY(BlueprintReadOnly, Category = "Parkour_Shimmying", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(BlueprintReadOnly, Category = "Character_Shimmying", meta = (AllowPrivateAccess = "true"))
 	float Right_Hand_Curve_Alpha{};
 
 #pragma endregion
@@ -524,8 +433,26 @@ protected:
 public:
 	
 	FORCEINLINE float Anim_Get_Air_Speed() const {return Air_Speed;}
+
 	FORCEINLINE float Anim_Get_Ground_Speed() const {return Ground_Speed;}
-	FORCEINLINE void Set_bLook_Left_Right_Debug_Visibility(const bool& bVisible) {bLook_Left_Right_Debug_Visibility = bVisible;}
+
+
+	//
+
+	void Update_Locomotion_Play_Rate();
+
+	FORCEINLINE void Set_Ground_Locomotion_State(const EGround_Locomotion_State& Ground_Locomotion_State_Reference) {Ground_Locomotion_State = Ground_Locomotion_State_Reference;}
+
+	FORCEINLINE void Set_Ground_Locomotion_Starting_Direction(const EGround_Locomotion_Starting_Direction& Ground_Locomotion_Starting_Direction_Reference) {Ground_Locomotion_Starting_Direction = Ground_Locomotion_Starting_Direction_Reference;}
+
+	FORCEINLINE void Set_Turn_In_Place_Target_Angle(const float& Turn_In_Place_Target_Angle_Reference) {Turn_In_Place_Target_Angle = Turn_In_Place_Target_Angle_Reference;}
+
+	FORCEINLINE void Set_Left_Right_Look_Value(const float& Left_Right_Look_Value_Reference) {Left_Right_Look_Value = Left_Right_Look_Value_Reference;}
+
+	FORCEINLINE void Set_Dynamic_Look_Weight(const float& Dynamic_Look_Weight_Reference) {Dynamic_Look_Weight = Dynamic_Look_Weight_Reference;}
+
+	FORCEINLINE void Set_Dynamic_Dynamic_Lean_Angle(const float& Dynamic_Lean_Angle_Reference) {Dynamic_Lean_Angle = Dynamic_Lean_Angle_Reference;}
+
 
 };	
 

@@ -16,8 +16,6 @@ class TECHNICAL_ANIMATOR_API UInitialize_IK_Limbs : public UAnimNotifyState
 
 private:
 
-	UInitialize_IK_Limbs();
-
 	//Override "NotifyEnd". This function will call the setter functions located within the UCustom_Movement_Component which handle the execution of 
 	//setting the locations and rotations of the hands and feet when the character intitially starts shimmying. These locations and rotations are set
 	//by calling the respective "Parkour_Locomotion_Interface" functions passing in the location and rotation obtained by const&. Said rotations and locations

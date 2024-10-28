@@ -7,6 +7,8 @@
 //#include "Gameplay_Tags/Gameplay_Tags.h"
 #include "Native_Gameplay_Tags/Native_Gameplay_Tags.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "Enumarators/Ground_Locomotion_State.h"
+#include "Enumarators/Ground_Locomotion_Starting_Direction.h"
 #include "Custom_Movement_Component.generated.h"
 
 DECLARE_DELEGATE(F_On_Enter_Climb_State)
@@ -17,9 +19,9 @@ DECLARE_DELEGATE(F_On_Exit_Take_Cover_State)
 class UCharacterMovementComponent;
 class UCapsuleComponent;
 class ATechnical_Animator_Character;
+class UCharacter_Animation_Instance;
 class USkeletalMeshComponent;
 class UMotionWarpingComponent;
-class UAnimInstance;
 class UAnimMontage;
 class UCameraComponent;
 class ACharacter_Direction_Arrow;
@@ -57,6 +59,19 @@ public:
 
 	friend class UFoot_Steps;
 
+	friend class ATechnical_Animator_Character;
+
+
+	UPROPERTY()
+	UCharacter_Animation_Instance* Owning_Player_Animation_Instance{};
+
+	UPROPERTY()
+	ATechnical_Animator_Character* Owning_Player_Character{};
+
+
+
+
+
 	F_On_Enter_Climb_State On_Enter_Climb_State_Delegate;
 
 	F_On_Exit_Climb_State On_Exit_Climb_State_Delegate;
@@ -71,22 +86,30 @@ protected:
 #pragma region Overriden_Functions
 	
 	virtual void BeginPlay() override;
+
 	virtual void TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+
+
+
+
 	virtual void OnMovementModeChanged(EMovementMode PreviousMovementMode, uint8 PreviousCustomMode) override;
+
 	virtual void PhysCustom(float deltaTime, int32 Iterations) override;
+
 	virtual float GetMaxSpeed() const override;
+
 	virtual float GetMaxAcceleration() const override;
+
 	virtual FVector ConstrainAnimRootMotionVelocity(const FVector& RootMotionVelocity, const FVector& CurrentVelocity) const override;
 
 #pragma endregion
 
+
+
 private:
-
-	UPROPERTY()
-	UAnimInstance* Owning_Player_Animation_Instance{};
-
-	UPROPERTY()
-	ATechnical_Animator_Character* Owning_Player_Character{};
 
 #pragma region Climb_Region
 
@@ -332,6 +355,244 @@ private:
 
 
 
+#pragma region Custom_Ground_Locomotion_Region
+
+#pragma region Custom_Ground_Locomotion_Core
+
+	void Custom_Ground_Locomotion_Call_In_Tick(const float& Delta_Time);
+
+	void Add_Movement_Input(const FVector2D& Scale_Value, const bool& bIs_Forward_Backward_Movement);
+	
+	void Stabilize_Movement_While_Free_Roaming();
+	
+	void Find_Ground_Locomotion_State();
+
+	//void Idle_Turn_In_Place(const FGameplayTag& Controller_Input);
+
+	/* void Track_Ground_Locomotion_State_Idle(const EGround_Locomotion_State& Ground_Locomotion_State_Reference); */
+
+	void Track_Ground_Locomotion_State_Walking(const EGround_Locomotion_State& Ground_Locomotion_State_Reference);
+
+	void Track_Ground_Locomotion_State_Jogging(const EGround_Locomotion_State& Ground_Locomotion_State_Reference);
+	
+	void Find_Locomotion_Start_Direction(const float& Starting_Angle);
+
+	void Update_On_Movement_Enter();
+
+	void Get_Predicted_Stop_Distance_Variables();
+
+	void Get_Dynamic_Look_Offset_Values(const float& DeltaSeconds);
+
+	void Dynamic_Look_Offset_Weight(const float& DeltaSeconds);
+
+	void Calculate_Dynamic_Lean_Angle();
+
+	void Execute_Idle_Turn_In_Place(const FGameplayTag& Controller_Input);
+
+	void Execute_Crouching();
+
+	void Execute_Start_Running();
+
+	void Execute_Stop_Running();
+
+#pragma endregion
+
+#pragma region Custom_Ground_Locomotion_BP_Variables
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Turn_In_Place_Left{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Turn_In_Place_Right{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Turn_In_Place_Backward_Left{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Turn_In_Place_Backward_Right{};
+
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Crouching_Turn_In_Place_Left{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Crouching_Turn_In_Place_Right{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Crouching_Turn_In_Place_Backward_Left{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Crouching_Turn_In_Place_Backward_Right{};
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Custom Locomotion ", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Unarmed_Stop_Running{};
+
+
+#pragma endregion
+
+#pragma region Custom_Ground_Locomotion_Core_Variables
+
+	UPROPERTY(Replicated)
+	double Forward_Backward_Movement_Value{};
+
+	UPROPERTY(Replicated)
+	double Right_Left_Movement_Value{};
+
+	FRotator Stabilize_Movement_Current_Input_Rotation{};
+
+	FRotator Stabilize_Movement_Target_Input_Rotation{};
+
+	double Interpolated_Forward_Backward_Movement_Value{};
+
+	double Interpolated_Right_Left_Movement_Value{};
+
+	FVector Current_Input_Vector{};
+
+
+	
+	EGround_Locomotion_State Ground_Locomotion_State{};
+
+	EGround_Locomotion_Starting_Direction Ground_Locomotion_Starting_Direction{};
+
+	FRotator Turn_In_Place_Starting_Rotation{};
+
+	float Turn_In_Place_Delta{};
+
+	float Turn_In_Place_Minimum_Threshold{45.f};
+
+	float Turn_In_Place_Target_Angle{};
+
+	float Locomotion_Start_Angle{};
+
+	bool bCan_Turn_In_Place{false};
+
+	bool bDisable_Turn_In_Place{true};
+
+	bool bTurn_In_Place_Flip_Flop{};
+
+	double Left_Right_Look_Value{};
+
+	float Dynamic_Look_Weight{};
+
+	float Dynamic_Lean_Angle{};
+	
+	
+	
+	bool Anim_Do_Once_1{true};
+
+	bool Anim_Do_Once_2{true};
+
+	FRotator Starting_Rotation{};
+
+	FRotator Primary_Rotation{};
+
+	FRotator Secondary_Rotation{};
+	
+
+	bool Anim_Do_Once_3{true};
+
+	bool Anim_Do_Once_4{true};
+	
+	FRotator Target_Input_Rotation{};
+
+    FRotator Current_Input_Rotation{};
+
+	
+	
+	
+	FRotator Target_Input_Rotation_1{};
+
+	FRotator Target_Input_Rotation_2{};
+
+	FRotator Target_Input_Rotation_3{};
+
+	FRotator Target_Input_Rotation_4{};
+
+	FRotator Target_Input_Rotation_5{};
+
+	FRotator Target_Input_Rotation_5_5{};
+
+	FRotator Target_Input_Rotation_7{};
+
+	
+	
+	FVector Interpolated_Direction{};
+
+	FVector Interpolated_Direction_1{};
+
+	FVector Interpolated_Direction_2{};
+
+	FVector Interpolated_Direction_3{};
+
+	FVector Interpolated_Direction_4{};
+
+	FVector Interpolated_Direction_5{};
+
+	FVector Interpolated_Direction_5_5{};
+
+	FVector Interpolated_Direction_7{};
+
+
+
+	double Look_At_Value_Final_Interpolation{};
+
+	bool bLook_Left_Right_Debug_Visibility{true};
+
+	float Character_Yaw{};
+
+#pragma endregion
+
+#pragma region Custom_Ground_Locomotion_Network
+
+UFUNCTION(Server, Reliable)
+void Server_Set_Add_Movement_Input_Variables(const double& Network_Forward_Backward_Movement_Value, const double& Network_Right_Left_Movement_Value);
+
+UFUNCTION(Server, Reliable)
+void Server_Play_Turn_In_Place_Montage(const FGameplayTag& Network_Controller_Input, const int& Network_Random_Number);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Play_Turn_In_Place_Montage(const FGameplayTag& Network_Controller_Input, const int& Network_Random_Number);
+
+UFUNCTION(Server, Reliable)
+void Server_Play_Crouching_Turn_In_Place_Montage(const FGameplayTag& Network_Controller_Input, const int& Network_Random_Number);
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Play_Crouching_Turn_In_Place_Montage(const FGameplayTag& Network_Controller_Input, const int& Network_Random_Number);
+
+UFUNCTION(Server, Reliable)
+void Server_Execute_Start_Running();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Execute_Start_Running();
+
+UFUNCTION(Server, Reliable)
+void Server_Execute_Stop_Running();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Execute_Stop_Running();
+
+UFUNCTION(Server, Reliable)
+void Server_Play_Running_Stop_Animation();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Play_Running_Stop_Animation();
+
+UFUNCTION(Server, Reliable)
+void Server_Stop_All_Montages();
+
+UFUNCTION(NetMulticast, Reliable)
+void Multicast_Stop_All_Montages();
+
+
+
+
+#pragma endregion
+
+#pragma endregion
+
+
+
 #pragma region Parkour_Region
 
 #pragma region Parkour_Helper
@@ -448,9 +709,9 @@ private:
 
 	void Validate_bIs_On_Ground();
 
-	void Decide_Climb_Style(const FVector& Impact_Point, const FRotator& Direction_For_Character_To_Face);
+	void Decide_Climb_Style(const FVector& Impact_Point, const FRotator& Rotation_Character_Will_Have);
 
-	bool Parkour_Climb_State_Detect_Wall(FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, FHitResult& Parkour_Climbing_Wall_Top_Result);
+	bool Parkour_Climb_State_Detect_Wall(FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, FHitResult& Parkour_Climbing_Warp_Point_Hit_Result);
 
 	bool Parkour_Climb_State_Are_There_Obstacles_On_Sides_Of_Hands(const FVector& Starting_Impact_Point);
 
@@ -510,7 +771,7 @@ private:
 
 	void Parkour_Wall_Pipe_Climb_Dynamic_IK_Feet(const bool& bIs_Left_Foot);
 
-	bool Parkour_Wall_Pipe_Climb_State_Detect_Wall_Pipe(FHitResult& Parkour_Pipe_Climbing_Wall_Top_Result);
+	bool Parkour_Wall_Pipe_Climb_State_Detect_Wall_Pipe(FHitResult& Parkour_Pipe_Climbing_Warp_Point_Hit_Result);
 
 	bool Parkour_Wall_Pipe_Climb_State_Are_There_Obstacles_Ontop_Or_Below_Body(const FVector& Movemement_Impact_Location) const;
 
@@ -522,11 +783,17 @@ private:
 
 	bool Validate_Wall_Pipe_Hop_Location(const double& Wall_Pipe_Horizontal_Hop_Distance, const double& Wall_Pipe_Vertical_Hop_Distance);
 
-	FGameplayTag Get_Wall_Pipe_Hop_Action_Based_On_Parkour_Direction(const FGameplayTag& Current_Parkour_Direction);
+	FGameplayTag Get_Wall_Pipe_Hop_Action_Based_On_Parkour_Direction(const FGameplayTag& Current_Character_Direction);
 
-	void Set_Horizontal_Wall_Pipe_Hop_Distance_Value_Based_On_Parkour_Direction(const FGameplayTag& Current_Parkour_Direction);
+	void Set_Horizontal_Wall_Pipe_Hop_Distance_Value_Based_On_Parkour_Direction(const FGameplayTag& Current_Character_Direction);
 
-	void Set_Vertical_Wall_Pipe_Hop_Distance_Value_Based_On_Parkour_Direction(const FGameplayTag& Current_Parkour_Direction);
+	void Set_Vertical_Wall_Pipe_Hop_Distance_Value_Based_On_Parkour_Direction(const FGameplayTag& Current_Character_Direction);
+
+	void Execute_Parkour_Wall_Pipe_Climb_Action();
+
+	void Execute_Parkour_Jump();
+
+	void Execute_Balance_Traversal(ABalance_Traversal_Actor* Balance_Traversal_Actor_Reference);
 
 	bool Validate_Foot_Contact_With_Ground(const bool& bIs_Left_Foot) const;
 
@@ -545,6 +812,14 @@ private:
 	bool Parkour_Balance_Walk_Are_There_Obstacles_In_Front_Of_Body(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference);
 
 	bool Validate_Balance_Walk_Hop();
+
+	void Execute_Exit_Balance_Traversal();
+
+	void Execute_Balance_Drop_Hanging();
+
+	void Execute_Free_Hang_To_Balanced_Walk();
+
+	void Execute_Wall_Vault(AWall_Vault_Actor* Wall_Vault_Actor_Reference);
 
 	void Balance_Walk_Hop_Detect_Wall();
 
@@ -574,23 +849,25 @@ private:
 
 #pragma region Parkour_Core
 
+	void Initialize_Parkour(ATechnical_Animator_Character* Character, UMotionWarpingComponent* Motion_Warping, UCameraComponent* Camera);
+	
 	void Parkour_State_Settings(const ECollisionEnabled::Type& Collision_Type, const EMovementMode& New_Movement_Mode, const bool& bStop_Movement_Immediately, const bool& bIgnore_Controller_Input);
 
-	void Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_State);
+	void Set_Parkour_State_Attributes(const FGameplayTag& Current_Character_State);
 
-	void Set_Parkour_State(const FGameplayTag& New_Parkour_State);
+	void Set_Parkour_State(const FGameplayTag& New_Character_State);
 
-	void Set_Parkour_Climb_Style(const FGameplayTag& New_Parkour_Climb_Style);
+	void Set_Parkour_Climb_Style(const FGameplayTag& New_Character_Climb_Style);
 
 	void Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
 
-	void Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
+	void Set_Parkour_Direction(const FGameplayTag& New_Character_Direction);
 
-	void Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
+	void Set_Parkour_Stairs_Direction(const FGameplayTag& New_Character_Stairs_Direction);
 
-	void Set_Parkour_Slide_Side(const FGameplayTag& New_Parkour_Slide_Side);
+	void Set_Parkour_Slide_Side(const FGameplayTag& New_Character_Slide_Side);
 
-	void Set_Parkour_Action(const FGameplayTag& New_Parkour_Action);
+	void Set_Parkour_Action(const FGameplayTag& New_Character_Action);
 
 	float Select_Value_Based_On_Climb_Style(const FGameplayTag& Climb_Style, const float& Braced_Value, const float& Free_Hang_Value) const;
 
@@ -604,15 +881,17 @@ private:
 
 	//void Get_Parkour_Data_Asset(UParkour_Action_Data* Parkour_Action_Data);
 
-	FVector Find_Parkour_Warp_Location(const FVector& Impact_Point_To_Use, const FRotator& Direction_For_Character_To_Face, const float& X_Axis_Offset, const float& Y_Axis_Offset, const float& Z_Axis_Offset) const;
+	FVector Find_Parkour_Warp_Location(const FVector& Impact_Point_To_Use, const FRotator& Rotation_Character_Will_Have, const float& X_Axis_Offset, const float& Y_Axis_Offset, const float& Z_Axis_Offset) const;
 
 	void Play_Parkour_Montage(UParkour_Action_Data* Parkour_Data_Asset_To_Use);
 
 	void Function_To_Execute_On_Animation_Blending_Out(UAnimMontage *Montage, bool bInterrupted);
 
+	void Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+
 	void Parkour_Climb_Handle_Shimmying_Movement();
 
-	void Calculate_And_Move_Character_To_New_Climb_Position(const FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, const FHitResult& Parkour_Climbing_Wall_Top_Result);
+	void Calculate_And_Move_Character_To_New_Climb_Position(const FHitResult& Parkour_Climbing_Detect_Wall_Hit_Result, const FHitResult& Parkour_Climbing_Warp_Point_Hit_Result);
 
 	void Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Input_Location_To_Move_Character, const FRotator& Input_Rotation_For_Character_To_Face);
 
@@ -622,9 +901,13 @@ private:
 
 	void Reset_Parkour_IK_Feet(bool bIs_Left_Foot);
 
+	void Release_From_Shimmying();
+
 	void Handle_Release_From_Shimmying();
 
 	void Set_bIs_Falling_To_False();
+
+	void Execute_Jump_Out_Of_Shimmy();
 
 	void Set_bCan_Jump_From_Braced_Climb_To_True();
 
@@ -636,7 +919,7 @@ private:
 
 	void Parkour_Shimmy_Decide_Corner_Movement();
 
-	void Parkour_Shimmy_Handle_Corner_Movement(const FHitResult& New_Corner_Detect_Wall_Hit_Result, const FHitResult& New_Corner_Wall_Top_Result);
+	void Parkour_Shimmy_Handle_Corner_Movement(const FHitResult& New_Corner_Detect_Wall_Hit_Result, const FHitResult& New_Corner_Warp_Point_Hit_Result);
 
 	void Set_bOut_Corner_Movement_To_False();
 
@@ -648,21 +931,23 @@ private:
 
 	void Select_Random_Montage_To_Execute(TArray<UParkour_Action_Data*>& Array_To_Select_From);
 
-	FGameplayTag Get_Hop_Action_Based_On_Parkour_Direction(const FGameplayTag& Current_Parkour_Direction) const;
+	FGameplayTag Get_Hop_Action_Based_On_Parkour_Direction(const FGameplayTag& Current_Character_Direction) const;
 
-	void Set_Horizontal_Hop_Distance_Value_Based_On_Parkour_Direction(const FGameplayTag& Current_Parkour_Direction);
+	void Set_Horizontal_Hop_Distance_Value_Based_On_Parkour_Direction(const FGameplayTag& Current_Character_Direction);
 
-	void Set_Vertical_Hop_Distance_Value_Based_On_Parkour_Direction(const FGameplayTag& Current_Parkour_Direction);
+	void Set_Vertical_Hop_Distance_Value_Based_On_Parkour_Direction(const FGameplayTag& Current_Character_Direction);
 
-	float Select_Value_Based_On_Parkour_State(const FGameplayTag& Current_Parkour_State, const float& Parkour_State_Free_Roam_Value_To_Return, 
-																	  const float& Parkour_State_Ready_To_Climb_Value_To_Return, 
-																	  const float& Parkour_State_Climb_Value_To_Return) const;
+	float Select_Value_Based_On_Parkour_State(const FGameplayTag& Current_Character_State, const float& Character_State_Free_Roam_Value_To_Return, 
+																	  const float& Character_State_Ready_To_Climb_Value_To_Return, 
+																	  const float& Character_State_Climb_Value_To_Return) const;
 
 	double Get_Characters_Highest_Hand_Height() const;
 
 	bool Realize_And_Validate_Hop_Destnation_And_Action();
 
 	void Perform_Hop_Action(const FGameplayTag& Hop_Action);
+
+	void Execute_Drop_Into_Shimmy();
 
 	void Reset_Wall_Run_Variables_And_Set_Parkour_State_To_Free_Roam();
 
@@ -678,17 +963,25 @@ private:
 
 	void Set_bCan_Jump_From_Wall_Run_To_True();
 
-	void Stabilize_Movement_While_Free_Roaming();
-
 	void On_Landing_Impact();
 
+	void Execute_Parkour_Action();
+
 	void Move_Character_To_Front_Of_Pipe();
+
+	void Release_From_Parkour_Wall_Pipe_Climb();
+
+	void Execute_Parkour_Wall_Pipe_Climb();
+
+	void Execute_Wall_Run();
+
+	void Execute_Exit_Wall_Run_With_Jump_Forward();
 
 	void Execute_Accelerating_Drop_Free_Roam();
 
 	void Parkour_Wall_Pipe_Climb_Handle_Pipe_Climbing_Movement();
 
-	void Calculate_And_Move_Character_To_New_Wall_Pipe_Climb_Position(const FHitResult& Parkour_Wall_Pipe_Climbing_Wall_Top_Result_Reference);
+	void Calculate_And_Move_Character_To_New_Wall_Pipe_Climb_Position(const FHitResult& Parkour_Wall_Pipe_Climbing_Warp_Point_Hit_Result_Reference);
 
 	void Decide_Wall_Pipe_Maneuver_To_Free_Hang_Mantle_Or_Hop();
 
@@ -696,15 +989,23 @@ private:
 
 	void Parkour_Balance_Walk_Handle_Balance_Walking_Movement();
 
+	void Execute_Balance_Walk_Hop();
+
 	void Calculate_And_Move_Character_To_New_Balance_Walk_Position(const FHitResult& Parkour_Balance_Walk_Balance_Surface_Top_Result_Reference);
 
 	void Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 	void Decide_Wall_Vault_Parkour_Action();
 
+	void Execute_Tic_Tac(ATic_Tac_Actor* Tic_Tac_Actor_Reference, const int& Tic_Tac_Area_Box_ID);
+
 	void Decide_Tic_Tac_Parkour_Action();
 
+	void Execute_Parkour_Stairs(AStairs_Actor* Stairs_Actor_Reference);
+
 	void Determine_Parkour_Stairs_Direction(AStairs_Actor* Stairs_Actor_Reference);
+
+	void Execute_Parkour_Sliding();
 
 	void Decide_Parkour_Slide_Side();
 
@@ -718,15 +1019,8 @@ private:
 
 	void Exit_Out_Of_Parkour_Slide();
 
-	#pragma region Set_Network_Variables
+	void Execute_Parkour_Roll();
 
-	void Set_Network_Variables(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector);
-
-	void Set_Network_Initialize_Parkour_IK_Limbs(const FHitResult& Network_Initialize_Parkour_IK_Limbs_Hit_Result);
-
-	void Set_Network_Move_Character_To_Front_Of_Pipe(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
-
-	#pragma endregion
 
 #pragma endregion
 
@@ -734,26 +1028,26 @@ private:
 
 	#pragma region Gameplay_Tags
 	
-	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_State)
-	FGameplayTag Parkour_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam")))};
+	UPROPERTY(ReplicatedUsing = On_Replication_Character_State)
+	FGameplayTag Character_State{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.State.Free.Roam")))};
 
-	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Climb_Style)
-	FGameplayTag Parkour_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Climb.Style.None")))};
+	UPROPERTY(ReplicatedUsing = On_Replication_Character_Climb_Style)
+	FGameplayTag Character_Climb_Style{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Climb.Style.None")))};
 
-	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Wall_Run_Side)
-	FGameplayTag Parkour_Wall_Run_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Wall.Run.Side.None")))};
+	UPROPERTY(ReplicatedUsing = On_Replication_Character_Wall_Run_Side)
+	FGameplayTag Character_Wall_Run_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Wall.Run.Side.None")))};
 
-	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Direction)
-	FGameplayTag Parkour_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Direction.None")))};
+	UPROPERTY(ReplicatedUsing = On_Replication_Character_Direction)
+	FGameplayTag Character_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.None")))};
 
-	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Stairs_Direction)
-	FGameplayTag Parkour_Stairs_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Stairs.Direction.None")))};
+	UPROPERTY(ReplicatedUsing = On_Replication_Character_Stairs_Direction)
+	FGameplayTag Character_Stairs_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Stairs.Direction.None")))};
 
-	UPROPERTY(ReplicatedUsing = On_Replication_Parkour_Slide_Side)
-	FGameplayTag Parkour_Slide_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Slide.Side.None")))};
+	UPROPERTY(ReplicatedUsing = On_Replication_Character_Slide_Side)
+	FGameplayTag Character_Slide_Side{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Slide.Side.None")))};
 
 	UPROPERTY(Replicated)
-	FGameplayTag Parkour_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.Action.No.Action")))};
+	FGameplayTag Character_Action{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Action.No.Action")))};
 
 	#pragma endregion
 
@@ -767,23 +1061,25 @@ private:
 
 	FHitResult Front_Wall_Top_Edge_Best_Hit{};
 
-	FRotator Reversed_Front_Wall_Normal_Z{};
+	UPROPERTY(Replicated)
+	FRotator Direction_For_Character_To_Face{};
 
-	FHitResult Wall_Top_Result{};
+	FHitResult Warp_Point_Hit_Result{};
 
 	FHitResult Wall_Depth_Result{};
 
 	FHitResult Wall_Vault_Result{};
 
+	UPROPERTY(Replicated)
 	FHitResult Initialize_Parkour_IK_Limbs_Hit_Result{};
 
 	FHitResult Parkour_Shimmying_Detect_Out_Corner_Wall_Hit_Result{};
 
-	FHitResult Parkour_Shimmying_Out_Corner_Wall_Top_Result{};
+	FHitResult Parkour_Shimmying_Out_Corner_Warp_Point_Hit_Result{};
 
 	FHitResult Parkour_Shimmying_Detect_In_Corner_Wall_Hit_Result{};
 
-	FHitResult Parkour_Shimmying_In_Corner_Wall_Top_Result{};
+	FHitResult Parkour_Shimmying_In_Corner_Warp_Point_Hit_Result{};
 
 	TArray<FHitResult> Grid_Scan_Hop_Hit_Traces{};
 
@@ -801,6 +1097,7 @@ private:
 
 	FHitResult Realize_Wall_Pipe_Hit_Result{};
 
+	UPROPERTY(Replicated)
 	FHitResult Custom_Wall_Pipe_Actor_Forward_Vector_Hit_Result{};
 
 	TArray<FHitResult> Detect_Balance_Traversal_Actors_Hit_Traces{};
@@ -821,6 +1118,9 @@ private:
 	double Distance_In_Grid_Scan_For_Hit_Results_Current_Iteration{};
 
 	double Distance_In_Grid_Scan_For_Hit_Results_Previous_Iteration{};
+
+	UPROPERTY(Replicated)
+	FVector_NetQuantize Warp_Location{};
 
 	UPROPERTY()
 	bool bIs_On_Ground{false};
@@ -908,7 +1208,7 @@ private:
 
 	FRotator Parkour_Slide_Rotation{};
 
-	FVector Parkour_Sliding_Momentum{};
+	FVector_NetQuantize Parkour_Sliding_Momentum{};
 
 	bool bCan_Blend_Out_Of_Parkour_Slide_Exit{false};
 
@@ -916,6 +1216,8 @@ private:
 
 	UPROPERTY(ReplicatedUsing = On_Replication_Foot_Step_Sound_To_Play_On_Network)
 	FVector_NetQuantize Location_To_Play_Foot_Steps{};
+
+	EDrawDebugTrace::Type Debug_Action{EDrawDebugTrace::None};
 	
 	#pragma endregion
 
@@ -1003,6 +1305,9 @@ private:
 														   Landing_Roll_A_R,
 														   Landing_Roll_B_L,
 														   Landing_Roll_B_R */};
+
+	TArray<UParkour_Action_Data*> Landing_Down_Back_Roll_Array{/* Landing_Back_Roll_L,
+														   	   Landing_Back_Roll_R,*/};
 
 	TArray<UParkour_Action_Data*> Free_Roam_Accelerating_Drop_Array{/* Dash_Drop,
 																    Jump_Drop,
@@ -1203,7 +1508,7 @@ private:
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Climbing_Detect_Wall_Trace_Types{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
-	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Climbing_Wall_Top_Result_Trace_Types{};
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Climbing_Warp_Point_Hit_Result_Trace_Types{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Climbing_Check_Sides_Of_Hands_Trace_Types{};
@@ -1236,13 +1541,13 @@ private:
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Detect_Out_Corner_Wall_Trace_Types{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
-	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Out_Corner_Wall_Top_Result_Trace_Types{};
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Out_Corner_Warp_Point_Hit_Result_Trace_Types{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Detect_In_Corner_Wall_Trace_Types{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
-	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_In_Corner_Wall_Top_Result_Trace_Types{};
+	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_In_Corner_Warp_Point_Hit_Result_Trace_Types{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	TArray<TEnumAsByte<EObjectTypeQuery>> Parkour_Shimmying_Validate_In_Corner_Wall_Space_Trace_Types{};
@@ -1639,6 +1944,12 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Landing_Roll_B_R{};
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Landing_Back_Roll_L{};
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	UParkour_Action_Data* Landing_Back_Roll_R{};
+
 
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
@@ -1923,11 +2234,11 @@ private:
 	
 	
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	/* UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Walking_Step_L_On{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
-	UParkour_Action_Data* Walking_Step_R_On{};
+	UParkour_Action_Data* Walking_Step_R_On{}; */
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Running_Step_L_On{};
@@ -1936,11 +2247,11 @@ private:
 	UParkour_Action_Data* Running_Step_R_On{};
 
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	/* UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Walking_Step_L_On_Off_To_Ground{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
-	UParkour_Action_Data* Walking_Step_R_On_Off_To_Ground{};
+	UParkour_Action_Data* Walking_Step_R_On_Off_To_Ground{}; */
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Running_Step_L_On_Off_To_Ground{};
@@ -1949,11 +2260,11 @@ private:
 	UParkour_Action_Data* Running_Step_R_On_Off_To_Ground{};
 
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
+	/* UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Walking_Step_L_On_Off_To_Airborne{};
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
-	UParkour_Action_Data* Walking_Step_R_On_Off_To_Airborne{};
+	UParkour_Action_Data* Walking_Step_R_On_Off_To_Airborne{}; */
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Character Movement Parkour", meta = (AllowPrivateAccess = "true"))
 	UParkour_Action_Data* Running_Step_L_On_Off_To_Airborne{};
@@ -2261,97 +2572,83 @@ private:
 
 #pragma region Network_Core
 
-virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
 UFUNCTION(Server, Reliable)
-void Server_Execute_Start_Running();
+void Server_Set_Parkour_State_Attributes(const FGameplayTag& Current_Character_State);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Execute_Start_Running();
+void Multicast_Set_Parkour_State_Attributes(const FGameplayTag& Current_Character_State);
 
 UFUNCTION(Server, Reliable)
-void Server_Execute_Stop_Running();
-
-UFUNCTION(NetMulticast, Reliable)
-void Multicast_Execute_Stop_Running();
-
-UFUNCTION(Server, Reliable)
-void Server_Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_State);
-
-UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Parkour_State_Attributes(const FGameplayTag& Current_Parkour_State);
-
-UFUNCTION(Server, Reliable)
-void Server_Set_Parkour_State(const FGameplayTag& New_Parkour_State);
+void Server_Set_Parkour_State(const FGameplayTag& New_Character_State);
 
 UFUNCTION()
-void On_Replication_Parkour_State();
+void On_Replication_Character_State();
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Parkour_State(const FGameplayTag& New_Parkour_State);
+void Multicast_Set_Parkour_State(const FGameplayTag& New_Character_State);
 
 UFUNCTION(Server, Reliable)
-void Server_Set_Parkour_Climb_Style(const FGameplayTag& New_Parkour_Climb_Style);
+void Server_Set_Parkour_Climb_Style(const FGameplayTag& New_Character_Climb_Style);
 
 UFUNCTION()
-void On_Replication_Parkour_Climb_Style();
+void On_Replication_Character_Climb_Style();
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Parkour_Climb_Style(const FGameplayTag& New_Parkour_Climb_Style);
+void Multicast_Set_Parkour_Climb_Style(const FGameplayTag& New_Character_Climb_Style);
 
 UFUNCTION(Server, Reliable)
 void Server_Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
 
 UFUNCTION()
-void On_Replication_Parkour_Wall_Run_Side();
+void On_Replication_Character_Wall_Run_Side();
 
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_Parkour_Wall_Run_Side(const FGameplayTag& New_Wall_Run_Side);
 
 UFUNCTION(Server, Reliable)
-void Server_Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
+void Server_Set_Parkour_Direction(const FGameplayTag& New_Character_Direction);
 
 UFUNCTION()
-void On_Replication_Parkour_Direction();
+void On_Replication_Character_Direction();
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Parkour_Direction(const FGameplayTag& New_Parkour_Direction);
+void Multicast_Set_Parkour_Direction(const FGameplayTag& New_Character_Direction);
 
 UFUNCTION(Server, Reliable)
-void Server_Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
+void Server_Set_Parkour_Stairs_Direction(const FGameplayTag& New_Character_Stairs_Direction);
 
 UFUNCTION()
-void On_Replication_Parkour_Stairs_Direction();
+void On_Replication_Character_Stairs_Direction();
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Parkour_Stairs_Direction(const FGameplayTag& New_Parkour_Stairs_Direction);
+void Multicast_Set_Parkour_Stairs_Direction(const FGameplayTag& New_Character_Stairs_Direction);
 
 UFUNCTION(Server, Reliable)
-void Server_Set_Parkour_Slide_Side(const FGameplayTag& New_Parkour_Slide_Side);
+void Server_Set_Parkour_Slide_Side(const FGameplayTag& New_Character_Slide_Side);
 
 UFUNCTION()
-void On_Replication_Parkour_Slide_Side();
+void On_Replication_Character_Slide_Side();
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Parkour_Slide_Side(const FGameplayTag& New_Parkour_Slide_Side);
+void Multicast_Set_Parkour_Slide_Side(const FGameplayTag& New_Character_Slide_Side);
 
 UFUNCTION(Server, Reliable)
-void Server_Handle_Release_From_Shimmying(const FGameplayTag& Network_Parkour_Climb_Style, const FGameplayTag& Network_Parkour_Direction, const double& Network_Forward_Backward_Movement_Value_Absolute_Value);
+void Server_Handle_Release_From_Shimmying(const FGameplayTag& Network_Character_Climb_Style, const FGameplayTag& Network_Character_Direction, const double& Network_Forward_Backward_Movement_Value_Absolute_Value);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Handle_Release_From_Shimmying(const FGameplayTag& Network_Parkour_Climb_Style, const FGameplayTag& Network_Parkour_Direction, const double& Network_Forward_Backward_Movement_Value_Absolute_Value);
+void Multicast_Handle_Release_From_Shimmying(const FGameplayTag& Network_Character_Climb_Style, const FGameplayTag& Network_Character_Direction, const double& Network_Forward_Backward_Movement_Value_Absolute_Value);
 
 UFUNCTION(Server, Reliable)
-void Server_Set_Parkour_Action(const FGameplayTag& New_Parkour_Action, const int& Network_Random_Montage_To_Play);
+void Server_Set_Parkour_Action(const FGameplayTag& New_Character_Action, const int& Network_Random_Montage_To_Play);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Parkour_Action(const FGameplayTag& New_Parkour_Action, const int& Network_Random_Montage_To_Play);
+void Multicast_Set_Parkour_Action(const FGameplayTag& New_Character_Action, const int& Network_Random_Montage_To_Play);
 
 UFUNCTION(Server, Reliable)
-void Server_Perform_Hop_Action(const FGameplayTag& Network_Parkour_State, const FGameplayTag& Network_Hop_Action, const int& Network_Random_Montage_To_Play);
+void Server_Perform_Hop_Action(const FGameplayTag& Network_Character_State, const FGameplayTag& Network_Hop_Action, const int& Network_Random_Montage_To_Play);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Perform_Hop_Action(const FGameplayTag& Network_Parkour_State, const FGameplayTag& Network_Hop_Action, const int& Network_Random_Montage_To_Play);
+void Multicast_Perform_Hop_Action(const FGameplayTag& Network_Character_State, const FGameplayTag& Network_Hop_Action, const int& Network_Random_Montage_To_Play);
 
 UFUNCTION(Server, Reliable)
 void Server_Decide_Parkour_Action();
@@ -2360,40 +2657,40 @@ UFUNCTION(NetMulticast, Reliable)
 void Multicast_Decide_Parkour_Action();
 
 UFUNCTION(Server, Reliable)
-void Server_Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Server_Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Multicast_Move_Character_To_New_Climb_Position_Interpolation_Settings(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(Server, Reliable)
-void Server_Move_Character_To_New_Parkour_Shimmy_Handle_Corner_Movement(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face, const float& Climb_Style_Interpolation_Speed);
+void Server_Move_Character_To_New_Parkour_Shimmy_Handle_Corner_Movement(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face, const float& Climb_Style_Interpolation_Speed);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Move_Character_To_New_Parkour_Shimmy_Handle_Corner_Movement(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face, const float& Climb_Style_Interpolation_Speed);
+void Multicast_Move_Character_To_New_Parkour_Shimmy_Handle_Corner_Movement(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face, const float& Climb_Style_Interpolation_Speed);
 
 UFUNCTION(Server, Reliable)
-void Server_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Server_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Multicast_Move_Character_To_New_Wall_Run_Position_Interpolation_Settings(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(Server, Reliable)
-void Server_Move_Character_To_Front_Of_Pipe(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Server_Move_Character_To_Front_Of_Pipe(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Move_Character_To_Front_Of_Pipe(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Multicast_Move_Character_To_Front_Of_Pipe(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(Server, Reliable)
-void Server_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Server_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Multicast_Move_Character_To_New_Balance_Walk_Position_Interpolation_Settings(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(Server, Reliable)
-void Server_Move_Character_To_New_Parkour_Slide_Position(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Server_Move_Character_To_New_Parkour_Slide_Position(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Move_Character_To_New_Parkour_Slide_Position(const FVector& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
+void Multicast_Move_Character_To_New_Parkour_Slide_Position(const FVector_NetQuantize& Location_To_Move_Character, const FRotator& Rotation_For_Character_To_Face);
 
 UFUNCTION(Server, Reliable)
 void Server_Exit_Out_Of_Parkour_Slide();
@@ -2405,14 +2702,11 @@ void Multicast_Exit_Out_Of_Parkour_Slide();
 
 #pragma region Set_Network_Variables
 
-UFUNCTION()
-void On_Replication_Set_Add_Movement_Input_Variables();
-
 UFUNCTION(Server, Reliable)
-void Server_Set_Network_Variables(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector);
+void Server_Set_Network_Variables(const FHitResult& Network_Warp_Point_Hit_Result, const FVector_NetQuantize& Network_Warp_Location, const FRotator& Network_Direction_For_Character_To_Face, const FHitResult& Network_Custom_Wall_Pipe_Forward_Vector);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Network_Variables(const FHitResult& Network_Wall_Top_Result, const FRotator& Network_Reversed_Front_Wall_Normal_Z, const FHitResult& Custom_Wall_Pipe_Forward_Vector);
+void Multicast_Set_Network_Variables(const FHitResult& Network_Warp_Point_Hit_Result, const FVector_NetQuantize& Network_Warp_Location, const FRotator& Network_Direction_For_Character_To_Face, const FHitResult& Network_Custom_Wall_Pipe_Forward_Vector);
 
 UFUNCTION(Server, Reliable)
 void Server_Set_bIs_Falling_To_True();
@@ -2433,10 +2727,10 @@ UFUNCTION(NetMulticast, Reliable)
 void Multicast_Set_bIn_Corner_Movement(const int& Network_bIn_Corner_Movement);
 
 UFUNCTION(Server, Reliable)
-void Server_Set_Parkour_Sliding_Network_Variables(const float& Network_Braking_Deceleration_Walking, const float& Network_Ground_Friction, const FVector& Network_Velocity, const float& Network_Parkour_Sliding_Capsule_Component_Half_Height_Interpolated);
+void Server_Set_Parkour_Sliding_Network_Variables(const float& Network_Braking_Deceleration_Walking, const float& Network_Ground_Friction, const FVector_NetQuantize& Network_Velocity, const float& Network_Parkour_Sliding_Capsule_Component_Half_Height_Interpolated);
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Set_Parkour_Sliding_Network_Variables(const float& Network_Braking_Deceleration_Walking, const float& Network_Ground_Friction, const FVector& Network_Velocity, const float& Network_Parkour_Sliding_Capsule_Component_Half_Height_Interpolated);
+void Multicast_Set_Parkour_Sliding_Network_Variables(const float& Network_Braking_Deceleration_Walking, const float& Network_Ground_Friction, const FVector_NetQuantize& Network_Velocity, const float& Network_Parkour_Sliding_Capsule_Component_Half_Height_Interpolated);
 
 UFUNCTION(Server, Reliable)
 void Server_Play_Foot_Steps(USoundBase* Network_Foot_Step_Sound, const FVector_NetQuantize& Network_Location_To_Play_Foot_Steps);
@@ -2463,6 +2757,8 @@ public:
 	FVector Get_Unrotated_Climb_Velocity() const;
  #pragma endregion
 
+
+
 #pragma region Take Cover
 
 	void Toggle_Take_Cover(bool bEneble_Take_Cover);
@@ -2472,94 +2768,33 @@ public:
 
 #pragma endregion
 
-#pragma region Initializing_Starting_And_Ending_Parkour
 
-	void Initialize_Parkour(ATechnical_Animator_Character* Character, UMotionWarpingComponent* Motion_Warping, UCameraComponent* Camera);
 
-	void Add_Movement_Input(const FVector2D& Scale_Value, const bool& bIs_Forward_Backward_Movement);
-	
-	void Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
+#pragma region Public_Setters
 
 	FORCEINLINE void Set_Parkour_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 
 	FORCEINLINE void Set_Parkour_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot) {Parkour_Climb_Initialize_IK_Feet(bIs_Left_Foot);}
-	
-	void Execute_Parkour_Action();
-
-	void Release_From_Shimmying();
-
-	void Execute_Jump_Out_Of_Shimmy();
-
-	void Execute_Drop_Into_Shimmy();
-
-	void Execute_Wall_Run();
-
-	void Execute_Exit_Wall_Run_With_Jump_Forward();
-
-	void Execute_Parkour_Wall_Pipe_Climb();
-
-	void Execute_Parkour_Wall_Pipe_Climb_Action();
-
-	void Execute_Start_Running();
-
-	void Execute_Stop_Running();
-
-	void Execute_Parkour_Jump();
-
-	void Execute_Balance_Traversal(ABalance_Traversal_Actor* Balance_Traversal_Actor_Reference);
-
-	void Execute_Balance_Walk_Hop();
-
-	void Execute_Exit_Balance_Traversal();
-
-	void Execute_Balance_Drop_Hanging();
-
-	void Execute_Free_Hang_To_Balanced_Walk();
-
-	void Execute_Wall_Vault(AWall_Vault_Actor* Wall_Vault_Actor_Reference);
-
-	void Execute_Tic_Tac(ATic_Tac_Actor* Tic_Tac_Actor_Reference, const int& Tic_Tac_Area_Box_ID);
-
-	void Execute_Parkour_Stairs(AStairs_Actor* Stairs_Actor_Reference);
-
-	void Execute_Parkour_Sliding();
-
-	void Execute_Crouching();
-
-	void Execute_Parkour_Roll();
 
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(const bool& bIs_Left_Hand) {Parkour_Wall_Pipe_Climb_Initialize_IK_Hands(bIs_Left_Hand);}
 
 	FORCEINLINE void Set_Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(const bool& bIs_Left_Foot) {Parkour_Wall_Pipe_Climb_Initialize_IK_Feet(bIs_Left_Foot);}
 
-	void Release_From_Parkour_Wall_Pipe_Climb();
+#pragma endregion
 
-	FORCEINLINE bool Get_bIs_Falling() const {return bIs_Falling;}
 
-	UPROPERTY(ReplicatedUsing = On_Replication_Set_Add_Movement_Input_Variables)
-	double Forward_Backward_Movement_Value{};
 
-	UPROPERTY(ReplicatedUsing = On_Replication_Set_Add_Movement_Input_Variables)
-	double Right_Left_Movement_Value{};
+#pragma region Public_Getters
 
-	UFUNCTION(Server, Reliable)
-	void Server_Set_Add_Movement_Input_Variables(const double& Network_Forward_Backward_Movement_Value, const double& Network_Right_Left_Movement_Value);
+	FORCEINLINE float Get_Forward_Backward_Movement_Value() {return Forward_Backward_Movement_Value;}
 
-	FVector Current_Input_Vector{};
-
-	FRotator Current_Input_Rotation{};
-
-	FRotator Target_Input_Rotation{};
-
-	double Interpolated_Forward_Backward_Movement_Value{};
-
-	double Interpolated_Right_Left_Movement_Value{};
+	FORCEINLINE float Get_Right_Left_Movement_Value() {return Right_Left_Movement_Value;}
+	
+	FORCEINLINE bool Get_bIs_Falling() const {return bIs_On_Ground;}
 
 	FORCEINLINE bool Get_bCan_Initialize_Running_Start() const {return bCan_Initialize_Running_Start;}
 
-	FORCEINLINE FGameplayTag Get_Parkour_State() const {return Parkour_State;}
-
-	EDrawDebugTrace::Type Debug_Action{EDrawDebugTrace::None};
+	FORCEINLINE FGameplayTag Get_Parkour_State() const {return Character_State;}
 
 	FORCEINLINE USoundBase* Get_Concrete_Foot_Step_Sound() const {return Concrete_Foot_Steps;}
 
@@ -2580,5 +2815,6 @@ public:
 	FORCEINLINE USoundBase* Get_Water_Foot_Step_Sound() const {return Water_Foot_Steps;}
 
 #pragma endregion
+
 
 };

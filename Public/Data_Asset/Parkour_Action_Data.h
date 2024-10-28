@@ -68,7 +68,7 @@ private:
 	/*//Constructor
 	UParkour_Action_Data();
 
-	 UParkour_Action_Data* Pointer_To_This_Class; */
+	UParkour_Action_Data* Pointer_To_This_Class; */
 
 	/*//An array that is the type of the struct developed above "FParkour_Action_Settings". This array holds all of the data types which are declared in said struct.
 	//When a data asset is developed within the editor (using this class (UParkour_Action_Data) as its parent class) and a new array element is created within said data asset, 

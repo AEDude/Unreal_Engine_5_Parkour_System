@@ -207,6 +207,8 @@ void ATechnical_Animator_Character::SetupPlayerInputComponent(UInputComponent* P
 
 		EnhancedInputComponent->BindAction(Crouch_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Crouch);
 
+		EnhancedInputComponent->BindAction(Turn_In_Place_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Turn_In_Place);
+
 		EnhancedInputComponent->BindAction(Parkour_Slide_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Slide_Started);
 
 		EnhancedInputComponent->BindAction(Parkour_Roll_Action, ETriggerEvent::Completed, this, &ATechnical_Animator_Character::On_Parkour_Roll_Started);
@@ -267,6 +269,9 @@ void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Triggered(const
 		// 
 			Custom_Movement_Component->Add_Movement_Input(Movement_Vector, true);
 			Custom_Movement_Component->Add_Movement_Input(Movement_Vector, false);
+
+			//Used for turning in place within &ATechnical_Animator_Character::On_Turn_In_Place
+			Canceled_Controller_Direction = Custom_Movement_Component->Get_Controller_Direction();
 		}
 	}
 
@@ -296,11 +301,11 @@ void ATechnical_Animator_Character::Handle_Ground_Movement_Input_Completed(const
 		{	
 			//When the call to "Handle_Ground_Movement_Input_Started" is completed this function will be called. It resets the values
 			//of the "Forward_Backward_Movement_Value" and the "Right_Left_Movement_Value" which are set within 
-			//"&Ucustom_Movement_Component::Add_Movement_Input". It also sets the FGameplaytag "Parkour_Direction" to
-			//"Parkour.Direction.None". The reason for the if check is because the custom ground locomotion within the Animation instance needs
+			//"&Ucustom_Movement_Component::Add_Movement_Input". It also sets the FGameplaytag "Character_Direction" to
+			//"Character.Direction.None". The reason for the if check is because the custom ground locomotion within the Animation instance needs
 			//braking distance in order for some of the animations to work as intended. Therefore These variables will only be reset if the character is 
-			//not in Parkour_State "Parkour.State.Free.Roam".
-			if(Custom_Movement_Component->Get_Parkour_State() != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+			//not in Character_State "Character.State.Free.Roam".
+			if(Custom_Movement_Component->Character_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Character.State.Free.Roam"))))
 			{
 				Custom_Movement_Component->Stop_Parkour_Movement_Immediately_And_Reset_Movement_Input_Variables();
 				Custom_Movement_Component->Forward_Backward_Movement_Value = 0.f;
@@ -385,7 +390,7 @@ void ATechnical_Animator_Character::Look(const FInputActionValue& Value)
 
 void ATechnical_Animator_Character::On_Crouch(const FInputActionValue& Value)
 {
-	if(!Custom_Movement_Component || Custom_Movement_Component->Get_Parkour_State() != FGameplayTag::RequestGameplayTag(FName(TEXT("Parkour.State.Free.Roam"))))
+	if(!Custom_Movement_Component || Custom_Movement_Component->Character_State != FGameplayTag::RequestGameplayTag(FName(TEXT("Character.State.Free.Roam"))))
 	{
 		return;
 	}
@@ -414,6 +419,14 @@ void ATechnical_Animator_Character::On_Crouch(const FInputActionValue& Value)
 		{
 			UnCrouch(true);
 		}
+	}
+}
+
+void ATechnical_Animator_Character::On_Turn_In_Place(const FInputActionValue& Value)
+{
+	if(Custom_Movement_Component)
+	{
+		Custom_Movement_Component->Execute_Idle_Turn_In_Place(Canceled_Controller_Direction);
 	}
 }
 
@@ -466,7 +479,7 @@ void ATechnical_Animator_Character::On_Parkour_Started(const FInputActionValue& 
 {
 	if(Custom_Movement_Component)
 	{
-		if(Custom_Movement_Component->Get_bIs_Falling())
+		if(Custom_Movement_Component->bIs_Falling)
 		{
 			Debug::Print("Parkour_Cool_Down_Activated", FColor::MakeRandomColor(), 11);
 			return;
@@ -527,7 +540,7 @@ void ATechnical_Animator_Character::On_Wall_Pipe_Climb_Started(const FInputActio
 
 void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Value)
 {
-	if(Custom_Movement_Component && Character_Direction_Arrow && Character_Animation_Instance)
+	if(Custom_Movement_Component && Character_Direction_Arrow)
 	{
 		if(Debug_Selector == 2)
 		{
@@ -542,7 +555,7 @@ void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Val
 			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::None;
 			GetCapsuleComponent()->SetVisibility(false);
 			Character_Direction_Arrow->SetHidden(true);
-			Character_Animation_Instance->Set_bLook_Left_Right_Debug_Visibility(false);
+			Custom_Movement_Component->bLook_Left_Right_Debug_Visibility = false;
 			Debug::Print("Debug_Mode_Changed: None", FColor::Emerald, 22);
 			break;
 			
@@ -550,7 +563,7 @@ void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Val
 			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::ForDuration;
 			GetCapsuleComponent()->SetVisibility(true);
 			Character_Direction_Arrow->SetHidden(false);
-			Character_Animation_Instance->Set_bLook_Left_Right_Debug_Visibility(true);
+			Custom_Movement_Component->bLook_Left_Right_Debug_Visibility = true;
 			Debug::Print("Debug_Mode_Changed: For_Duration", FColor::Emerald, 22);
 			break;
 
@@ -558,7 +571,7 @@ void ATechnical_Animator_Character::On_Debug_Action(const FInputActionValue& Val
 			Custom_Movement_Component->Debug_Action = EDrawDebugTrace::ForOneFrame;
 			GetCapsuleComponent()->SetVisibility(true);
 			Character_Direction_Arrow->SetHidden(false);
-			Character_Animation_Instance->Set_bLook_Left_Right_Debug_Visibility(true);
+			Custom_Movement_Component->bLook_Left_Right_Debug_Visibility = true;
 			Debug::Print("Debug_Mode_Changed: For_One_Frame", FColor::Emerald, 22);
 			break;
 		}

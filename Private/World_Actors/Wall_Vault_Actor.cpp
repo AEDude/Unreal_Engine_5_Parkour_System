@@ -80,7 +80,7 @@ void AWall_Vault_Actor::BeginPlay()
 
 	if(bEnable_Wall_Under_Bar)
 	{
-		Obtain_Wall_Top_Result();
+		Obtain_Warp_Point_Hit_Result();
 	}
 	
 }
@@ -139,7 +139,7 @@ FVector AWall_Vault_Actor::Move_Vector_Down(const FVector& Initial_Location, con
 
 #pragma region Ray_Casts
 
-void AWall_Vault_Actor::Obtain_Wall_Top_Result()
+void AWall_Vault_Actor::Obtain_Warp_Point_Hit_Result()
 {
 	const FVector Wall_Vault_Actor_Location{GetActorLocation()};
 	
@@ -155,7 +155,7 @@ void AWall_Vault_Actor::Obtain_Wall_Top_Result()
 		false,
 		TArray<AActor*>(),
 		EDrawDebugTrace::None,
-		Wall_Vault_Actor_Wall_Top_Result,
+		Wall_Vault_Actor_Warp_Point_Hit_Result,
 		false
 	);
 }

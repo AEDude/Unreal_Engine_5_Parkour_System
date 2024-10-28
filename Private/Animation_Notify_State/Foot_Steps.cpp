@@ -12,21 +12,23 @@
 
 void UFoot_Steps::NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBase * Animation, float TotalDuration, const FAnimNotifyEventReference& EventReference)
 {
+    Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+    
     if(MeshComp)
     {
         AActor* Mesh_Owner{MeshComp->GetOwner()};
 
         if(Mesh_Owner)
         {
-            Technical_Animator_Character = Cast<ATechnical_Animator_Character>(Mesh_Owner);
+            ATechnical_Animator_Character* Technical_Animator_Character = Cast<ATechnical_Animator_Character>(Mesh_Owner);
                
             if(Technical_Animator_Character && Technical_Animator_Character->IsLocallyControlled())
             {
-                Custom_Movement_Component = Technical_Animator_Character->Get_Custom_Movement_Component();
+                UCustom_Movement_Component* Custom_Movement_Component = Technical_Animator_Character->Get_Custom_Movement_Component();
 
                 if(Custom_Movement_Component)
                 {
-                    //Super::NotifyBegin(MeshComp, Animation, TotalDuration, EventReference);
+	                TArray<TEnumAsByte<EObjectTypeQuery>> Object_Trace_Types{};
                     
                     Object_Trace_Types.Emplace(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
                     Object_Trace_Types.Emplace(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
@@ -35,9 +37,9 @@ void UFoot_Steps::NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBa
 
                    
                     //Get the location of both feet bones
-                    const FVector Left_Foot_Location{MeshComp->GetSocketLocation(FName(TEXT("foot_l")))};
+                    const FVector Left_Foot_Location{Technical_Animator_Character->GetMesh()->GetSocketLocation(FName(TEXT("foot_l")))};
 
-                    const FVector Right_Foot_Location{MeshComp->GetSocketLocation(FName(TEXT("foot_r")))};
+                    const FVector Right_Foot_Location{Technical_Animator_Character->GetMesh()->GetSocketLocation(FName(TEXT("foot_r")))};
 
 
                    
@@ -46,11 +48,11 @@ void UFoot_Steps::NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBa
 
                     //Left Foot 
 
-                    const FVector Offset_Left_Foot_Location_Up{Move_Vector_Up(Left_Foot_Location, 20.f)};
+                    const FVector Offset_Left_Foot_Location_Up{Move_Vector_Up(Custom_Movement_Component, Left_Foot_Location, 20.f)};
 
                     const FVector Start_Left_Foot{Offset_Left_Foot_Location_Up};
 
-                    const FVector Offset_Left_Foot_Location_Down{Move_Vector_Down(Start_Left_Foot, 30.f)};
+                    const FVector Offset_Left_Foot_Location_Down{Move_Vector_Down(Custom_Movement_Component, Start_Left_Foot, 30.f)};
 
                     const FVector End_Left_Foot{Offset_Left_Foot_Location_Down};
 
@@ -71,6 +73,8 @@ void UFoot_Steps::NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBa
 
                     if(Left_Foot_Out_Hit.bBlockingHit)
                     {
+                        EPhysicalSurface Surface_Type{};
+                        
                         Surface_Type = UGameplayStatics::GetSurfaceType(Left_Foot_Out_Hit);
 
                         switch(Surface_Type)
@@ -262,11 +266,11 @@ void UFoot_Steps::NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBa
 
                     //Right Foot 
 
-                    const FVector Offset_Right_Foot_Location_Up{Move_Vector_Up(Right_Foot_Location, 30.f)};
+                    const FVector Offset_Right_Foot_Location_Up{Move_Vector_Up(Custom_Movement_Component, Right_Foot_Location, 30.f)};
 
                     const FVector Start_Right_Foot{Offset_Right_Foot_Location_Up};
 
-                    const FVector Offset_Right_Foot_Location_Down{Move_Vector_Down(Start_Right_Foot, 50.f)};
+                    const FVector Offset_Right_Foot_Location_Down{Move_Vector_Down(Custom_Movement_Component, Start_Right_Foot, 50.f)};
 
                     const FVector End_Right_Foot{Offset_Right_Foot_Location_Down};
 
@@ -288,6 +292,8 @@ void UFoot_Steps::NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBa
 
                     if(Right_Foot_Out_Hit.bBlockingHit)
                     {
+                        EPhysicalSurface Surface_Type{};
+                        
                         Surface_Type = UGameplayStatics::GetSurfaceType(Right_Foot_Out_Hit);
 
                         switch(Surface_Type)
@@ -482,7 +488,7 @@ void UFoot_Steps::NotifyBegin(USkeletalMeshComponent * MeshComp, UAnimSequenceBa
     }
 }
 
-FVector UFoot_Steps::Move_Vector_Up(const FVector& Initial_Location, const float& Move_Value)
+FVector UFoot_Steps::Move_Vector_Up(UCustom_Movement_Component* Custom_Movement_Component, const FVector& Initial_Location, const float& Move_Value)
 {
     if(Custom_Movement_Component)
     {
@@ -499,7 +505,7 @@ FVector UFoot_Steps::Move_Vector_Up(const FVector& Initial_Location, const float
     }
 }
 
-FVector UFoot_Steps::Move_Vector_Down(const FVector& Initial_Location, const float& Move_Value)
+FVector UFoot_Steps::Move_Vector_Down(UCustom_Movement_Component* Custom_Movement_Component, const FVector& Initial_Location, const float& Move_Value)
 {
     if(Custom_Movement_Component)
     {
