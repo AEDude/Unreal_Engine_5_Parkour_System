@@ -410,7 +410,7 @@ protected:
 #pragma endregion
 
 
-#pragma region Others
+#pragma region Other_Variables
 
 	UPROPERTY(BlueprintReadOnly, Category = "Character_Shimmying", meta = (AllowPrivateAccess = "true"))
 	double Forward_Backward_Movement_Value{};

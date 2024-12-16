@@ -2,6 +2,7 @@
 
 
 #include "World_Actor_Components/Actor_Movement_Component.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values for this component's properties
 UActor_Movement_Component::UActor_Movement_Component()
@@ -9,6 +10,8 @@ UActor_Movement_Component::UActor_Movement_Component()
 	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
 	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
+
+	SetIsReplicated(true);
 
 	// ...
 }
@@ -21,12 +24,27 @@ void UActor_Movement_Component::BeginPlay()
 
 	// ...
 
-	Component_Owner = Cast<AActor>(GetOwner());
+	Component_Owner = GetOwner();
 	
-	Component_Starting_Location = Component_Owner->GetActorLocation();
-	
+	if(Component_Owner)
+	{
+		if(Component_Owner->HasAuthority())
+		{
+			Component_Starting_Location = Component_Owner->GetActorLocation();
+
+			Component_Current_Location = Component_Starting_Location;
+		}
+	}
 }
 
+void UActor_Movement_Component::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	
+	DOREPLIFETIME_CONDITION(UActor_Movement_Component, Component_Starting_Location, COND_SkipOwner);
+
+	DOREPLIFETIME_CONDITION(UActor_Movement_Component, Component_Current_Location, COND_SkipOwner);
+}
 
 // Called every frame
 void UActor_Movement_Component::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -42,8 +60,6 @@ void UActor_Movement_Component::TickComponent(float DeltaTime, ELevelTick TickTy
 
 void UActor_Movement_Component::Move_Component(const float& DeltaTime)
 {
-	//Get the components current location.
-	Component_Current_Location = Component_Owner->GetActorLocation();
 	//Move Component in desired direction
 	Component_Current_Location = Component_Current_Location + (Component_Velocity * DeltaTime);
 	Component_Owner->SetActorLocation(Component_Current_Location);

@@ -75,6 +75,18 @@ void UCustom_Movement_Component::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 
 	DOREPLIFETIME_CONDITION(UCustom_Movement_Component, Right_Left_Movement_Value, COND_SkipOwner);
 
+	DOREPLIFETIME_CONDITION(UCustom_Movement_Component, bPlay_Running_Stop_Animation, COND_SkipOwner);
+
+	DOREPLIFETIME_CONDITION(UCustom_Movement_Component, Turning_In_Place_Direction, COND_SkipOwner);
+
+	DOREPLIFETIME_CONDITION(UCustom_Movement_Component, Turning_In_Place_Selection, COND_SkipOwner);
+
+	DOREPLIFETIME_CONDITION(UCustom_Movement_Component, Turning_In_Place_Crouching_Direction, COND_SkipOwner);
+
+	DOREPLIFETIME_CONDITION(UCustom_Movement_Component, Turning_In_Place_Crouching_Selection, COND_SkipOwner);
+
+	DOREPLIFETIME_CONDITION(UCustom_Movement_Component, bStop_All_Montages, COND_SkipOwner);
+
 
 
 	DOREPLIFETIME_CONDITION(UCustom_Movement_Component, Character_State, COND_SkipOwner);
@@ -1431,7 +1443,26 @@ void UCustom_Movement_Component::Add_Movement_Input(const FVector2D& Scale_Value
 		if(Owning_Player_Animation_Instance->IsAnyMontagePlaying() && 
 		Character_Action == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Action.No.Action"))))
 		{
-			Server_Stop_All_Montages();
+			int Random_Number{UKismetMathLibrary::RandomInteger(8)};
+			
+			//This is to make sure a different number is selected from the previous time this code is executed. This needs to happen so that when 
+			//&UCustom_Movement_Component::Server_Stop_All_Montages is called and "Random_Number" is passed in via the input argument "bStop_All_Montages"
+			//(which is the integer that will be set to equal the value of "Random_Number") will replicate everytime it is set with a different value. 
+			//Variables need to change in order to replicate. 
+			while(Random_Number == bStop_All_Montages_Previous_Integer)
+			{
+				Random_Number = UKismetMathLibrary::RandomInteger(8);
+			}
+
+			bStop_All_Montages_Previous_Integer = Random_Number;
+
+			//This is to stop this from being called twice if the server is executing this function.
+			if(!Owning_Player_Character->HasAuthority())
+			{
+				Owning_Player_Animation_Instance->StopAllMontages(.25f);
+			}
+
+			Server_Stop_All_Montages(Random_Number);
 		}
 		
 		//This variable is set within the character class in one of the calls to this function. One call sets this variable to true the other sets this variable to false. In each respective call to this function the global double variables
@@ -2116,18 +2147,127 @@ void UCustom_Movement_Component::Execute_Idle_Turn_In_Place(const FGameplayTag& 
 		return;
    	}
 	
-	const int Random_Number{UKismetMathLibrary::RandomIntegerInRange(1, 2)};
-   	
+	int Random_Number{UKismetMathLibrary::RandomInteger(8)};
+			
+	//This is to make sure a different number is selected from the previous time this code is executed. This needs to happen so that when 
+	//&UCustom_Movement_Component::Server_Play_(Insert Respective Turning In Place Function Here) is called and "Random_Number" is passed in via the input argument 
+	//replication will happen everytime. Variables need to change in order to replicate. 
+	while(Random_Number == Turning_In_Place_Previous_Integer)
+	{
+		Random_Number = UKismetMathLibrary::RandomIntegerInRange(1, 2);
+	}
+
+	Turning_In_Place_Previous_Integer = Random_Number;
+	
 	if(Owning_Player_Character->bIsCrouched)
    	{
-		Server_Play_Crouching_Turn_In_Place_Montage(Controller_Input, Random_Number);
+		Turning_In_Place_Crouching_Direction = Controller_Input;
+
+		Turning_In_Place_Crouching_Selection = Random_Number;
+
+		//This is to stop this from being called twice if the server is executing this function.
+		if(!Owning_Player_Character->HasAuthority())
+		{
+			if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward"))))
+			{
+				Turning_In_Place_Crouching_Selection == 1 ? Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+			}
+
+			else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward"))))
+			{
+
+				Turning_In_Place_Crouching_Selection == 1 ? Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+			}
+		
+			else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Left"))))
+			{
+				Play_Parkour_Montage(Crouching_Turn_In_Place_Left);
+			}
+
+			else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Right"))))
+			{
+				Play_Parkour_Montage(Crouching_Turn_In_Place_Right);
+			}
+
+			else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Left"))))
+			{
+				Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left);
+			}
+
+			else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Right"))))
+			{
+				Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+			}
+
+			else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Left"))))
+			{
+				Play_Parkour_Montage(Crouching_Turn_In_Place_Left);
+			}
+
+			else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Right"))))
+			{
+				Play_Parkour_Montage(Crouching_Turn_In_Place_Right);
+			}
+		}
+
+		Server_Play_Crouching_Turn_In_Place_Montage(Turning_In_Place_Crouching_Direction, Turning_In_Place_Crouching_Selection);
+
+
    	}
    
 	else
 	{
-		Server_Play_Turn_In_Place_Montage(Controller_Input, Random_Number);
-	}
-     
+		Turning_In_Place_Direction = Controller_Input;
+
+		Turning_In_Place_Selection = Random_Number;
+
+		//This is to stop this from being called twice if the server is executing this function.
+		if(!Owning_Player_Character->HasAuthority())
+		{
+			if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward"))))
+			{
+				Turning_In_Place_Selection == 1 ? Play_Parkour_Montage(Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+			}
+
+			else if(Controller_Input == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward"))))
+			{
+				Turning_In_Place_Selection == 1 ? Play_Parkour_Montage(Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+			}
+			
+			else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Left"))))
+			{
+				Play_Parkour_Montage(Turn_In_Place_Left);
+			}
+
+			else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Right"))))
+			{
+				Play_Parkour_Montage(Turn_In_Place_Right);
+			}
+
+			else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Left"))))
+			{
+				Play_Parkour_Montage(Turn_In_Place_Backward_Left);
+			}
+
+			else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Right"))))
+			{
+				Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+			}
+
+			else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Left"))))
+			{
+				Play_Parkour_Montage(Turn_In_Place_Left);
+			}
+
+			else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Right"))))
+			{
+				Play_Parkour_Montage(Turn_In_Place_Right);
+			}
+
+		}
+
+		Server_Play_Turn_In_Place_Montage(Turning_In_Place_Direction, Turning_In_Place_Selection);
+	} 
 }
 
 void UCustom_Movement_Component::Execute_Crouching()
@@ -2192,10 +2332,29 @@ void UCustom_Movement_Component::Execute_Stop_Running()
 
 	if(bIs_On_Ground && Ground_Speed > 300.f)
 	{
-		Server_Play_Running_Stop_Animation();
+		//This is to stop this from being called twice if the server is executing this function.
+		if(!Owning_Player_Character->HasAuthority())
+		{
+			Play_Parkour_Montage(Unarmed_Stop_Running);
+		}
+		
+		int Random_Number{UKismetMathLibrary::RandomInteger(8)};
+			
+		//This is to make sure a different number is selected from the previous time this code is executed. This needs to happen so that when 
+		//&UCustom_Movement_Component::Server_Play_Running_Stop_Animation is called and "Random_Number" is passed in via the input argument "bPlay_Running_Stop_Animation"
+		//(which is the integer that will be set to equal the value of "Random_Number") will replicate everytime it is set with a different value. 
+		//Variables need to change in order to replicate. 
+		while(Random_Number == bPlay_Running_Stop_Animation_Previous_Integer)
+		{
+			Random_Number = UKismetMathLibrary::RandomInteger(8);
+		}
+
+		bPlay_Running_Stop_Animation_Previous_Integer = Random_Number;
+
+		Server_Play_Running_Stop_Animation(Random_Number);
 	}
 	
-	Server_Execute_Stop_Running();
+	Server_Update_Stop_Running_Variables();
 }
 
 #pragma endregion
@@ -2211,7 +2370,95 @@ void UCustom_Movement_Component::Server_Set_Add_Movement_Input_Variables_Impleme
 
 void UCustom_Movement_Component::Server_Play_Turn_In_Place_Montage_Implementation(const FGameplayTag& Controller_Input, const int& Network_Random_Number)
 {
-	Multicast_Play_Turn_In_Place_Montage(Controller_Input, Network_Random_Number);
+	Turning_In_Place_Direction = Controller_Input;
+
+	Turning_In_Place_Selection = Network_Random_Number;
+
+	if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward"))))
+   	{
+		Turning_In_Place_Selection == 1 ? Play_Parkour_Montage(Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+   	}
+
+	else if(Controller_Input == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward"))))
+	{
+		Turning_In_Place_Selection == 1 ? Play_Parkour_Montage(Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+	}
+	
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Left"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Left);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Right"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Right);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Left"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Backward_Left);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Right"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Left"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Left);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Right"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Right);
+	}
+
+	//Multicast_Play_Turn_In_Place_Montage(Controller_Input, Network_Random_Number);
+}
+
+void UCustom_Movement_Component::On_Replication_Turning_In_Place()
+{
+	if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward"))))
+   	{
+		Turning_In_Place_Selection == 1 ? Play_Parkour_Montage(Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+   	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward"))))
+	{
+		Turning_In_Place_Selection == 1 ? Play_Parkour_Montage(Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+	}
+	
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Left"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Left);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Right"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Right);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Left"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Backward_Left);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Right"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Backward_Right);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Left"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Left);
+	}
+
+	else if(Turning_In_Place_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Right"))))
+	{
+		Play_Parkour_Montage(Turn_In_Place_Right);
+	}
+
 }
 
 void UCustom_Movement_Component::Multicast_Play_Turn_In_Place_Montage_Implementation(const FGameplayTag& Controller_Input, const int& Network_Random_Number)
@@ -2260,7 +2507,96 @@ void UCustom_Movement_Component::Multicast_Play_Turn_In_Place_Montage_Implementa
 
 void UCustom_Movement_Component::Server_Play_Crouching_Turn_In_Place_Montage_Implementation(const FGameplayTag& Controller_Input, const int& Network_Random_Number)
 {
-	Multicast_Play_Crouching_Turn_In_Place_Montage(Controller_Input, Network_Random_Number);
+	Turning_In_Place_Crouching_Direction = Controller_Input;
+
+	Turning_In_Place_Crouching_Selection = Network_Random_Number;
+	
+	if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward"))))
+   	{
+		Turning_In_Place_Crouching_Selection == 1 ? Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+   	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward"))))
+	{
+
+		Turning_In_Place_Crouching_Selection == 1 ? Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+	}
+  
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Left"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Left);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Right"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Right);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Left"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Right"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Left"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Left);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Right"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Right);
+	}
+	
+	//Multicast_Play_Crouching_Turn_In_Place_Montage(Controller_Input, Network_Random_Number);
+}
+
+void UCustom_Movement_Component::On_Replication_Turning_In_Place_Crouching()
+{
+	if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward"))))
+   	{
+		Turning_In_Place_Crouching_Selection == 1 ? Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+   	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward"))))
+	{
+
+		Turning_In_Place_Crouching_Selection == 1 ? Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left) : Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+	}
+  
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Left"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Left);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Right"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Right);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Left"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Left);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Backward.Right"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Backward_Right);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Left"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Left);
+	}
+
+	else if(Turning_In_Place_Crouching_Direction == FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.Forward.Right"))))
+	{
+		Play_Parkour_Montage(Crouching_Turn_In_Place_Right);
+	}
 }
 
 void UCustom_Movement_Component::Multicast_Play_Crouching_Turn_In_Place_Montage_Implementation(const FGameplayTag& Controller_Input, const int& Network_Random_Number)
@@ -2336,12 +2672,12 @@ void UCustom_Movement_Component::Multicast_Execute_Start_Running_Implementation(
 	
 }
 
-void UCustom_Movement_Component::Server_Execute_Stop_Running_Implementation()
+void UCustom_Movement_Component::Server_Update_Stop_Running_Variables_Implementation()
 {
-	Multicast_Execute_Stop_Running();
+	Multicast_Update_Stop_Running_Variables();
 }
 
-void UCustom_Movement_Component::Multicast_Execute_Stop_Running_Implementation()
+void UCustom_Movement_Component::Multicast_Update_Stop_Running_Variables_Implementation()
 {
 	if(!Owning_Player_Character)
 	return;
@@ -2362,22 +2698,46 @@ void UCustom_Movement_Component::Multicast_Execute_Stop_Running_Implementation()
 
 }
 
-void UCustom_Movement_Component::Server_Play_Running_Stop_Animation_Implementation()
+void UCustom_Movement_Component::Server_Play_Running_Stop_Animation_Implementation(const int& bNetwork_bPlay_Running_Stop_Animation)
 {
-	Multicast_Play_Running_Stop_Animation();
+	bPlay_Running_Stop_Animation = bNetwork_bPlay_Running_Stop_Animation;
+
+	Play_Parkour_Montage(Unarmed_Stop_Running);
+	
+	//Multicast_Play_Running_Stop_Animation();
 }
 
-void UCustom_Movement_Component::Multicast_Play_Running_Stop_Animation_Implementation()
+void UCustom_Movement_Component::On_Replication_bPlay_Running_Stop_Animation()
 {
 	Play_Parkour_Montage(Unarmed_Stop_Running);
 }
 
-void UCustom_Movement_Component::Server_Stop_All_Montages_Implementation()
+void UCustom_Movement_Component::Multicast_Play_Running_Stop_Animation_Implementation(const int& bNetwork_bPlay_Running_Stop_Animation)
 {
-	Multicast_Stop_All_Montages();
+	Play_Parkour_Montage(Unarmed_Stop_Running);
 }
 
-void UCustom_Movement_Component::Multicast_Stop_All_Montages_Implementation()
+void UCustom_Movement_Component::Server_Stop_All_Montages_Implementation(const int& Network_bStop_All_Montages)
+{
+	bStop_All_Montages = Network_bStop_All_Montages;
+	
+	if(Owning_Player_Animation_Instance)
+	{
+		Owning_Player_Animation_Instance->StopAllMontages(.25f);
+	}
+	
+	//Multicast_Stop_All_Montages();
+}
+
+void UCustom_Movement_Component::On_Replication_bStop_All_Montages()
+{
+	if(Owning_Player_Animation_Instance)
+	{
+		Owning_Player_Animation_Instance->StopAllMontages(.25f);
+	}
+}
+
+void UCustom_Movement_Component::Multicast_Stop_All_Montages_Implementation(const int& Network_bStop_All_Montages)
 {
 	if(Owning_Player_Animation_Instance)
 	{
@@ -13266,8 +13626,10 @@ void UCustom_Movement_Component::Parkour_Call_In_Tick()
 
 		//Set_Parkour_Climb_Style(FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Climb.Style.None"))));
 		//Set_Parkour_Wall_Run_Side(FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Wall.Run.Side.None"))));
-
-		Execute_Accelerating_Drop_Free_Roam();
+		if(Owning_Player_Character->Get_Is_Jogging() && !Owning_Player_Character->Get_bDrop_To_Shimmy() && Ground_Speed >= 499.f)
+		{
+			Execute_Accelerating_Drop_Free_Roam();
+		}
 		
 		//If thie global pointer of type AStairs_Actor "Stairs_Actor has been set to being valid within &UCustom_Movement_Component::Execute_Parkour_Stairs, 
 		//handle the locotmotion of the character. How said locomotion is handled is dependant on whether the character is currently making contact with a 
@@ -16257,19 +16619,13 @@ void UCustom_Movement_Component::Execute_Wall_Run()
 
 void UCustom_Movement_Component::Execute_Accelerating_Drop_Free_Roam()
 {
-	if(!Owning_Player_Character)
-	return;
-	
-	if(Owning_Player_Character->Get_Is_Jogging() && !Owning_Player_Character->Get_bDrop_To_Shimmy() && Ground_Speed >= 499.f)
+	if(bIs_On_Ground)
 	{
-		if(bIs_On_Ground)
+		if(Validate_Drop_Off_Ledge_While_Sprinting())
 		{
-			if(Validate_Drop_Off_Ledge_While_Sprinting())
-			{
-				Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Action.Free.Roam.Accelerating.Drop"))));
-			}
-		}		
-	}
+			Set_Parkour_Action(FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Action.Free.Roam.Accelerating.Drop"))));
+		}
+	}		
 }
 
 void UCustom_Movement_Component::Move_Character_To_Front_Of_Pipe()

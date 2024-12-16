@@ -20,9 +20,11 @@ protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 
-public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 
 private:
 	
@@ -31,6 +33,7 @@ private:
 	UPROPERTY()
 	AActor* Component_Owner{};
 	
+	UPROPERTY(Replicated)
 	FVector Component_Starting_Location{};
 
 	UPROPERTY(EditAnywhere, Category = "Translation")
@@ -38,6 +41,7 @@ private:
 
 	FVector Move{};
 
+	UPROPERTY(Replicated)
 	FVector Component_Current_Location{};
 
 	UPROPERTY(EditAnywhere, Category = "Translation")

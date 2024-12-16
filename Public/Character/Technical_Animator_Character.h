@@ -229,16 +229,12 @@ private:
 
 #pragma region Network
 
-virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
-
-
 #pragma region Character_Network
 
 UFUNCTION(Server, Reliable)
 void Server_On_Parkour_Ended_Completed(const FInputActionValue& Value);
 
 #pragma endregion
-
 
 #pragma region World_Actors_Network
 

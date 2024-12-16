@@ -449,6 +449,30 @@ private:
 
 	FVector Current_Input_Vector{};
 
+	UPROPERTY(ReplicatedUsing = On_Replication_Turning_In_Place)
+	FGameplayTag Turning_In_Place_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.None")))};
+
+	UPROPERTY(ReplicatedUsing = On_Replication_Turning_In_Place)
+	int Turning_In_Place_Selection{};
+
+	UPROPERTY(ReplicatedUsing = On_Replication_Turning_In_Place_Crouching)
+	FGameplayTag Turning_In_Place_Crouching_Direction{FGameplayTag::RequestGameplayTag(FName(TEXT("Character.Direction.None")))};
+
+	UPROPERTY(ReplicatedUsing = On_Replication_Turning_In_Place_Crouching)
+	int Turning_In_Place_Crouching_Selection{};
+
+	int Turning_In_Place_Previous_Integer{};
+
+	UPROPERTY(ReplicatedUsing = On_Replication_bPlay_Running_Stop_Animation)
+	int bPlay_Running_Stop_Animation{};
+
+	int bPlay_Running_Stop_Animation_Previous_Integer{};
+
+	UPROPERTY(ReplicatedUsing = On_Replication_bStop_All_Montages)
+	int bStop_All_Montages{};
+
+	int bStop_All_Montages_Previous_Integer{};
+
 
 	
 	EGround_Locomotion_State Ground_Locomotion_State{};
@@ -551,6 +575,12 @@ void Server_Set_Add_Movement_Input_Variables(const double& Network_Forward_Backw
 UFUNCTION(Server, Reliable)
 void Server_Play_Turn_In_Place_Montage(const FGameplayTag& Network_Controller_Input, const int& Network_Random_Number);
 
+UFUNCTION()
+void On_Replication_Turning_In_Place();
+
+UFUNCTION()
+void On_Replication_Turning_In_Place_Crouching();
+
 UFUNCTION(NetMulticast, Reliable)
 void Multicast_Play_Turn_In_Place_Montage(const FGameplayTag& Network_Controller_Input, const int& Network_Random_Number);
 
@@ -567,22 +597,28 @@ UFUNCTION(NetMulticast, Reliable)
 void Multicast_Execute_Start_Running();
 
 UFUNCTION(Server, Reliable)
-void Server_Execute_Stop_Running();
+void Server_Update_Stop_Running_Variables();
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Execute_Stop_Running();
+void Multicast_Update_Stop_Running_Variables();
 
 UFUNCTION(Server, Reliable)
-void Server_Play_Running_Stop_Animation();
+void Server_Play_Running_Stop_Animation(const int& bNetwork_bPlay_Running_Stop_Animation);
+
+UFUNCTION()
+void On_Replication_bPlay_Running_Stop_Animation();
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Play_Running_Stop_Animation();
+void Multicast_Play_Running_Stop_Animation(const int& bNetwork_bPlay_Running_Stop_Animation);
 
 UFUNCTION(Server, Reliable)
-void Server_Stop_All_Montages();
+void Server_Stop_All_Montages(const int& Network_bStop_All_Montages);
+
+UFUNCTION()
+void On_Replication_bStop_All_Montages();
 
 UFUNCTION(NetMulticast, Reliable)
-void Multicast_Stop_All_Montages();
+void Multicast_Stop_All_Montages(const int& Network_bStop_All_Montages);
 
 
 
